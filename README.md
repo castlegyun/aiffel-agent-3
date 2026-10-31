@@ -8,12 +8,9 @@
 | # | 과제 | 설명 | 기술 | 바로가기 |
 |---|---|---|---|---|
 | 01 | [assignment-domain](01-assignment-domain) | 내 도메인(AI 서비스 개발)의 업무 분해 예시 | Markdown | [README](01-assignment-domain/README.md) |
-| 02 | [my-blog](02-my-blog) | 개인 블로그 | HTML, CSS | [▶ 블로그 열기](https://castlegyun.github.io/aiffel-agent-3/02-my-blog/) |
 | 03 | [card-match-quest](03-card-match-quest) | 카드 짝 맞추기 게임 | HTML | [▶ 게임 하기](https://castlegyun.github.io/aiffel-agent-3/03-card-match-quest/) |
 | 04 | [my-game](04-my-game) | 나만의 뱀서류 게임 | JavaScript | [▶ 게임 하기](https://castlegyun.github.io/aiffel-agent-3/04-my-game/) |
-| 05 | [todo-routine-planner](05-todo-routine-planner) | 루틴 체크리스트 + 회고 Todo 앱 | Node.js, Supabase, Render | [배포](https://aiffel-todo-app.onrender.com) |
 | 06 | [todo-supabase](06-todo-supabase) | 로그인한 사용자가 자기 할 일만 관리하는 Todo 앱 | Flask, Supabase(Auth+RLS), Render | [배포](https://todo-app-iw2l.onrender.com) |
-| 07 | [link-journey](07-link-journey) | 네트워크와 배포: 링크가 열리기까지 (그림 정리) | HTML | [▶ 열어보기](https://castlegyun.github.io/aiffel-agent-3/07-link-journey/) |
 
 > ▶ 표시는 GitHub Pages로 바로 열리는 사이트입니다. 주소 규칙: `https://castlegyun.github.io/aiffel-agent-3/폴더이름/`
 
