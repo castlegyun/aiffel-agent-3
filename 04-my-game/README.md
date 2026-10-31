@@ -19,7 +19,7 @@
 
 HTML · CSS · JavaScript만으로 만든 다크 판타지 **뱀서라이크** 게임입니다. 4분 동안 살아남거나, 그 전에 보스를 쓰러뜨리면 승리합니다.
 
-**▶ 바로 플레이: https://castlegyun.github.io/my-game/**
+**▶ 바로 플레이: https://castlegyun.github.io/aiffel-agent-3/04-my-game/**
 
 이미지·오디오 파일이 없습니다. 캐릭터는 코드 속 도트 도안으로, 효과음은 Web Audio로 직접 만들었습니다.
 
