@@ -1,0 +1,15 @@
+# 비밀 정보
+.env
+.env.*
+!.env.example
+
+# 데이터베이스 / 캐시 / 의존성
+*.db
+__pycache__/
+*.pyc
+node_modules/
+
+# 에디터 / OS
+.vscode/
+.DS_Store
+Thumbs.db

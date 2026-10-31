@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>카드 짝 맞추기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #dcecf7;
+    --surface: #ffffff;
+    --ink: #1d2b4a;
+    --ink-soft: #4a5a7a;
+    --back: #2f4a8a;
+    --back-dot: #4f6db3;
+    --accent: #ffc233;
+    --accent-ink: #3a2a00;
+    --match: #bff0cf;
+    --match-edge: #3fae6a;
+    --focus: #e0527a;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141c33;
+      --surface: #22305a;
+      --ink: #eef3ff;
+      --ink-soft: #b3c0e0;
+      --back: #4f6db3;
+      --back-dot: #7d98d6;
+      --accent: #ffc233;
+      --accent-ink: #3a2a00;
+      --match: #1f5c3d;
+      --match-edge: #5fd68e;
+      --focus: #ff8fb0;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141c33;
+    --surface: #22305a;
+    --ink: #eef3ff;
+    --ink-soft: #b3c0e0;
+    --back: #4f6db3;
+    --back-dot: #7d98d6;
+    --match: #1f5c3d;
+    --match-edge: #5fd68e;
+    --focus: #ff8fb0;
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: inherit; }
+  html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    min-height: 100%;
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  main { width: 100%; max-width: 440px; padding: 20px 16px 28px; }
+  .screen[hidden] { display: none; }
+
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 4px solid var(--focus); outline-offset: 3px; }
+
+  .btn {
+    border: 0;
+    border-radius: 18px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 1.35rem;
+    padding: 14px 32px;
+    box-shadow: 0 5px 0 rgba(0,0,0,.22);
+    transition: transform .08s, box-shadow .08s;
+  }
+  .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.22); }
+  .btn.small { font-size: 1rem; padding: 8px 18px; border-radius: 14px; box-shadow: 0 3px 0 rgba(0,0,0,.22); }
+
+  /* start & result */
+  .center { text-align: center; padding: 8vh 0; }
+  .logo { display: grid; grid-template-columns: repeat(4, 56px); gap: 10px; justify-content: center; margin-bottom: 28px; }
+  .logo span {
+    width: 56px; height: 72px; border-radius: 12px;
+    background: var(--surface); display: grid; place-items: center; font-size: 2rem;
+    box-shadow: 0 4px 0 rgba(0,0,0,.18);
+  }
+  .logo span:nth-child(odd) { transform: rotate(-5deg); }
+  .logo span:nth-child(even) { transform: rotate(4deg) translateY(6px); }
+  .logo span.b { background: var(--back); background-image: radial-gradient(var(--back-dot) 22%, transparent 24%); background-size: 14px 14px; }
+  h1 { font-size: 2.6rem; font-weight: 400; margin: 0 0 28px; letter-spacing: .01em; }
+  h2 { font-size: 2.2rem; font-weight: 400; margin: 0 0 8px; }
+  .big { font-size: 5rem; line-height: 1; margin: 6px 0 4px; }
+  .sub { color: var(--ink-soft); font-size: 1.2rem; margin: 0 0 30px; }
+
+  /* game */
+  .bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .score { font-size: 1.6rem; }
+  .score small { font-size: 1rem; color: var(--ink-soft); margin-right: 8px; }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    perspective: 900px;
+  }
+  .card {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    padding: 0;
+    border: 0;
+    background: none;
+    border-radius: 14px;
+    transform-style: preserve-3d;
+    transition: transform .35s;
+  }
+  .card.open, .card.matched { transform: rotateY(180deg); }
+  .face {
+    position: absolute; inset: 0;
+    border-radius: 14px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    display: grid; place-items: center;
+    box-shadow: 0 4px 0 rgba(0,0,0,.2);
+  }
+  .face.back {
+    background-color: var(--back);
+    background-image: radial-gradient(var(--back-dot) 20%, transparent 22%);
+    background-size: 16px 16px;
+    border: 3px solid var(--surface);
+  }
+  .face.front {
+    background: var(--surface);
+    transform: rotateY(180deg);
+    font-size: clamp(2rem, 11vw, 3.1rem);
+    border: 3px solid transparent;
+    transition: background .2s, border-color .2s;
+  }
+  .card.matched .face.front { background: var(--match); border-color: var(--match-edge); }
+  .card.matched { cursor: default; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <section id="start" class="screen center">
+    <div class="logo" aria-hidden="true">
+      <span class="b"></span><span>🦊</span><span class="b"></span><span>🍓</span>
+    </div>
+    <h1>카드 짝 맞추기</h1>
+    <button class="btn" id="startBtn" type="button">시작</button>
+  </section>
+
+  <section id="game" class="screen" hidden>
+    <div class="bar">
+      <div class="score" aria-live="polite"><small>맞힌 짝</small><span id="pairs">0/10</span></div>
+      <button class="btn small" id="newBtn" type="button">새 게임</button>
+    </div>
+    <div class="board" id="board"></div>
+  </section>
+
+  <section id="result" class="screen center" hidden>
+    <h2>모두 찾았어요!</h2>
+    <div class="big" id="flips">0</div>
+    <p class="sub">번 뒤집었어요</p>
+    <button class="btn" id="againBtn" type="button">다시 하기</button>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var EMOJIS = ['🐶', '🐱', '🦊', '🐼', '🐸', '🦄', '🐙', '🍓', '🍄', '🌻'];
+  var TOTAL_PAIRS = EMOJIS.length;
+  var MISMATCH_MS = 1000;
+  var FINISH_MS = 900;
+
+  var screens = {
+    start: document.getElementById('start'),
+    game: document.getElementById('game'),
+    result: document.getElementById('result')
+  };
+  var boardEl = document.getElementById('board');
+  var pairsEl = document.getElementById('pairs');
+  var flipsEl = document.getElementById('flips');
+
+  var deck, els, firstIdx, pending, pairs, flips, locked, timer;
+
+  function show(name) {
+    Object.keys(screens).forEach(function (k) { screens[k].hidden = (k !== name); });
+  }
+
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function newGame() {
+    clearTimeout(timer);
+    var list = [];
+    EMOJIS.forEach(function (e) { list.push(e, e); });
+    deck = shuffle(list).map(function (e) { return { emoji: e, open: false, matched: false }; });
+    firstIdx = null; pending = null; pairs = 0; flips = 0; locked = false;
+    renderBoard();
+    updateScore();
+    show('game');
+  }
+
+  function renderBoard() {
+    boardEl.innerHTML = '';
+    els = deck.map(function (c, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'card';
+      b.setAttribute('aria-label', '카드 ' + (i + 1) + ', 뒷면');
+      b.innerHTML = '<span class="face back"></span><span class="face front">' + c.emoji + '</span>';
+      b.addEventListener('click', function () { flip(i); });
+      boardEl.appendChild(b);
+      return b;
+    });
+  }
+
+  function paint(i) {
+    var c = deck[i], el = els[i];
+    el.classList.toggle('open', c.open);
+    el.classList.toggle('matched', c.matched);
+    el.setAttribute('aria-label', '카드 ' + (i + 1) + (c.open || c.matched ? ', ' + c.emoji : ', 뒷면') + (c.matched ? ', 맞힘' : ''));
+  }
+
+  function updateScore() { pairsEl.textContent = pairs + '/' + TOTAL_PAIRS; }
+
+  function closePending() {
+    clearTimeout(timer);
+    if (!pending) return;
+    pending.forEach(function (i) { deck[i].open = false; paint(i); });
+    pending = null;
+  }
+
+  function flip(i) {
+    if (locked) return;
+    var c = deck[i];
+    if (c.open || c.matched) return;           // 이미 열린/맞힌 카드: 무시
+
+    if (pending) {                              // 틀린 두 장이 보이는 중: 바로 닫고 새 첫 번째 카드로
+      closePending();
+    }
+
+    c.open = true;
+    paint(i);
+
+    if (firstIdx === null) {
+      firstIdx = i;
+      return;
+    }
+
+    // 두 번째 카드: 비교
+    var a = firstIdx;
+    firstIdx = null;
+    flips++;
+
+    if (deck[a].emoji === c.emoji) {
+      deck[a].matched = c.matched = true;
+      deck[a].open = c.open = false;
+      paint(a); paint(i);
+      pairs++;
+      updateScore();
+      if (pairs === TOTAL_PAIRS) {
+        locked = true;
+        timer = setTimeout(function () {
+          flipsEl.textContent = flips;
+          show('result');
+        }, FINISH_MS);
+      }
+    } else {
+      pending = [a, i];
+      timer = setTimeout(closePending, MISMATCH_MS);
+    }
+  }
+
+  document.getElementById('startBtn').addEventListener('click', newGame);
+  document.getElementById('newBtn').addEventListener('click', newGame);
+  document.getElementById('againBtn').addEventListener('click', newGame);
+})();
+</script>
+</body>
+</html>

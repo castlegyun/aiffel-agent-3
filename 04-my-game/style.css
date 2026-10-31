@@ -1,0 +1,996 @@
+/* ============ 기본 ============ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #05060f;
+  --ink: #0d0807;
+  --iron: #4a3f38;
+  --iron-light: #8a7a68;
+  --parchment: #e8dca0;
+  --fire: #ffb43a;
+  --blood: #c4221a;
+  --xp: #3fae4a;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+  color: #e8f6ff;
+  user-select: none;
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* 메뉴·결과 화면에서는 HUD를 숨긴다 (#id 규칙보다 우선하도록 !important) */
+body[data-state="menu"] .hud,
+body[data-state="gameover"] .hud,
+body[data-state="victory"] .hud {
+  display: none !important;
+}
+
+/* ============ HUD ============ */
+
+/* ---- 남은 시간 (상단 중앙, 크게) ---- */
+#timer {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  transform-origin: center top;
+  padding: 0 22px;
+  font-size: 46px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  line-height: 1.2;
+  color: var(--parchment);
+  text-shadow: 0 2px 0 #000, 0 0 14px rgba(0, 0, 0, 0.9);
+  background: linear-gradient(rgba(30, 20, 15, 0.85), rgba(13, 8, 7, 0.85));
+  border: 2px solid var(--iron);
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+/* 마지막 30초: 붉게 깜빡임 */
+#timer-text.urgent {
+  color: #ff5a44;
+  animation: urgent 0.8s ease-in-out infinite;
+}
+
+@keyframes urgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* 보스 등장: 붉게 물들며 확 커졌다가 조금 큰 채로 자리 잡는다 */
+#timer.boss-pop {
+  animation: bossPop 1.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes bossPop {
+  0%   { transform: translateX(-50%) scale(1);    color: var(--parchment); border-color: var(--iron); }
+  18%  { transform: translateX(-50%) scale(2.3);  color: #ff3a2a; border-color: #ff3a2a;
+         text-shadow: 0 0 30px rgba(255, 40, 20, 1), 0 2px 0 #000; }
+  100% { transform: translateX(-50%) scale(1.15); color: #ff5a44; border-color: #8a2a20;
+         text-shadow: 0 0 14px rgba(255, 60, 40, 0.7), 0 2px 0 #000; }
+}
+
+/* 보스 등장 순간 화면 가장자리에 번지는 붉은 섬광 */
+#flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, rgba(255, 30, 20, 0) 40%, rgba(255, 30, 20, 0.55) 100%);
+}
+
+#flash.show {
+  animation: flash 1.4s ease-out;
+}
+
+@keyframes flash {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 플레이어가 맞았을 때 화면 가장자리가 붉게 번쩍인다 */
+#hurt {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, rgba(180, 0, 0, 0) 35%, rgba(200, 10, 10, 0.6) 100%);
+}
+
+#hurt.show {
+  animation: hurt 0.4s ease-out;
+}
+
+@keyframes hurt {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---- 보스 체력바 ---- */
+#boss-hud {
+  position: fixed;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, 80vw);
+  text-align: center;
+  pointer-events: none;
+}
+
+#boss-name {
+  margin-bottom: 3px;
+  font-size: 16px;
+  letter-spacing: 4px;
+  color: var(--parchment);
+  text-shadow: 0 1px 4px #000;
+}
+
+#boss-bar {
+  height: 16px;
+  background: var(--ink);
+  border: 2px solid #6a5a4a;
+  border-radius: 3px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+#boss-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(#d83a2a, #7a1410);
+  transition: width 0.12s linear;
+}
+
+#boss-fill.rage {
+  background: linear-gradient(#ff9a3a, #c4421a);
+}
+
+/* ---- 안내 문구 ---- */
+#announce {
+  position: fixed;
+  top: 28%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 34px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  color: #ff6a50;
+  text-shadow: 0 0 20px rgba(196, 34, 26, 0.9), 0 3px 0 #000;
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+#announce.good {
+  top: 22%;
+  font-size: 26px;
+  color: #8affb0;
+  text-shadow: 0 0 18px rgba(60, 200, 110, 0.85), 0 3px 0 #000;
+}
+
+#announce.show {
+  animation: announce 2.4s ease-out forwards;
+}
+
+@keyframes announce {
+  0% { opacity: 0; transform: translateX(-50%) scale(1.4); }
+  12% { opacity: 1; transform: translateX(-50%) scale(1); }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---- 경험치 바 (하단 전체, 20칸) + 레벨 ---- */
+#xp-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 16px;
+  background: var(--ink);
+  border-top: 2px solid var(--iron);
+  pointer-events: none;
+}
+
+#xp-fill {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(#7aef9a, #2f9a4a 60%, #1f6a32);
+  transition: width 0.12s linear;
+}
+
+#xp-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0, transparent calc(5% - 2px), var(--ink) calc(5% - 2px), var(--ink) 5%);
+}
+
+#level-label {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  padding: 2px 18px;
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: var(--parchment);
+  text-shadow: 0 1px 3px #000;
+  background: linear-gradient(#2a1d17, #130d0a);
+  border: 2px solid var(--iron-light);
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+/* ---- 처치 수 + 무기 슬롯 (우하단) ---- */
+#side-hud {
+  position: fixed;
+  right: 18px;
+  bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+#kills {
+  padding: 2px 12px;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--parchment);
+  background: rgba(13, 8, 7, 0.8);
+  border: 2px solid var(--iron);
+  border-radius: 3px;
+}
+
+#slots {
+  display: flex;
+  gap: 8px;
+}
+
+.slot {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: var(--fire);
+  background: linear-gradient(#2a1d17, #0d0807);
+  border: 3px solid var(--iron);
+  border-radius: 5px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.8), inset 0 0 8px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 0 10px rgba(255, 180, 58, 0.7);
+}
+
+.slot.empty {
+  opacity: 0.35;
+}
+
+.slot.evolved {
+  border-color: var(--fire);
+  box-shadow: 0 0 14px rgba(255, 180, 58, 0.6), inset 0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+.slot .slot-lv {
+  position: absolute;
+  right: 3px;
+  bottom: 0;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--parchment);
+  text-shadow: 0 1px 2px #000, 0 0 3px #000;
+}
+
+/* ============ 오버레이(메뉴/일시정지/레벨업/결과) ============ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 16px;
+  overflow-y: auto;
+  background: radial-gradient(ellipse at center, rgba(30, 6, 4, 0.78), rgba(0, 0, 0, 0.94));
+}
+
+.overlay h1 {
+  --ls: 6px;
+  letter-spacing: var(--ls);
+  padding-left: var(--ls);
+  font-size: 56px;
+  color: var(--blood);
+  text-shadow: 0 0 24px rgba(196, 34, 26, 0.7), 0 3px 0 #000;
+}
+
+.overlay p {
+  font-size: 20px;
+  color: var(--parchment);
+}
+
+.overlay .hint {
+  font-size: 13px;
+  color: var(--iron-light);
+}
+
+.buttons {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.overlay button {
+  min-width: 150px;
+  padding: 12px 30px;
+  font-size: 18px;
+  font-family: inherit;
+  color: var(--parchment);
+  background: linear-gradient(#3a2a20, #1c1411);
+  border: 2px solid var(--iron-light);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.overlay button.primary {
+  border-color: var(--fire);
+  background: linear-gradient(#5a3a1c, #2a1a0c);
+}
+
+.overlay button:hover {
+  border-color: var(--fire);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(255, 180, 58, 0.45);
+}
+
+/* ---- 시작 화면 ---- */
+#menu {
+  background: radial-gradient(ellipse at center, rgba(20, 8, 6, 0.55), rgba(0, 0, 0, 0.9));
+}
+
+#menu .title {
+  --ls: 10px;
+  letter-spacing: var(--ls);
+  padding-left: var(--ls);
+  font-size: 72px;
+  color: #d8402e;
+  text-shadow: 0 0 34px rgba(255, 90, 40, 0.65), 0 4px 0 #000;
+}
+
+#menu .subtitle {
+  --ls: 6px;
+  letter-spacing: var(--ls);
+  padding-left: var(--ls);
+  margin-top: -10px;
+  color: var(--iron-light);
+}
+
+#menu .controls {
+  list-style: none;
+  display: grid;
+  grid-template-columns: max-content max-content;
+  column-gap: 14px;
+  row-gap: 8px;
+  margin-top: 8px;
+  padding: 14px 24px;
+  font-size: 15px;
+  color: #b9ad94;
+  background: rgba(13, 8, 7, 0.55);
+  border: 1px solid #3a2e28;
+  border-radius: 4px;
+}
+
+#menu .controls li {
+  display: contents; /* li 대신 안의 b/span이 표의 칸이 된다 */
+}
+
+#menu .controls b {
+  text-align: right;
+  color: var(--parchment);
+}
+
+#menu .controls span {
+  text-align: left;
+}
+
+/* 터치/키보드 전용 줄은 display: contents인 li 자체를 숨겨야 한다 */
+body:not(.touch) #menu .controls .touch-only,
+body.touch #menu .controls .kb-only {
+  display: none;
+}
+
+.best {
+  margin-top: 6px;
+  font-size: 15px;
+  color: var(--fire);
+}
+
+/* ---- 일시정지 ---- */
+#paused h1 {
+  color: var(--parchment);
+  text-shadow: 0 0 20px rgba(232, 220, 160, 0.4), 0 3px 0 #000;
+}
+
+/* ---- 레벨업 카드 ---- */
+#levelup h1 {
+  color: var(--fire);
+  text-shadow: 0 0 24px rgba(255, 180, 58, 0.6), 0 3px 0 #000;
+}
+
+#levelup {
+  background: radial-gradient(ellipse at center, rgba(30, 20, 6, 0.8), rgba(0, 0, 0, 0.94));
+}
+
+#cards {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.card {
+  position: relative;
+  width: 200px;
+  min-height: 260px;
+  padding: 36px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  color: var(--parchment);
+  background: linear-gradient(#2a1d17, #130d0a);
+  border: 2px solid #6a5a4a;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  border-color: var(--fire);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.8), 0 0 18px rgba(255, 180, 58, 0.4);
+}
+
+.card-key {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 13px;
+  color: var(--iron-light);
+}
+
+.card-icon {
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: var(--fire);
+  background: var(--ink);
+  border: 2px solid var(--iron);
+  border-radius: 50%;
+  text-shadow: 0 0 10px rgba(255, 180, 58, 0.7);
+}
+
+.card-name {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.card-level {
+  font-size: 14px;
+  color: var(--xp);
+}
+
+.card-line {
+  font-size: 14px;
+  color: #c9bfa8;
+  text-align: center;
+}
+
+/* 새 무기 / 진화 카드는 눈에 띄게 */
+.card.new {
+  border-color: #3a6fd0;
+}
+
+.card.new .card-level {
+  color: #6aa8ff;
+}
+
+.card.evolve {
+  border-color: var(--fire);
+  background: linear-gradient(#3a2610, #170e08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 22px rgba(255, 180, 58, 0.35);
+}
+
+.card.evolve .card-level {
+  color: var(--fire);
+  font-weight: bold;
+}
+
+/* ---- 결과 화면 (게임오버 / 승리) ---- */
+#result.win {
+  background: radial-gradient(ellipse at center, rgba(40, 30, 8, 0.8), rgba(0, 0, 0, 0.94));
+}
+
+#result.win h1 {
+  color: #ffd25a;
+  text-shadow: 0 0 28px rgba(255, 210, 90, 0.7), 0 3px 0 #000;
+}
+
+#result {
+  gap: 12px;
+}
+
+#result h1 {
+  margin-bottom: -4px;
+  font-size: 48px;
+}
+
+/* 처치한 적은 2열로 보여 화면 높이를 아낀다 */
+#result-kills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 28px;
+}
+
+.record {
+  min-height: 22px;
+  font-size: 17px;
+  font-weight: bold;
+  color: var(--fire);
+  letter-spacing: 1px;
+}
+
+.record.new {
+  animation: recordGlow 1.2s ease-in-out infinite;
+}
+
+@keyframes recordGlow {
+  0%, 100% { text-shadow: 0 0 6px rgba(255, 180, 58, 0.4); }
+  50% { text-shadow: 0 0 18px rgba(255, 180, 58, 1); }
+}
+
+#result-panel {
+  width: min(460px, 92vw);
+  padding: 16px 22px;
+  background: linear-gradient(rgba(30, 20, 15, 0.9), rgba(13, 8, 7, 0.9));
+  border: 2px solid var(--iron);
+  border-radius: 6px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.8);
+}
+
+.result-row,
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  font-size: 15px;
+  color: #c9bfa8;
+}
+
+.result-row b,
+.result-item b {
+  color: var(--parchment);
+}
+
+.result-sub {
+  margin: 12px 0 4px;
+  padding-top: 8px;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--iron-light);
+  border-top: 1px solid #3a2e28;
+}
+
+.result-item.evolved b {
+  color: var(--fire);
+}
+
+/* ============ 모바일 / 터치 ============ */
+
+/* 가상 조이스틱: 누른 자리에 나타난다 */
+#joy {
+  position: fixed;
+  width: 112px;
+  height: 112px;
+  margin: -56px 0 0 -56px;
+  border-radius: 50%;
+  border: 3px solid rgba(232, 220, 160, 0.45);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.25));
+  pointer-events: none;
+}
+
+#joy-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 35% 30%, rgba(255, 240, 200, 0.85), rgba(180, 130, 60, 0.75));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* 터치 기기에서만 일시정지 버튼과 터치용 안내를 보인다 */
+#btn-pause-touch {
+  display: none;
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  width: 46px;
+  height: 46px;
+  font-size: 16px;
+  color: var(--parchment);
+  background: rgba(13, 8, 7, 0.75);
+  border: 2px solid var(--iron-light);
+  border-radius: 50%;
+}
+
+body.touch #btn-pause-touch {
+  display: block;
+}
+
+.touch-only {
+  display: none;
+}
+
+body.touch .touch-only {
+  display: contents;
+}
+
+body.touch .kb-only {
+  display: none;
+}
+
+/* 작은 화면(휴대폰 가로/세로)에서는 HUD와 화면을 줄인다 */
+@media (max-width: 900px), (max-height: 520px) {
+  #timer {
+    top: 4px;
+    padding: 0 14px;
+    font-size: 30px;
+  }
+
+  #boss-hud {
+    top: 52px;
+    width: min(420px, 70vw);
+  }
+
+  #boss-bar {
+    height: 12px;
+  }
+
+  #announce {
+    font-size: 24px;
+  }
+
+  #announce.good {
+    font-size: 20px;
+  }
+
+  #level-label {
+    bottom: 18px;
+    font-size: 14px;
+    padding: 0 12px;
+  }
+
+  #xp-bar {
+    height: 12px;
+  }
+
+  #side-hud {
+    right: 10px;
+    bottom: 22px;
+    gap: 5px;
+  }
+
+  #kills {
+    font-size: 13px;
+    padding: 0 8px;
+  }
+
+  .slot {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    border-width: 2px;
+  }
+
+  .slot .slot-lv {
+    font-size: 10px;
+  }
+
+  .overlay {
+    gap: 12px;
+  }
+
+  .overlay h1 {
+    --ls: 3px;
+    font-size: 36px;
+  }
+
+  #menu .title {
+    --ls: 5px;
+    font-size: 44px;
+  }
+
+  #menu .controls {
+    font-size: 13px;
+  }
+
+  .overlay button {
+    min-width: 120px;
+    padding: 10px 18px;
+    font-size: 16px;
+  }
+
+  #cards {
+    gap: 10px;
+  }
+
+  .card {
+    width: 150px;
+    min-height: 190px;
+    padding: 28px 10px 12px;
+    gap: 5px;
+  }
+
+  .card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+  }
+
+  .card-name {
+    font-size: 15px;
+  }
+
+  .card-level,
+  .card-line {
+    font-size: 12px;
+  }
+
+  #result h1 {
+    font-size: 34px;
+  }
+
+  #result-panel {
+    padding: 10px 14px;
+  }
+
+  .result-row,
+  .result-item {
+    font-size: 13px;
+  }
+}
+
+/* 세로 휴대폰처럼 아주 좁은 화면 */
+@media (max-width: 480px) {
+  #menu .title {
+    --ls: 2px;
+    font-size: 34px;
+  }
+
+  #menu .subtitle {
+    --ls: 3px;
+    font-size: 15px;
+  }
+
+  .card {
+    width: 140px;
+  }
+
+  #timer {
+    font-size: 26px;
+  }
+}
+
+/* ============ 보스 등장 경고 ============ */
+#warn {
+  --warn: 0;
+  --dur: 1.5s;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, rgba(255, 0, 0, 0) 28%, rgba(220, 10, 10, 0.8) 100%);
+}
+
+#warn.on {
+  animation: warnPulse var(--dur) ease-in-out infinite;
+}
+
+@keyframes warnPulse {
+  0%, 100% { opacity: calc(0.08 + var(--warn) * 0.18); }
+  45% { opacity: calc(0.45 + var(--warn) * 0.55); }
+}
+
+body[data-state="menu"] #warn,
+body[data-state="gameover"] #warn,
+body[data-state="victory"] #warn {
+  display: none;
+}
+
+#warn-label {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 18px;
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  color: #ff6a50;
+  text-shadow: 0 0 12px rgba(255, 40, 20, 0.9), 0 2px 0 #000;
+  background: rgba(13, 8, 7, 0.8);
+  border: 2px solid #8a2a20;
+  border-radius: 4px;
+  animation: urgent 0.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (max-width: 900px), (max-height: 520px) {
+  #warn-label {
+    top: 44px;
+    font-size: 13px;
+    padding: 1px 12px;
+  }
+}
+
+/* ============ 소리 버튼 ============ */
+#btn-sound {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  z-index: 50; /* 시작/일시정지 화면 위에서도 눌린다 */
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--parchment);
+  background: rgba(13, 8, 7, 0.75);
+  border: 2px solid var(--iron-light);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+#btn-sound:hover {
+  border-color: var(--fire);
+}
+
+/* 꺼짐: 흐리게 + 붉은 빗금 */
+#btn-sound.off {
+  color: #8a7a68;
+  border-color: #8a2a20;
+}
+
+#btn-sound.off::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  top: 50%;
+  height: 3px;
+  background: #ff5a44;
+  border-radius: 2px;
+  transform: rotate(-45deg);
+}
+
+/* 아직 소리가 시작되지 않음: 깜빡여서 눌러야 한다는 걸 알려준다 */
+#btn-sound.idle {
+  animation: urgent 1.2s ease-in-out infinite;
+}
+
+#menu-sound {
+  min-height: 18px;
+  color: #ffb43a;
+}
+
+@media (max-width: 900px), (max-height: 520px) {
+  #btn-sound {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+  }
+}
+
+/* ============ 스킬 공명(각성) ============ */
+#awaken-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, rgba(255, 245, 200, 0.85) 0%, rgba(255, 214, 100, 0.45) 40%, rgba(255, 180, 58, 0) 75%);
+}
+
+#awaken-flash.show {
+  animation: awakenFlash 0.9s ease-out;
+}
+
+@keyframes awakenFlash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+#announce.awaken {
+  top: 24%;
+  font-size: 40px;
+  color: #ffe08a;
+  text-shadow: 0 0 26px rgba(255, 200, 80, 0.95), 0 0 6px #fff, 0 3px 0 #000;
+}
+
+#awaken-badge {
+  padding: 2px 12px;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #ffe08a;
+  background: rgba(40, 28, 8, 0.85);
+  border: 2px solid #ffb43a;
+  border-radius: 3px;
+  box-shadow: 0 0 12px rgba(255, 180, 58, 0.55);
+  animation: urgent 1.6s ease-in-out infinite;
+}
+
+@media (max-width: 900px), (max-height: 520px) {
+  #announce.awaken {
+    font-size: 24px;
+  }
+
+  #awaken-badge {
+    font-size: 11px;
+    padding: 0 8px;
+  }
+}
+
+/* 스킬 하나가 Lv3 각성 */
+#announce.skill {
+  top: 26%;
+  font-size: 30px;
+  color: #ffe08a;
+  text-shadow: 0 0 20px rgba(255, 200, 80, 0.9), 0 3px 0 #000;
+}
+
+.slot.lv3 {
+  border-color: #d8a64a;
+  box-shadow: 0 0 8px rgba(216, 166, 74, 0.5), inset 0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+@media (max-width: 900px), (max-height: 520px) {
+  #announce.skill {
+    font-size: 20px;
+  }
+}
