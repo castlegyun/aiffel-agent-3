@@ -11,6 +11,7 @@
 | 02 | [card-match-quest](02-card-match-quest) | 카드 짝 맞추기 게임 | HTML | [▶ 게임 하기](https://castlegyun.github.io/aiffel-agent-3/02-card-match-quest/) |
 | 03 | [my-game](03-my-game) | 나만의 뱀서류 게임 | JavaScript | [▶ 게임 하기](https://castlegyun.github.io/aiffel-agent-3/03-my-game/) |
 | 04 | [todo-supabase](04-todo-supabase) | 로그인한 사용자가 자기 할 일만 관리하는 Todo 앱 | Flask, Supabase(Auth+RLS), Render | [배포](https://todo-app-iw2l.onrender.com) |
+| 05 | [submit-assignment-skill](05-submit-assignment-skill) | 과제를 GitHub에 올리는 반복 작업을 자동화한 Claude Code 스킬 | Claude Code Skill, Markdown | [README](05-submit-assignment-skill/README.md) |
 
 > ▶ 표시는 GitHub Pages로 바로 열리는 사이트입니다. 주소 규칙: `https://castlegyun.github.io/aiffel-agent-3/폴더이름/`
 
