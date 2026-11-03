@@ -100,7 +100,7 @@ description: 코드 또는 배운 내용(텍스트)을 코딩 입문자용 해�
 
 | 파일 | 만드는 법 |
 |---|---|
-| `summary.html` ([종합 정리]) | answer-me-with-html 스킬의 `am render` 에 `-o <노트 폴더>/summary.html --no-open` 을 붙여 만든다. 한 장 안에 코드(또는 핵심), 흐름·구조 그림, 표, 기억할 점을 넣는다. 다 만든 뒤 `</head>` 바로 앞에 `<style id="embed-hide-toolbar">.am-toolbar{display:none !important}</style>` 한 줄을 넣어 도구 막대를 숨긴다. 출처 표기(`am-colophon`)는 지우지 않는다. |
+| `summary.html` ([종합 정리]) | answer-me-with-html 스킬의 `am render` 에 `-o <노트 폴더>/summary.html --no-open` 을 붙여 만든다. 머리말에 `theme: shadcn`(화면에는 Cards)을 쓴다. 한 장 안에 코드(또는 핵심), 흐름·구조 그림, 표, 기억할 점을 넣는다. 다 만든 뒤 `</head>` 바로 앞에 `<style id="embed-hide-toolbar">.am-toolbar .am-btn{display:none !important}</style>` 한 줄을 넣는다. Reply·Remark·Copy source 버튼만 숨기고 Theme·Mode 선택칸은 남겨서, 보는 사람이 Blueprint / Cards / Paper 를 바꿀 수 있게 한다. 출처 표기(`am-colophon`)는 지우지 않는다. |
 | `diagram.html` ([그림 하나]) | 그림 종류가 **단계별 실행 과정**(코드만)이면 `templates/simulator.html` 을 복사해 `{{TITLE}}` 과 `{{SIM_DATA}}`(JSON)만 채운다. JSON 형식은 틀 안 주석을 따르고, 마지막 단계의 값이 실제 실행 결과와 같은지 계산해 확인한다. 그 밖의 종류는 `/diagram-design` 으로 만든다 (플로우차트=Flowchart, 개념 관계도=Tree·Nested, 데이터 이동=Sequence·Data flow, 코드 구조도=Tree·Architecture). 이 프로젝트에서 처음 쓰면 스타일을 묻는다. 사용자에게 물어 정하고, 이후 같은 스타일을 쓴다. |
 | `eli5.html` ([아주 쉽게]) | `/eli5` 스킬로 만든다. 부를 때 "비유는 쓰지 말고 실제로 일어나는 일로 설명한다. 큰 그림, 적은 글. 영어는 단어(한글 발음)"를 함께 지시한다. 로컬 HTML 한 파일(밝은/어두운 색 지원)로 저장하고, Artifact로 게시하지 않는다. |
 
