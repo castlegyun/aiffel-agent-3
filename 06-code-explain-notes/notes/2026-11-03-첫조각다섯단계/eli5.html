@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>굴러가는 첫 조각 아주 쉽게</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --card:#fff; --hot:#e8590c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --card:#262624; --hot:#ffa94d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 system-ui, "Malgun Gothic", sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.8rem; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 24px; }
+  h2 { font-size:1.2rem; margin:24px 0 10px; }
+  .goal { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:560px) { .goal { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; }
+  .card .big { font-size:1.3rem; font-weight:700; margin:0 0 2px; }
+  .card .small { color:var(--muted); font-size:.95rem; margin:0; }
+  .card.no { opacity:.7; }
+  .card.no .big { text-decoration:line-through; }
+  .card.yes { border:3px solid var(--hot); }
+  .card.yes .big { color:var(--hot); }
+  .step { display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 18px; margin-bottom:8px; }
+  .step .n { font:700 1.6rem/1 Consolas, monospace; color:var(--accent); border:3px solid var(--accent); border-radius:10px; width:2.4em; height:2.4em; display:flex; align-items:center; justify-content:center; flex:none; }
+  .step.last .n { color:var(--hot); border-color:var(--hot); }
+  .step .big { font-size:1.2rem; font-weight:700; margin:0; }
+  .step .small { color:var(--muted); font-size:.95rem; margin:0; }
+  .arrow { text-align:center; color:var(--muted); font-size:1.2rem; line-height:1; margin:0 0 8px; }
+  .words { border-top:1px solid var(--line); margin-top:28px; padding-top:12px; color:var(--muted); font-size:.95rem; }
+  .words span { display:inline-block; margin-right:14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>굴러가는 첫 조각, 아주 쉽게</h1>
+  <p class="lead">다 만들지 말고, 작게 한 바퀴 돌린다.</p>
+
+  <div class="goal">
+    <div class="card no"><p class="big">완성</p><p class="small">오늘의 목표가 아니다</p></div>
+    <div class="card yes"><p class="big">굴러가는 첫 조각</p><p class="small">핵심 한 가지를 처음부터 끝까지 해 볼 수 있는 가장 작은 버전</p></div>
+  </div>
+
+  <h2>다섯 단계</h2>
+  <div class="step"><span class="n">1</span><div><p class="big">기획서 쓰기</p><p class="small">무엇을 만들지 한 장에 적는다 (PRD)</p></div></div>
+  <div class="arrow">↓</div>
+  <div class="step"><span class="n">2</span><div><p class="big">작업대 정하기</p><p class="small">어디서 만들지 정한다 (harness, 하네스)</p></div></div>
+  <div class="arrow">↓</div>
+  <div class="step"><span class="n">3</span><div><p class="big">화면 만들기</p><p class="small">HTML, CSS, JavaScript와 가짜 데이터</p></div></div>
+  <div class="arrow">↓</div>
+  <div class="step"><span class="n">4</span><div><p class="big">저장 붙이기</p><p class="small">서버와 DB, 비밀값은 코드 밖에 보관</p></div></div>
+  <div class="arrow">↓</div>
+  <div class="step last"><span class="n">5</span><div><p class="big">확인하고 배포하기</p><p class="small">한 바퀴 돌려 보고, 인터넷 주소로 내보낸다</p></div></div>
+
+  <h2>이것만 기억하기</h2>
+  <div class="card"><p class="big">범위를 좁히고, 한 걸음씩, 막히면 되돌린다</p><p class="small">부끄러운 첫 조각이 두 번째 버전의 출발점이다.</p></div>
+
+  <div class="words">
+    <span><b>PRD(피알디)</b> 무엇을, 왜 만들지 적은 기획서</span>
+    <span><b>MVP(엠브이피)</b> 최소 작동 버전</span>
+    <span><b>commit(커밋)</b> 복구 지점 기록</span>
+    <span><b>.env(닷엔브)</b> 비밀값을 두는 파일</span>
+  </div>
+</main>
+</body>
+</html>
