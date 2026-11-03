@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>for문 목록 반복 단계별 실행</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --card:#fff; --hot:#e8590c; --hl:#fff3bf; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --card:#262624; --hot:#ffa94d; --hl:#4a3f12; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 system-ui, "Malgun Gothic", sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:20px 16px 32px; }
+  .top { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  #stepno { color:var(--muted); white-space:nowrap; font-size:.95rem; }
+  .bar { flex:1; height:6px; background:var(--line); border-radius:3px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; background:var(--accent); transition:width .15s; }
+  #explain { font-size:1.35rem; line-height:1.5; font-weight:600; min-height:4.2em; margin:0 0 12px; }
+  #vars { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .var { display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:6px 12px; }
+  .var .name { color:var(--muted); font:15px Consolas, monospace; }
+  .var .val { font:700 1.4rem Consolas, monospace; min-width:1.5em; text-align:center; color:var(--accent); }
+  .var.changed .val { color:var(--hot); }
+  .var.changed { border-color:var(--hot); }
+  #code { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px 0; margin:0 0 12px; font:18px/1.9 Consolas, monospace; }
+  .line { display:flex; padding:0 14px 0 6px; white-space:pre; }
+  .line .no { width:2em; color:var(--muted); text-align:right; margin-right:10px; user-select:none; }
+  .line .mark { width:1.4em; color:var(--hot); }
+  .line.cur { background:var(--hl); }
+  #out { min-height:2.4em; border-radius:8px; padding:6px 12px; font:16px Consolas, monospace; color:var(--muted); }
+  #out b { color:var(--fg); }
+  .ctrl { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .ctrl button { font:inherit; padding:8px 18px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--fg); cursor:pointer; }
+  .ctrl button.primary { border-color:var(--accent); color:var(--accent); font-weight:600; }
+  .ctrl button:disabled { color:var(--muted); cursor:not-allowed; opacity:.6; }
+  .hint { color:var(--muted); font-size:.85rem; margin-top:8px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><span id="stepno"></span><div class="bar"><i id="barfill"></i></div></div>
+  <p id="explain" aria-live="polite"></p>
+  <div id="vars"></div>
+  <div id="code" role="group" aria-label="코드"></div>
+  <div id="out"></div>
+  <div class="ctrl">
+    <button id="prev" type="button">← 이전</button>
+    <button id="next" type="button" class="primary">다음 →</button>
+    <button id="reset" type="button">처음부터</button>
+  </div>
+  <p class="hint">키보드 ← → 로도 움직일 수 있다.</p>
+</main>
+
+<!-- 단계 데이터: AI는 이 JSON만 채운다.
+  code: 코드 줄 배열 (들여쓰기는 공백으로)
+  steps[].line: 지금 실행 중인 줄 번호 (0부터)
+  steps[].text: 이 단계에서 일어나는 일 (쉬운 말, 비유 없이)
+  steps[].vars: 이 단계 직후의 변수 값. 아직 없는 변수는 null
+  steps[].out: (선택) 이 단계에서 화면에 출력되는 값 -->
+<script type="application/json" id="sim-data">
+{
+ "code": [
+  "fruits = [\"apple\", \"pear\", \"tangerine\"]",
+  "for fruit in fruits:",
+  "    print(fruit)"
+ ],
+ "steps": [
+  {
+   "line": 0,
+   "text": "대괄호 안의 문자열 세 개로 목록을 만들고, fruits라는 이름에 저장한다.",
+   "vars": {
+    "fruits": "[apple, pear, tangerine]",
+    "fruit": null
+   }
+  },
+  {
+   "line": 1,
+   "text": "목록의 첫 값 apple을 꺼내 fruit에 넣는다. 반복 1번째가 시작된다.",
+   "vars": {
+    "fruits": "[apple, pear, tangerine]",
+    "fruit": "apple"
+   }
+  },
+  {
+   "line": 2,
+   "text": "들여쓴 줄이 실행된다. fruit의 값 apple을 화면에 보여 준다.",
+   "vars": {
+    "fruits": "[apple, pear, tangerine]",
+    "fruit": "apple"
+   },
+   "out": "apple"
+  },
+  {
+   "line": 1,
+   "text": "목록의 다음 값 pear를 꺼내 fruit에 넣는다. 반복 2번째.",
+   "vars": {
+    "fruits": "[apple, pear, tangerine]",
+    "fruit": "pear"
+   }
+  },
+  {
+   "line": 2,
+   "text": "fruit의 값 pear를 화면에 보여 준다.",
+   "vars": {
+    "fruits": "[apple, pear, tangerine]",
+    "fruit": "pear"
+   },
+   "out": "pear"
+  },
+  {
+   "line": 1,
+   "text": "목록의 다음 값 tangerine을 꺼내 fruit에 넣는다. 마지막 반복(3번째).",
+   "vars": {
+    "fruits": "[apple, pear, tangerine]",
+    "fruit": "tangerine"
+   }
+  },
+  {
+   "line": 2,
+   "text": "fruit의 값 tangerine을 화면에 보여 준다.",
+   "vars": {
+    "fruits": "[apple, pear, tangerine]",
+    "fruit": "tangerine"
+   },
+   "out": "tangerine"
+  },
+  {
+   "line": 1,
+   "text": "목록에 꺼낼 값이 더 없다. 반복이 끝나고 프로그램이 끝난다.",
+   "vars": {
+    "fruits": "[apple, pear, tangerine]",
+    "fruit": "tangerine"
+   }
+  }
+ ]
+}
+</script>
+<script>
+  const data = JSON.parse(document.getElementById('sim-data').textContent);
+  const steps = data.steps;
+  let i = 0;
+
+  const $ = function (id) { return document.getElementById(id); };
+  const codeEl = $('code');
+  data.code.forEach(function (text, n) {
+    const row = document.createElement('div');
+    row.className = 'line';
+    const mark = document.createElement('span'); mark.className = 'mark';
+    const no = document.createElement('span'); no.className = 'no'; no.textContent = n + 1;
+    const src = document.createElement('span'); src.textContent = text;
+    row.append(mark, no, src);
+    codeEl.appendChild(row);
+  });
+  const rows = codeEl.querySelectorAll('.line');
+
+  function render() {
+    const s = steps[i];
+    const prev = i > 0 ? steps[i - 1].vars : {};
+    $('stepno').textContent = '단계 ' + (i + 1) + ' / ' + steps.length;
+    $('barfill').style.width = ((i + 1) / steps.length * 100) + '%';
+    $('explain').textContent = s.text;
+    rows.forEach(function (r, n) {
+      r.classList.toggle('cur', n === s.line);
+      r.firstChild.textContent = n === s.line ? '▶' : '';
+    });
+    const vars = $('vars');
+    vars.textContent = '';
+    Object.keys(s.vars).forEach(function (k) {
+      const v = s.vars[k];
+      const box = document.createElement('div');
+      box.className = 'var' + (v !== null && v !== prev[k] ? ' changed' : '');
+      const name = document.createElement('span'); name.className = 'name'; name.textContent = k;
+      const val = document.createElement('span'); val.className = 'val'; val.textContent = v === null ? '—' : v;
+      box.append(name, val);
+      vars.appendChild(box);
+    });
+    const shown = steps.slice(0, i + 1).filter(function (x) { return x.out !== undefined; }).map(function (x) { return x.out; });
+    const out = $('out');
+    out.textContent = '';
+    if (shown.length) {
+      out.append('화면 출력: ');
+      const b = document.createElement('b'); b.textContent = shown.join('  '); out.appendChild(b);
+    }
+    $('prev').disabled = i === 0;
+    $('next').disabled = i === steps.length - 1;
+  }
+
+  function go(d) { i = Math.max(0, Math.min(steps.length - 1, i + d)); render(); }
+  $('prev').addEventListener('click', function () { go(-1); });
+  $('next').addEventListener('click', function () { go(1); });
+  $('reset').addEventListener('click', function () { i = 0; render(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') go(1);
+    else if (e.key === 'ArrowLeft') go(-1);
+  });
+  render();
+</script>
+</body>
+</html>
