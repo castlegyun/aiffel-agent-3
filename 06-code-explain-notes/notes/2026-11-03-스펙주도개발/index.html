@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>스펙 주도 개발: 코드보다 문서를 먼저 · 코드 해설 노트</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --code:#f0efe9; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --code:#262624; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.7 system-ui, "Malgun Gothic", sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  a { color:var(--accent); }
+  h1 { font-size:1.6rem; margin:8px 0 4px; }
+  .summary { color:var(--muted); margin:0 0 20px; }
+  .terms { border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-bottom:20px; }
+  .terms h2 { font-size:1rem; margin:0 0 6px; }
+  .terms ul { margin:0; padding-left:20px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:16px; flex-wrap:wrap; }
+  .tabs button { background:none; border:0; border-bottom:3px solid transparent; padding:8px 14px; font:inherit; color:var(--muted); cursor:pointer; }
+  .tabs button[aria-selected="true"] { color:var(--fg); border-bottom-color:var(--accent); font-weight:600; }
+  .panel[hidden] { display:none; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; vertical-align:top; padding:8px 10px; border-bottom:1px solid var(--line); }
+  td.n { width:2.5em; color:var(--muted); }
+  code, pre { background:var(--code); border-radius:4px; font:14px/1.5 Consolas, monospace; }
+  code { padding:1px 5px; white-space:pre-wrap; }
+  .words li, .points li { margin:4px 0; }
+  .nav { margin-bottom:8px; font-size:.9rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="nav"><a href="../../index.html">← 노트 보관함</a></div>
+  <h1>스펙 주도 개발: 코드보다 문서를 먼저</h1>
+  <p class="summary">코드를 만들기 전에 규칙을 문서(스펙)로 먼저 정하고, 그 문서를 구현과 검증의 기준으로 삼는 방식이다.</p>
+
+  <section class="terms">
+    <h2>새 용어</h2>
+    <ul>
+      <li><strong>스펙 주도 개발</strong> = 문서로 정한 규칙을 구현과 검증의 기준으로 삼는 개발 방식</li>
+      <li><strong>정형화</strong> = 자유롭게 쓴 글을 정해진 칸과 형식으로 나누어 정리하는 일</li>
+      <li><strong>검증</strong> = 만든 것이 규칙대로 동작하는지 확인하는 일</li>
+    </ul>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="flow">요약</button>
+    <button role="tab" aria-selected="false" data-tab="detail">풀어쓰기</button>
+    <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+  </div>
+
+  <section class="panel" id="flow">
+    <ul class="points">
+      <li>바로 "만들어 줘"라고만 하면, AI가 내가 말하지 않은 규칙을 빼먹을 수 있다.</li>
+      <li>그래서 코드를 만들기 전에 규칙을 스펙 문서로 먼저 쓴다.</li>
+      <li>그 문서가 구현과 검증의 기준이 된다. 이 방식이 스펙 주도 개발이다.</li>
+      <li>PRD는 "무엇을"이고, OpenSpec은 PRD를 제안·설계·명세·작업목록으로 나누는 심화판이다. 필수는 아니다.</li>
+      <li>원문은 OpenSpec 시작 방법을 말하기 직전에 끝난다. 명령어는 원문에 없다.</li>
+    </ul>
+  </section>
+
+  <section class="panel" id="detail" hidden>
+    <table>
+      <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>바로 '만들어 줘'라고 하면 에이전트는 그럴듯한 코드를 쏟아내지만, 정원 초과 금지 같은 내 규칙이 슬쩍 빠지곤 합니다.</td><td>규칙을 적어 주지 않고 "만들어 줘"라고만 하면, AI는 그럴듯해 보이는 코드를 많이 만들어 준다. 하지만 내가 머릿속에만 둔 규칙(예: 정원이 차면 더 받지 않는다)은 코드에서 빠지는 일이 있다. 빠진 것은 나중에 직접 찾아야 한다.</td></tr>
+        <tr><td class="n">2</td><td>그래서 코드 전에 스펙을 먼저 세웁니다.</td><td>스펙 = 만들 기능과 규칙을 적은 문서다. 코드를 요청하기 전에 이 문서부터 쓴다. 그러면 규칙이 글로 남아서 빠졌는지 대조할 수 있다.</td></tr>
+        <tr><td class="n">3</td><td>PRD에 원하는 기능과 규칙을 적어 본 경험에서 한 걸음 더 나아가 볼게요. 문서로 정한 규칙을 구현과 검증의 기준으로 삼는 방식을 스펙 주도 개발이라고 합니다.</td><td>앞에서 PRD에 원하는 기능과 규칙을 적어 봤다. 거기서 더 나아가, 그 문서를 두 곳에서 기준으로 쓴다. 구현할 때는 "문서에 적힌 대로 만든다", 검증할 때는 "문서에 적힌 대로 동작하는지 확인한다". 이 방식의 이름이 스펙 주도 개발이다.</td></tr>
+        <tr><td class="n">4</td><td>곧 1단계에서 쓸 PRD가 '무엇을'이라면, OpenSpec은 그 PRD를 도구로 정형화해 제안·설계·명세·작업목록으로 나눠 주는 심화판입니다(필수는 아니에요).</td><td>PRD는 "무엇을 만들지"를 적은 글이다. OpenSpec은 그 PRD를 받아 네 가지로 나누어 정리해 주는 도구다: 제안(왜 바꾸나), 설계(어떻게 만들까), 명세(규칙 목록), 작업목록(할 일 순서). 원문이 "필수는 아니다"라고 했으므로, 쓰지 않고 PRD만으로도 진행할 수 있다. 추측: 네 가지 이름 옆의 괄호 속 설명은 원문에 없고, 이름의 뜻을 보고 쓴 것이다.</td></tr>
+        <tr><td class="n">5</td><td>스펙 도구로 OpenSpec을 쓴다면 이렇게 시작합니다.</td><td>"이렇게"가 가리키는 시작 방법(명령어 등)은 이 글에 없다. 원문이 여기서 잘린 것으로 보인다. OpenSpec 시작 방법이 필요하면 원문의 뒷부분을 붙여 주면 이어서 설명할 수 있다.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="words" hidden>
+    <ul class="words">
+      <li><strong>spec(스펙)</strong>: specification(스페시피케이션)의 줄임말. 만들 기능과 규칙을 적어 둔 문서</li>
+      <li><strong>PRD(피알디)</strong>: 무엇을, 왜 만들지 정리한 기획서</li>
+      <li><strong>OpenSpec(오픈스펙)</strong>: PRD를 제안·설계·명세·작업목록으로 나눠 주는 스펙 도구 (원문 설명)</li>
+      <li><strong>agent(에이전트)</strong>: 요청을 받아 스스로 코드를 만들고 작업하는 AI</li>
+      <li><strong>driven(드리븐)</strong>: ~이 이끄는, ~을 기준으로 움직이는</li>
+      <li><strong>development(디벨롭먼트)</strong>: 개발</li>
+      <li><strong>proposal(프러포절)</strong>: 제안</li>
+      <li><strong>design(디자인)</strong>: 설계</li>
+      <li><strong>task(태스크)</strong>: 작업, 할 일</li>
+      <li><strong>verification(베리피케이션)</strong>: 검증의 영어</li>
+    </ul>
+  </section>
+</main>
+<script>
+  const tabs = document.querySelectorAll('.tabs button');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabs.forEach(function (x) {
+        const on = x === b;
+        x.setAttribute('aria-selected', on);
+        document.getElementById(x.dataset.tab).hidden = !on;
+      });
+    });
+  });
+</script>
+</body>
+</html>
