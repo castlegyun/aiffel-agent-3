@@ -29,6 +29,8 @@
   code { padding:1px 5px; white-space:pre-wrap; }
   .words li { margin:4px 0; }
   .nav { margin-bottom:8px; font-size:.9rem; }
+  .visual-kind, .visual-reason { margin:4px 0; }
+  .visual-note { color:var(--muted); font-size:.9rem; }
 </style>
 </head>
 <body>
@@ -49,6 +51,7 @@
     <button role="tab" aria-selected="true" data-tab="flow">흐름</button>
     <button role="tab" aria-selected="false" data-tab="detail">자세히</button>
     <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
   </div>
 
   <section class="panel" id="flow">
@@ -83,6 +86,11 @@
       <li><strong>range(레인지)</strong>: 범위. <code>range(1, 6)</code>은 1부터 5까지 숫자를 차례로 만들어 주는 명령이다. 끝 숫자 6은 포함되지 않는다</li>
       <li><strong>print(프린트)</strong>: 출력하다. 값을 화면에 보여 주는 명령</li>
     </ul>
+  </section>
+  <section class="panel" id="visual" hidden>
+    <p class="visual-kind"><strong>그림 종류:</strong> 단계별 실행 과정</p>
+    <p class="visual-reason"><strong>고른 이유:</strong> 반복할 때마다 <code>total</code>과 <code>n</code>의 값이 한 줄씩 바뀌는 코드라서, 글보다 한 단계씩 따라가며 보는 그림이 이해에 도움이 된다.</p>
+    <p class="visual-note">그림 자체는 다음 단계에서 연결됩니다.</p>
   </section>
 </main>
 <script>

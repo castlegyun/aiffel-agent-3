@@ -29,6 +29,8 @@
   code { padding:1px 5px; white-space:pre-wrap; }
   .words li { margin:4px 0; }
   .nav { margin-bottom:8px; font-size:.9rem; }
+  .visual-kind, .visual-reason { margin:4px 0; }
+  .visual-note { color:var(--muted); font-size:.9rem; }
 </style>
 </head>
 <body>
@@ -48,6 +50,7 @@
     <button role="tab" aria-selected="true" data-tab="flow">흐름</button>
     <button role="tab" aria-selected="false" data-tab="detail">자세히</button>
     <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
   </div>
 
   <section class="panel" id="flow">
@@ -72,6 +75,9 @@
     <ul class="words">
 {{WORDS}}
     </ul>
+  </section>
+  <section class="panel" id="visual" hidden>
+{{VISUAL}}
   </section>
 </main>
 <script>

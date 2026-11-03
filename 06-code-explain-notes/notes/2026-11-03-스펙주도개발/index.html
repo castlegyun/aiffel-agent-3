@@ -29,6 +29,8 @@
   code { padding:1px 5px; white-space:pre-wrap; }
   .words li, .points li { margin:4px 0; }
   .nav { margin-bottom:8px; font-size:.9rem; }
+  .visual-kind, .visual-reason { margin:4px 0; }
+  .visual-note { color:var(--muted); font-size:.9rem; }
 </style>
 </head>
 <body>
@@ -50,6 +52,7 @@
     <button role="tab" aria-selected="true" data-tab="flow">요약</button>
     <button role="tab" aria-selected="false" data-tab="detail">풀어쓰기</button>
     <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
   </div>
 
   <section class="panel" id="flow">
@@ -88,6 +91,11 @@
       <li><strong>task(태스크)</strong>: 작업, 할 일</li>
       <li><strong>verification(베리피케이션)</strong>: 검증의 영어</li>
     </ul>
+  </section>
+  <section class="panel" id="visual" hidden>
+    <p class="visual-kind"><strong>그림 종류:</strong> 플로우차트</p>
+    <p class="visual-reason"><strong>고른 이유:</strong> 스펙 작성 → 구현 → 검증으로 이어지는 순서가 핵심이라서, 순서를 화살표로 보여 주는 그림이 도움이 된다.</p>
+    <p class="visual-note">그림 자체는 다음 단계에서 연결됩니다.</p>
   </section>
 </main>
 <script>
