@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>함수의 데이터 이동</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper:       #f5f5f5;
+      --ink:         #2d3142;
+      --muted:       #4f5d75;
+      --soft:        #5a6580;
+      --accent:      #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --node-fill:   #ffffff;
+      --node-stroke: #2d3142;
+      --font-sans:   'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:  'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:   'Geist Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:       #2d3142;
+        --ink:         #f5f5f5;
+        --muted:       #bfc0c0;
+        --soft:        #949eb2;
+        --accent:      #f08a59;
+        --accent-tint: rgba(240,138,89,0.10);
+        --node-fill:   rgba(245,245,245,0.04);
+        --node-stroke: rgba(245,245,245,0.45);
+      }
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 1.5rem 1rem;
+    }
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .caption { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; }
+    svg { width: 100%; min-width: 720px; display: block; }
+    .paper  { fill: var(--paper); }
+    .node   { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1; }
+    .focal  { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2; }
+    .line   { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .head   { fill: var(--muted); }
+    .t-name { fill: var(--ink); font: 600 12px var(--font-sans); text-anchor: middle; }
+    .t-sub  { fill: var(--muted); font: 400 9px var(--font-mono); text-anchor: middle; }
+    .t-arrow { fill: var(--soft); font: 500 12px var(--font-sans); text-anchor: middle; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Data flow · function</p>
+    <h1>함수에 값이 들어가고 나오는 순서</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 720 168" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="function-flow-title function-flow-desc">
+        <title id="function-flow-title">함수의 데이터 이동</title>
+        <desc id="function-flow-desc">호출 add(2, 3)의 값 2와 3이 매개변수 a와 b로 들어가고, 함수 안의 코드 return a + b가 계산한 반환값 5가 호출한 자리의 result에 저장되는 순서를 보여 준다.</desc>
+        <defs>
+          <marker id="function-flow-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
+        </defs>
+
+        <rect class="paper" width="100%" height="100%"/>
+
+        <!-- 연결선 먼저, 상자는 나중에 -->
+        <line class="line" x1="120" y1="84" x2="168" y2="84" marker-end="url(#function-flow-arrow)"/>
+        <line class="line" x1="264" y1="84" x2="312" y2="84" marker-end="url(#function-flow-arrow)"/>
+        <line class="line" x1="408" y1="84" x2="456" y2="84" marker-end="url(#function-flow-arrow)"/>
+        <line class="line" x1="552" y1="84" x2="600" y2="84" marker-end="url(#function-flow-arrow)"/>
+
+        <!-- 연결선 라벨 (마스크 + 글자, 선과 6px 간격) -->
+        <rect class="paper" x="128" y="62" width="32" height="16" rx="2"/>
+        <text class="t-arrow" x="144" y="74">전달</text>
+        <rect class="paper" x="272" y="62" width="32" height="16" rx="2"/>
+        <text class="t-arrow" x="288" y="74">계산</text>
+        <rect class="paper" x="416" y="62" width="32" height="16" rx="2"/>
+        <text class="t-arrow" x="432" y="74">반환</text>
+        <rect class="paper" x="560" y="62" width="32" height="16" rx="2"/>
+        <text class="t-arrow" x="576" y="74">저장</text>
+
+        <!-- 1. 호출 -->
+        <rect class="paper" x="24" y="48" width="96" height="72" rx="6"/>
+        <rect class="node" x="24" y="48" width="96" height="72" rx="6"/>
+        <text class="t-name" x="72" y="80">호출</text>
+        <text class="t-sub" x="72" y="98">add(2, 3)</text>
+
+        <!-- 2. 매개변수 -->
+        <rect class="paper" x="168" y="48" width="96" height="72" rx="6"/>
+        <rect class="node" x="168" y="48" width="96" height="72" rx="6"/>
+        <text class="t-name" x="216" y="80">매개변수</text>
+        <text class="t-sub" x="216" y="98">a = 2, b = 3</text>
+
+        <!-- 3. 함수 안의 코드 (핵심) -->
+        <rect class="paper" x="312" y="48" width="96" height="72" rx="6"/>
+        <rect class="focal" x="312" y="48" width="96" height="72" rx="6"/>
+        <text class="t-name" x="360" y="80">함수 안의 코드</text>
+        <text class="t-sub" x="360" y="98">return a + b</text>
+
+        <!-- 4. 반환값 -->
+        <rect class="paper" x="456" y="48" width="96" height="72" rx="6"/>
+        <rect class="node" x="456" y="48" width="96" height="72" rx="6"/>
+        <text class="t-name" x="504" y="80">반환값</text>
+        <text class="t-sub" x="504" y="98">5</text>
+
+        <!-- 5. 호출한 자리 -->
+        <rect class="paper" x="600" y="48" width="96" height="72" rx="6"/>
+        <rect class="node" x="600" y="48" width="96" height="72" rx="6"/>
+        <text class="t-name" x="648" y="80">호출한 자리</text>
+        <text class="t-sub" x="648" y="98">result = 5</text>
+      </svg>
+    </div>
+
+    <p class="caption">호출할 때 넣은 값(2, 3)이 매개변수(a, b)에 들어간다. <code>return</code> 뒤의 계산 결과(5)가 반환값이 되어 호출한 자리로 돌아온다. 예시 코드는 원문에 없는, 흐름을 보이기 위한 예다.</p>
+  </div>
+</body>
+</html>

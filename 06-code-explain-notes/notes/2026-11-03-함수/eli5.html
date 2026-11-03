@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>함수 아주 쉽게</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --card:#fff; --hot:#e8590c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --card:#262624; --hot:#ffa94d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 system-ui, "Malgun Gothic", sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.8rem; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 24px; }
+  .code { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; font:20px/1.8 Consolas, monospace; margin-bottom:28px; }
+  .code .ind { padding-left:2ch; }
+  h2 { font-size:1.2rem; margin:24px 0 10px; }
+  .step { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin-bottom:10px; }
+  .step .label { color:var(--muted); width:6.5em; font-size:.95rem; }
+  .box { font:700 1.5rem/1 Consolas, monospace; border:3px solid var(--accent); color:var(--accent); border-radius:10px; padding:10px 16px; min-width:3em; text-align:center; }
+  .box.hot { border-color:var(--hot); color:var(--hot); }
+  .op { font:700 1.5rem/1 Consolas, monospace; color:var(--muted); }
+  .note { color:var(--muted); font-size:.95rem; }
+  .words { border-top:1px solid var(--line); margin-top:28px; padding-top:12px; color:var(--muted); font-size:.95rem; }
+  .words span { display:inline-block; margin-right:14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>함수, 아주 쉽게</h1>
+  <p class="lead">코드 덩어리에 이름을 붙여 두고, 이름을 부르면 실행한다.</p>
+
+  <div class="code">
+    <div>def add(a, b):</div>
+    <div class="ind">return a + b</div>
+    <div>result = add(2, 3)</div>
+  </div>
+
+  <h2>1. 이름 붙이기</h2>
+  <div class="step"><span class="label">def</span><span class="box">add</span><span class="note">코드 묶음에 add라는 이름이 붙는다. 아직 실행되지 않는다.</span></div>
+
+  <h2>2. 부르기 (호출)</h2>
+  <div class="step"><span class="label">add(2, 3)</span><span class="note">add를 부르면 묶음이 실행된다.</span></div>
+
+  <h2>3. 값이 들어간다 (매개변수)</h2>
+  <div class="step"><span class="label">a</span><span class="box">2</span><span class="label">b</span><span class="box">3</span></div>
+
+  <h2>4. 계산한다</h2>
+  <div class="step"><span class="box">2</span><span class="op">+</span><span class="box">3</span><span class="op">=</span><span class="box hot">5</span></div>
+
+  <h2>5. 결과가 나온다 (반환값)</h2>
+  <div class="step"><span class="label">result</span><span class="box hot">5</span><span class="note">return 뒤의 5가 부른 자리로 돌아온다.</span></div>
+
+  <div class="words">
+    <span><b>function(펑션)</b> 함수</span>
+    <span><b>call(콜)</b> 부르다, 호출</span>
+    <span><b>parameter(퍼래미터)</b> 매개변수</span>
+    <span><b>return(리턴)</b> 돌려주다</span>
+    <span><b>def(데프)</b> 함수를 만들 때 쓰는 단어 (파이썬)</span>
+  </div>
+</main>
+</body>
+</html>
