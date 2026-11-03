@@ -2,7 +2,8 @@
 
 코드나 배운 글(텍스트)을 넣으면 Claude Code가 초보자용 해설 노트(쉬운 주석·풀어쓰기·단어장·그림)를 HTML로 만들고, 웹사이트(Render 정적 사이트)에서 모아 보는 개인 공부 도구.
 
-- 보관함: Render 정적 사이트로 배포한다 (배포 후 주소를 여기에 적는다). GitHub Pages는 쓰지 않는다.
+- 보관함 (Render 정적 사이트): https://aiffel-agent-3.onrender.com/
+  - 레포에 푸시하면 Render가 자동으로 다시 배포한다. GitHub Pages는 쓰지 않는다.
 - 기획서: [PRD.md](PRD.md) · 설명 규칙: [CLAUDE.md](CLAUDE.md) · 회고: [retrospective.md](retrospective.md)
 
 ## 쓰는 법

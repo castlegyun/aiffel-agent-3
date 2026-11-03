@@ -12,9 +12,9 @@
 | 03 | [my-game](03-my-game) | 나만의 뱀서류 게임 | JavaScript | [▶ 게임 하기](https://castlegyun.github.io/aiffel-agent-3/03-my-game/) |
 | 04 | [todo-supabase](04-todo-supabase) | 로그인한 사용자가 자기 할 일만 관리하는 Todo 앱 | Flask, Supabase(Auth+RLS), Render | [배포](https://todo-app-iw2l.onrender.com) |
 | 05 | [submit-assignment-skill](05-submit-assignment-skill) | 과제를 GitHub에 올리는 반복 작업을 자동화한 Claude Code 스킬 | Claude Code Skill, Markdown | [README](05-submit-assignment-skill/README.md) |
-| 06 | [code-explain-notes](06-code-explain-notes) | 코드를 초보자용 해설 노트(쉬운 주석·단어장)로 만들어 모아 보는 도구 | HTML, Claude Code Skill | [폴더 보기](06-code-explain-notes) (Render 배포 예정) |
+| 06 | [code-explain-notes](06-code-explain-notes) | 코드를 초보자용 해설 노트(쉬운 주석·단어장)로 만들어 모아 보는 도구 | HTML, Claude Code Skill | [▶ 보관함 열기](https://aiffel-agent-3.onrender.com/) (Render) |
 
-> ▶ 표시는 GitHub Pages로 바로 열리는 사이트입니다. 주소 규칙: `https://castlegyun.github.io/aiffel-agent-3/폴더이름/`
+> ▶ 표시는 브라우저에서 바로 열리는 사이트입니다. 02, 03은 GitHub Pages(`https://castlegyun.github.io/aiffel-agent-3/폴더이름/`), 06은 Render입니다.
 
 > 새 과제 추가: `05-이름/` 폴더를 만들고 위 표에 한 줄을 추가합니다.
 
