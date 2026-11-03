@@ -31,8 +31,8 @@ Claude Code 사용자가 이 레포를 받아 쓰는 순서다. 다른 컴퓨터
    claude plugin install eli5 --marketplace anthropics/claude-plugins-community
    ```
 3. 받은 레포의 **맨 위 폴더(`aiffel-agent-3`)** 에서 `claude`를 실행한다. 폴더를 신뢰하겠느냐고 물으면 허용한다.
-4. `/explain-code 텍스트` 또는 `/explain-code 코드`를 입력한다.
-5. 노트는 `06-code-explain-notes/notes/` 에 생긴다. 보려면 그 폴더에서 `python -m http.server` 를 실행하고 `http://localhost:8000` 으로 연다.
+4. `/explain-code 텍스트 궁금한내용` 또는 `/explain-code 코드 궁금한코드`를 입력한다.
+6. 노트는 `06-code-explain-notes/notes/` 에 생긴다. 보려면 그 폴더에서 `python -m http.server` 를 실행하고 `http://localhost:8000` 으로 연다.
 
 **한계:** 다른 사람은 이 레포에 올릴 권한이 없어서, 위 배포 사이트에 자기 노트를 추가할 수 없다. 자기 노트는 자기 컴퓨터에서만 보인다. 남에게 보이려면 레포를 fork해서 자기 Render에 따로 배포해야 한다.
 
