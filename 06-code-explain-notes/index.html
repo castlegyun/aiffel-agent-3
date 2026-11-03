@@ -51,7 +51,7 @@
         a.href = 'notes/' + encodeURIComponent(n.id) + '/index.html';
         const t = document.createElement('div');
         t.className = 'title';
-        t.textContent = n.title;
+        t.textContent = (n.type === 'text' ? '[텍스트] ' : '[코드] ') + n.title;
         const s = document.createElement('div');
         s.textContent = n.summary;
         const d = document.createElement('div');
