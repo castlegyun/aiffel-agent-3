@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>for문 아주 쉽게</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --card:#fff; --hot:#e8590c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --card:#262624; --hot:#ffa94d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 system-ui, "Malgun Gothic", sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.8rem; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 24px; }
+  .code { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; font:20px/1.8 Consolas, monospace; margin-bottom:28px; }
+  .code .ind { padding-left:2ch; }
+  .step { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin-bottom:10px; }
+  .step .label { color:var(--muted); width:5.5em; font-size:.95rem; }
+  .box { font:700 1.6rem/1 Consolas, monospace; border:3px solid var(--accent); color:var(--accent); border-radius:10px; padding:10px 16px; min-width:3em; text-align:center; }
+  .box.hot { border-color:var(--hot); color:var(--hot); }
+  .op { font:700 1.6rem/1 Consolas, monospace; color:var(--muted); }
+  .final { text-align:center; margin:24px 0; }
+  .final .box { font-size:3rem; padding:16px 36px; display:inline-block; }
+  .words { border-top:1px solid var(--line); margin-top:28px; padding-top:12px; color:var(--muted); font-size:.95rem; }
+  .words span { display:inline-block; margin-right:14px; }
+  h2 { font-size:1.2rem; margin:24px 0 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>for문, 아주 쉽게</h1>
+  <p class="lead">1부터 5까지 더하면 15가 된다.</p>
+
+  <div class="code">
+    <div>total = 0</div>
+    <div>for n in range(1, 6):</div>
+    <div class="ind">total = total + n</div>
+    <div>print(total)</div>
+  </div>
+
+  <h2>1. 시작: total은 0</h2>
+  <div class="step"><span class="label">total</span><span class="box">0</span></div>
+
+  <h2>2. n이 1, 2, 3, 4, 5로 바뀌면서 같은 줄이 5번 실행된다</h2>
+  <div class="step"><span class="label">1번째 · n=1</span><span class="box">0</span><span class="op">+</span><span class="box">1</span><span class="op">=</span><span class="box hot">1</span></div>
+  <div class="step"><span class="label">2번째 · n=2</span><span class="box">1</span><span class="op">+</span><span class="box">2</span><span class="op">=</span><span class="box hot">3</span></div>
+  <div class="step"><span class="label">3번째 · n=3</span><span class="box">3</span><span class="op">+</span><span class="box">3</span><span class="op">=</span><span class="box hot">6</span></div>
+  <div class="step"><span class="label">4번째 · n=4</span><span class="box">6</span><span class="op">+</span><span class="box">4</span><span class="op">=</span><span class="box hot">10</span></div>
+  <div class="step"><span class="label">5번째 · n=5</span><span class="box">10</span><span class="op">+</span><span class="box">5</span><span class="op">=</span><span class="box hot">15</span></div>
+
+  <h2>3. 끝: print가 total을 보여 준다</h2>
+  <div class="final"><span class="box hot">15</span></div>
+
+  <div class="words">
+    <span><b>for(포)</b> ~마다</span>
+    <span><b>range(레인지)</b> 범위. 1~5 (6은 빠짐)</span>
+    <span><b>total(토털)</b> 합계</span>
+    <span><b>print(프린트)</b> 화면에 보여 주기</span>
+  </div>
+</main>
+</body>
+</html>
