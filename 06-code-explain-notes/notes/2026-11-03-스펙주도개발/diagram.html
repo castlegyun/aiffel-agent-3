@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스펙 주도 개발의 순서</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper:       #f5f5f5;
+      --ink:         #2d3142;
+      --muted:       #4f5d75;
+      --soft:        #5a6580;
+      --accent:      #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --node-fill:   #ffffff;
+      --node-stroke: #2d3142;
+      --font-sans:   'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:  'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:   'Geist Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:       #2d3142;
+        --ink:         #f5f5f5;
+        --muted:       #bfc0c0;
+        --soft:        #949eb2;
+        --accent:      #f08a59;
+        --accent-tint: rgba(240,138,89,0.10);
+        --node-fill:   rgba(245,245,245,0.04);
+        --node-stroke: rgba(245,245,245,0.45);
+      }
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 1.5rem 1rem;
+    }
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .caption { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; }
+    svg { width: 100%; min-width: 720px; display: block; }
+    .paper  { fill: var(--paper); }
+    .node   { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1; }
+    .focal  { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2; }
+    .line   { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .dashed { stroke-dasharray: 5,4; }
+    .head   { fill: var(--muted); }
+    .t-name { fill: var(--ink); font: 600 12px var(--font-sans); text-anchor: middle; }
+    .t-sub  { fill: var(--muted); font: 400 12px var(--font-sans); text-anchor: middle; }
+    .t-arrow { fill: var(--soft); font: 500 12px var(--font-sans); text-anchor: middle; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flowchart · spec first</p>
+    <h1>스펙을 먼저 쓰는 개발의 순서</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 720 216" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="spec-flow-title spec-flow-desc">
+        <title id="spec-flow-title">스펙 주도 개발의 순서</title>
+        <desc id="spec-flow-desc">규칙을 적은 스펙 문서를 먼저 쓰고, 그 문서대로 구현한 뒤, 같은 문서를 기준으로 결과를 검증하는 순서를 보여 준다.</desc>
+        <defs>
+          <marker id="spec-flow-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
+        </defs>
+
+        <rect class="paper" width="100%" height="100%"/>
+
+        <!-- 연결선 먼저, 상자는 나중에 -->
+        <line class="line" x1="176" y1="132" x2="296" y2="132" marker-end="url(#spec-flow-arrow)"/>
+        <line class="line" x1="424" y1="132" x2="544" y2="132" marker-end="url(#spec-flow-arrow)"/>
+        <path class="line dashed" d="M112 96 V56 Q112 48 120 48 H600 Q608 48 608 56 V96" marker-end="url(#spec-flow-arrow)"/>
+
+        <!-- 연결선 라벨 (마스크 + 글자, 선과 6px 이상 간격) -->
+        <rect class="paper" x="188" y="110" width="96" height="16" rx="2"/>
+        <text class="t-arrow" x="236" y="122">문서대로 구현</text>
+        <rect class="paper" x="436" y="110" width="96" height="16" rx="2"/>
+        <text class="t-arrow" x="484" y="122">결과를 확인</text>
+        <rect class="paper" x="308" y="26" width="104" height="16" rx="2"/>
+        <text class="t-arrow" x="360" y="38">같은 문서가 기준</text>
+
+        <!-- 1. 스펙 문서 (핵심) -->
+        <rect class="paper" x="48" y="96" width="128" height="72" rx="6"/>
+        <rect class="focal" x="48" y="96" width="128" height="72" rx="6"/>
+        <text class="t-name" x="112" y="128">스펙 문서</text>
+        <text class="t-sub" x="112" y="148">기능과 규칙</text>
+
+        <!-- 2. 구현 -->
+        <rect class="paper" x="296" y="96" width="128" height="72" rx="6"/>
+        <rect class="node" x="296" y="96" width="128" height="72" rx="6"/>
+        <text class="t-name" x="360" y="128">구현</text>
+        <text class="t-sub" x="360" y="148">코드를 만든다</text>
+
+        <!-- 3. 검증 -->
+        <rect class="paper" x="544" y="96" width="128" height="72" rx="6"/>
+        <rect class="node" x="544" y="96" width="128" height="72" rx="6"/>
+        <text class="t-name" x="608" y="128">검증</text>
+        <text class="t-sub" x="608" y="148">규칙대로 되는지</text>
+      </svg>
+    </div>
+
+    <p class="caption">코드를 만들기 전에 규칙을 스펙 문서로 쓴다. 이 문서는 구현할 때와 검증할 때 모두 기준이 된다.</p>
+  </div>
+</body>
+</html>
