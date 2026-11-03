@@ -2,7 +2,7 @@
 
 코드나 배운 글(텍스트)을 넣으면 Claude Code가 초보자용 해설 노트(쉬운 주석·풀어쓰기·단어장·그림)를 HTML로 만들고, 웹사이트(GitHub Pages)에서 모아 보는 개인 공부 도구.
 
-- 보관함: https://castlegyun.github.io/aiffel-agent-3/06-code-explain-notes/
+- 보관함: Render 정적 사이트로 배포한다 (배포 후 주소를 여기에 적는다). GitHub Pages는 쓰지 않는다.
 - 기획서: [PRD.md](PRD.md) · 설명 규칙: [CLAUDE.md](CLAUDE.md) · 회고: [retrospective.md](retrospective.md)
 
 ## 쓰는 법
@@ -44,5 +44,5 @@ Claude Code 입력창에서 입력한다. (PowerShell에서는 안 된다.) 종�
 ## 알려진 한계
 
 - 웹사이트는 보기 전용이다. 새 노트는 Claude Code에서만 만들 수 있다 (API 키가 필요 없는 대신).
-- 보관함 목록은 `fetch`로 JSON을 읽어서, 파일을 더블클릭해 열면(`file://`) 브라우저가 막는다. Pages 주소나 로컬 서버(`python -m http.server`)로 열어야 한다.
+- 보관함 목록은 `fetch`로 JSON을 읽어서, 파일을 더블클릭해 열면(`file://`) 브라우저가 막는다. 배포된 주소나 로컬 서버(`python -m http.server`)로 열어야 한다.
 - 밝은 모드와 모바일 폭은 눈으로 확인하지 못했다.
