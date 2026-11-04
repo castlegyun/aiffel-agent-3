@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM의 학습과 추론, 그리고 프롬프트·RAG·파인튜닝 고르기 · 코드 해설 노트</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --code:#f0efe9; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --code:#262624; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.7 system-ui, "Malgun Gothic", sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  a { color:var(--accent); }
+  h1 { font-size:1.6rem; margin:8px 0 4px; }
+  .summary { color:var(--muted); margin:0 0 20px; }
+  .terms { border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-bottom:20px; }
+  .terms h2 { font-size:1rem; margin:0 0 6px; }
+  .terms ul { margin:0; padding-left:20px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:16px; flex-wrap:wrap; }
+  .tabs button { background:none; border:0; border-bottom:3px solid transparent; padding:8px 14px; font:inherit; color:var(--muted); cursor:pointer; }
+  .tabs button[aria-selected="true"] { color:var(--fg); border-bottom-color:var(--accent); font-weight:600; }
+  .panel[hidden] { display:none; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; vertical-align:top; padding:8px 10px; border-bottom:1px solid var(--line); }
+  td.n { width:2.5em; color:var(--muted); }
+  code, pre { background:var(--code); border-radius:4px; font:14px/1.5 Consolas, monospace; }
+  code { padding:1px 5px; white-space:pre-wrap; }
+  .words li, .points li { margin:4px 0; }
+  .nav { margin-bottom:8px; font-size:.9rem; }
+  .visual-kind, .visual-reason { margin:4px 0; }
+  .visual-buttons { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:12px 0; }
+  .visual-buttons button { font:inherit; padding:6px 14px; border:1px solid var(--line); border-radius:6px; background:none; color:var(--fg); cursor:pointer; }
+  .visual-buttons button[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); font-weight:600; }
+  #visual-frame { width:100%; height:75vh; border:1px solid var(--line); border-radius:8px; background:#fff; }
+</style>
+</head>
+<body>
+<main>
+  <div class="nav"><a href="../../index.html">← 노트 보관함</a></div>
+  <h1>LLM의 학습과 추론, 그리고 프롬프트·RAG·파인튜닝 고르기</h1>
+  <p class="summary">LLM은 글을 토큰으로 바꿔 다음 토큰을 맞히도록 가중치를 고치며 학습하고, 추론 때는 고정된 가중치로 다음 토큰을 하나씩 골라 문장을 만든다. 문제를 먼저 정의하고 프롬프트부터 시도한 뒤, 필요하면 RAG나 파인튜닝을 고른다.</p>
+
+  <section class="terms">
+    <h2>새 용어</h2>
+    <ul>
+      <li><strong>학습</strong> = 글을 보여 주고 다음 토큰을 맞히게 한 뒤, 틀린 만큼 모델 안의 숫자를 고치는 일을 되풀이하는 과정</li>
+      <li><strong>추론</strong> = 학습으로 정해진 숫자를 더 고치지 않고, 입력 뒤에 올 토큰을 하나씩 계산해 만드는 과정</li>
+      <li><strong>코퍼스</strong> = 블로그, 웹사이트, SNS, 코드 등 여러 곳의 글을 모은 덩어리</li>
+      <li><strong>데이터셋</strong> = 코퍼스를 학습에 알맞은 형태로 정리한 자료</li>
+      <li><strong>인코딩</strong> = 글자를 정해진 규칙에 따라 숫자로 바꾸는 일</li>
+      <li><strong>시퀀스</strong> = 숫자나 토큰을 순서대로 늘어놓은 것</li>
+      <li><strong>토큰</strong> = 모델이 글을 읽고 쓰는 단위. 단어와 꼭 같지 않다</li>
+      <li><strong>파라미터</strong> = 모델이 예측할 때 쓰는 숫자들</li>
+      <li><strong>가중치</strong> = 원문 정의: 파라미터가 모델의 답에 미치는 영향. (추측: 보통은 파라미터의 대부분을 가리키며, 두 말을 거의 같은 뜻으로 쓴다)</li>
+      <li><strong>역전파</strong> = 예측이 틀린 정도를 바탕으로 모델 안의 숫자를 조정하는 과정</li>
+      <li><strong>사전 학습</strong> = 방대한 글로 다음 토큰 맞히기를 훈련하는 첫 단계. 끝나면 기본 모델이 된다</li>
+      <li><strong>기본 모델</strong> = 사전 학습만 끝난 모델. 글을 자연스럽게 이어 쓰지만, 업무 목적에 맞게 행동하는 능력은 더 배워야 할 수 있다</li>
+      <li><strong>후속 학습</strong> = 기본 모델에 목적에 맞는 응답 방식이나 행동을 더 익히게 하는 추가 훈련</li>
+      <li><strong>파인튜닝</strong> = 질문과 바람직한 답의 예시로 추가 훈련해 응답을 원하는 형태로 맞추는 방법. 후속 학습의 한 방법</li>
+      <li><strong>임베딩</strong> = 토큰 번호를 모델이 계산에 쓰는 숫자 묶음으로 바꾸는 과정</li>
+      <li><strong>맥락</strong> = 앞뒤 토큰이 서로 어떤 관계인지에 대한 정보</li>
+      <li><strong>프롬프트</strong> = 모델에 원하는 일과 답변 방식을 알려 주는 입력</li>
+    </ul>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="flow">요약</button>
+    <button role="tab" aria-selected="false" data-tab="detail">풀어쓰기</button>
+    <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
+  </div>
+
+  <section class="panel" id="flow">
+    <ul class="points">
+      <li>학습은 글을 토큰으로 바꾸고 다음 토큰을 맞히게 하면서, 틀린 만큼 가중치를 고치는 일을 아주 많이 되풀이하는 과정이다.</li>
+      <li>사전 학습이 끝나면 글을 이어 쓰는 기본 모델이 생기고, 후속 학습(파인튜닝 등)으로 목적에 맞게 답하도록 다듬는다.</li>
+      <li>추론은 가중치를 고정한 채 입력 토큰 → 임베딩 → Attention → Logit → Softmax → 토큰 하나 선택을 되풀이해, 멈춤 토큰이 나올 때까지 문장을 만든다.</li>
+      <li>Context Window가 크면 더 많은 내용을 넣을 수 있지만 계산량이 늘고, 길다고 답이 늘 좋아지지는 않는다.</li>
+      <li>먼저 문제를 정의하고 프롬프트부터 시도한다. 정보가 자주 바뀌면 RAG, 같은 형식을 대량으로 반복하며 비용을 줄여야 하면 파인튜닝을 검토한다.</li>
+    </ul>
+  </section>
+
+  <section class="panel" id="detail" hidden>
+    <table>
+      <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td><strong>한눈에 보기</strong><br>1. LLM은 방대한 텍스트(코퍼스)를 토큰화하여 다음 토큰을 예측하도록 학습된 모델이다. 학습은 신경망의 파라미터(가중치)를 조정해 예측 확률을 높이는 과정이며, 이후 TPO에 맞게 응답하도록 포스트 트레이닝을 거친다.<br>2. 추론은 고정된 파라미터를 활용해 입력된 토큰 시퀀스 뒤에 올 최적의 토큰을 확률적으로 생성하는 과정이다. 트랜스포머의 어텐션 메커니즘을 통해 문맥을 파악하며, 샘플링 설정(온도 등)에 따라 응답의 창의성과 다양성이 결정된다.<br>3. 문제 해결 방식은 비용과 목적에 따라 프롬프트, RAG, 파인 튜닝 중 선택해야 한다. 프롬프트: 일반적인 지시사항으로 해결 가능한 경우. RAG: 외부 문서 등 근거 기반의 정확한 답변이 필요하거나 최신 정보가 중요할 때. 파인 튜닝: 특정 형식의 반복적 응답이 필요하고 대규모 호출 시 비용 최적화가 핵심일 때.</td><td>강의 전체를 세 줄로 줄인 부분이다. (1) 학습: 많은 글을 토큰으로 자르고, 다음 토큰을 맞힐 확률이 높아지도록 모델 안의 숫자(파라미터)를 고친다. 그 뒤 원하는 방식으로 답하도록 한 번 더 훈련한다(후속 학습). (2) 추론: 숫자는 더 고치지 않는다. 들어온 토큰들 뒤에 올 토큰을 확률에 따라 하나씩 고른다. 앞뒤 토큰의 관계는 Attention으로 계산하고, 온도 같은 설정이 답을 얼마나 다양하게 만들지 정한다. (3) 고르기: 지시만으로 되면 프롬프트, 근거 문서나 최신 정보가 필요하면 RAG, 같은 형식을 대량으로 반복하며 비용을 줄여야 하면 파인튜닝이다. 추측: "TPO에 맞게"의 TPO는 녹취하며 잘못 적힌 말일 수 있다(단어장 참고).</td></tr>
+        <tr><td class="n">2</td><td><strong>0. 학습 목표</strong><br>1. LLM의 학습과 추론은 어떻게 다른가?<br>2. 글이 토큰으로 바뀌고 다음 토큰을 예측하는 과정은 어떻게 이어지는가?<br>3. 문제에 따라 프롬프트, RAG, 파인튜닝 중 무엇을 선택해야 하는가?</td><td>이 강의가 답하려는 질문은 세 가지다. 학습과 추론은 무엇이 다른가. 글이 어떻게 토큰이 되고, 그 토큰으로 어떻게 다음 토큰을 예측하는가. 문제마다 프롬프트, RAG, 파인튜닝 중 무엇을 고르는가.</td></tr>
+        <tr><td class="n">3</td><td><strong>1.1. 학습 재료는 인터넷의 글을 모은 코퍼스이다</strong><br>- LLM은 Large Language Model의 줄임말이며, 많은 글을 학습하는 대형 언어 모델이다.<br>- 코퍼스는 블로그, 웹사이트, SNS, 코드처럼 여러 곳에 있는 글을 모은 덩어리이다.<br>- 코퍼스를 바로 학습에 쓰는 것이 아니라, 학습에 알맞은 형태로 정리한 데이터셋이 필요하다.</td><td>모델이 배우는 재료는 사람이 쓴 글이다. 블로그, 웹사이트, SNS, 코드 등에서 글을 모은다. 이렇게 모은 덩어리가 코퍼스다. 모은 글을 그대로 넣지 않고 학습에 맞는 형태로 정리하는데, 정리한 결과가 데이터셋이다. LLM이라는 이름은 이렇게 아주 많은 글로 학습한 큰 언어 모델이라는 뜻이다.</td></tr>
+        <tr><td class="n">4</td><td><strong>1.2. 글은 숫자로 바뀐 뒤 토큰이 된다</strong><br>- 컴퓨터는 글자를 그대로 이해하지 않으므로, UTF-8 인코딩을 이용해 글자를 숫자로 표현한다.<br>- 글자를 숫자로 바꾸어 순서대로 놓은 것을 시퀀스라고 부른다.<br>- 반복되는 글자 조합을 묶어 Vocabulary(모델이 쓰는 단위 목록)를 만들고, 그 목록에 들어가는 단위를 토큰이라고 한다.<br>- 토큰은 단어와 꼭 같지 않으며, 한 단어가 여러 토큰으로 나뉘거나 여러 글자가 한 토큰이 될 수 있다.<br>- 모델마다 토큰을 나누는 방식과 Vocabulary가 다르므로, 같은 문장도 토큰 수가 달라질 수 있다.</td><td>컴퓨터는 숫자만 계산한다. 그래서 먼저 UTF-8이라는 규칙으로 글자를 숫자로 바꾼다(원문 밖 일반 설명: UTF-8에서 한글 한 글자는 숫자 3개가 된다). 이 숫자들을 순서대로 늘어놓은 것이 시퀀스다. 다음으로 자주 함께 나오는 숫자 조합을 하나로 묶어 목록을 만든다. 이 목록이 Vocabulary이고, 목록에 든 하나하나가 토큰이다. 그래서 자주 쓰는 말은 토큰 하나가 되고, 드문 말은 여러 토큰으로 쪼개질 수 있다. 목록은 모델마다 다르므로, 같은 문장이라도 모델에 따라 토큰 수가 다르다.</td></tr>
+        <tr><td class="n">5</td><td><strong>1.3. 모델은 다음 토큰을 맞히며 가중치를 배운다</strong><br>- 학습할 때는 문장의 마지막 토큰을 가리고, 모델이 그다음 토큰을 맞히게 한다.<br>- 처음에는 예측이 엉뚱하지만, 정답과 비교해 틀린 정도를 계산하고 모델을 고친다.<br>- 역전파는 틀린 결과를 바탕으로 모델의 내부 숫자를 조정하는 과정이다.<br>- 강의에서는 이 조정을 DJ 장비의 노브를 맞추는 일에 비유한다.<br>- 파라미터는 모델이 예측할 때 쓰는 숫자들이며, 가중치는 그 숫자들이 모델의 답에 미치는 영향이다.<br>- 이 과정을 많이 반복해 다음 토큰을 더 잘 맞히도록 만든다.</td><td>학습 때는 문장의 앞부분을 보여 주고, 가려 둔 바로 다음 토큰을 맞히게 한다. 처음에는 모델 안의 숫자가 아무렇게나 정해져 있어 예측이 엉뚱하다(원문 밖 일반 설명). 예측과 정답을 비교해 얼마나 틀렸는지 숫자로 계산하고, 틀린 정도가 줄어드는 쪽으로 모델 안의 숫자를 조금씩 고친다. 이렇게 고치는 과정이 역전파다. 이를 아주 많은 문장으로 되풀이하면 다음 토큰을 점점 잘 맞힌다. 원문은 이 조정을 DJ 장비의 노브 맞추기에 비유했다. 추측: 원문은 파라미터와 가중치를 다르게 정의했지만, 보통은 두 말을 거의 같은 뜻으로 쓴다.</td></tr>
+        <tr><td class="n">6</td><td><strong>2.1. Pre-training은 글의 이어짐을 배우는 단계이다</strong><br>- Pre-training은 방대한 글에서 다음 토큰을 예측하도록 모델을 훈련하는 과정이다.<br>- 이 과정이 끝난 모델은 Base model(기본 모델)이라고 부른다.<br>- Base model은 글을 자연스럽게 이어가는 능력을 배웠지만, 업무 목적에 맞게 행동하는 능력은 더 배워야 할 수 있다.</td><td>1.3의 다음 토큰 맞히기를 방대한 글로 하는 단계가 사전 학습(Pre-training)이다. 이 단계가 끝난 모델을 기본 모델(Base model)이라 부른다. 기본 모델은 주어진 글 뒤를 자연스럽게 이어 쓸 수 있다. 하지만 업무 목적에 맞게 행동하는 능력은 더 배워야 할 수 있다.</td></tr>
+        <tr><td class="n">7</td><td><strong>2.2. Fine-tuning은 모델의 응답을 목적에 맞게 다듬는 방법이다</strong><br>- Post-training은 기본 모델에 목적에 맞는 응답 방식이나 행동을 더 익히게 하는 추가 훈련이다.<br>- Fine-tuning(파인튜닝)은 질문과 바람직한 답의 예시 등을 이용해 모델의 응답을 원하는 형태에 가깝게 만든다.<br>- 파인튜닝은 모델의 가중치를 조정하거나, 기존 가중치는 두고 추가 가중치를 붙이는 방식으로 할 수 있다.<br>- 모델마다 훈련 방법과 집중하는 능력이 달라서, 코딩·글쓰기 등에서 강점이 다를 수 있다.</td><td>기본 모델이 원하는 방식으로 답하게 만드는 추가 훈련이 후속 학습(Post-training)이다. 그중 파인튜닝은 질문과 바람직한 답의 예시를 보여 주며 학습시킨다. 방법은 두 가지다. 기존 가중치 자체를 고치거나, 기존 가중치는 그대로 두고 추가 가중치를 붙여 그것만 학습한다. 모델마다 훈련 방법과 집중한 능력이 달라서, 어떤 모델은 코딩을, 어떤 모델은 글쓰기를 더 잘할 수 있다.</td></tr>
+        <tr><td class="n">8</td><td><strong>3.1. 입력은 토큰 ID와 임베딩으로 바뀐다</strong><br>- 추론은 입력된 토큰 뒤에 어떤 토큰이 올지 계산하는 과정이다.<br>- 모델은 입력 문장을 토큰으로 나누고, 각 토큰을 고유한 숫자 ID로 바꾼다.<br>- 임베딩은 토큰 ID를 모델이 계산에 쓸 수 있는 숫자 표현으로 바꾸는 과정이다.<br>- LLM은 Transformer라는 구조를 이용해 다음 토큰을 예측한다.</td><td>추론은 입력을 받아 그 뒤에 올 토큰을 계산하는 과정이다. 순서는 이렇다. 입력 문장을 토큰으로 자른다 → 토큰마다 Vocabulary 목록의 고유 번호(ID)로 바꾼다 → 임베딩으로 번호를 숫자 묶음으로 바꾼다. 번호 하나로는 뜻을 계산할 수 없어서, 계산에 쓸 수 있는 여러 숫자로 바꾸는 것이다(원문 밖 일반 설명). 이 숫자 묶음을 Transformer라는 구조에 넣어 다음 토큰을 예측한다.</td></tr>
+        <tr><td class="n">9</td><td><strong>3.2. Attention은 토큰 사이의 관계와 맥락을 계산한다</strong><br>- 긴 문장에서는 앞에 나온 정보가 뒤의 표현을 이해하는 데 중요할 수 있다.<br>- Attention은 각 토큰이 다른 토큰과 얼마나 관련 있는지 살펴 맥락을 계산하는 방법이다.<br>- 예를 들어 “로이는 우리 집에 사는 고양이”라는 문장에서, Attention은 ‘로이’와 ‘고양이’의 관계를 연결해 볼 수 있다.<br>- 이 계산은 여러 레이어와 Attention Head에서 반복되어 다음 토큰 후보를 좁힌다.</td><td>문장 뒤쪽의 말을 이해하려면 앞쪽의 말을 참고해야 할 때가 많다. Attention은 토큰마다 다른 토큰과 얼마나 관련 있는지를 숫자로 계산하고, 관련이 큰 토큰의 정보를 더 많이 가져온다. 예: “로이는 우리 집에 사는 고양이”에서 ‘로이’와 ‘고양이’의 관련 점수가 높게 나오면, 로이가 고양이라는 연결이 계산에 들어간다. 이 계산은 한 번으로 끝나지 않는다. 여러 층(레이어)을 차례로 거치고, 한 층 안에서도 여러 갈래(Attention Head)가 따로 계산한다. 이를 거듭할수록 다음 토큰 후보가 좁혀진다.</td></tr>
+        <tr><td class="n">10</td><td><strong>3.3. Logit과 Softmax를 거쳐 후보 토큰을 고른다</strong><br>- 모델은 다음 토큰 후보마다 먼저 Logit이라는 점수를 매긴다.<br>- Softmax는 점수를 확률처럼 비교할 수 있게 바꾸며, 후보들의 확률을 더하면 1이 된다.<br>- Temperature, Top-K, Top-P는 후보를 얼마나 넓게 고려할지 조절하는 설정이다.<br>- Temperature가 높으면 다양한 후보를 더 고려하고, 낮으면 상위 후보에 더 집중한다.<br>- 선택한 토큰은 다음 입력에 더해지고, 모델은 같은 과정을 반복해 문장을 만든다.</td><td>모델은 Vocabulary에 있는 후보 토큰마다 다음에 올 만한 정도를 점수로 매긴다. 이 점수가 Logit이다. Softmax는 점수를 확률로 바꾸며, 모든 후보의 확률을 더하면 1이 된다. 원문 밖 계산 예시: 후보 A, B, C의 점수가 2, 1, 0이면 확률은 약 0.67, 0.24, 0.09다. Temperature는 점수를 이 값으로 나눈 뒤 Softmax를 하는 설정이다(원문 밖 일반 설명). 같은 점수에 Temperature 2를 쓰면 약 0.51, 0.31, 0.19로 차이가 줄어 여러 후보가 뽑힐 수 있다. Temperature 0.5를 쓰면 약 0.87, 0.12, 0.02로 1등에 몰린다. Top-K와 Top-P는 뽑을 후보의 수 자체를 줄이는 설정이다(단어장 참고). 고른 토큰은 입력 끝에 붙고, 늘어난 입력으로 같은 계산을 다시 한다. 이렇게 토큰을 하나씩 더해 문장을 만든다.</td></tr>
+        <tr><td class="n">11</td><td><strong>3.4. 처음 답이 나오기 전에는 많은 계산이 필요하고, 이후에는 KV Cache가 돕는다</strong><br>- 입력 전체의 맥락을 처음 계산하는 단계는 Prefill이라고 부른다.<br>- 다음 토큰을 만들 때마다 앞부분을 처음부터 다시 계산하면 시간이 오래 걸린다.<br>- KV Cache는 이전 계산에서 만든 정보를 저장해 다음 토큰을 계산할 때 다시 활용한다.<br>- 응답을 멈추라는 특수 토큰도 학습되어 있어, 모델은 그 토큰이 나오면 생성을 멈춘다.</td><td>첫 토큰을 만들기 전에 입력 전체를 한꺼번에 계산해 맥락을 잡는다. 이 단계가 Prefill이다. 그래서 첫 답이 나오기 전에 계산이 많이 필요하다. 그 뒤 토큰을 하나 만들 때마다 앞부분을 처음부터 다시 계산하면 느리다. 그래서 앞에서 계산한 중간 결과를 저장해 두고 다시 쓴다. 이 저장소가 KV Cache다. 덕분에 새 토큰에 대한 계산만 더하면 된다. 언제 멈출지도 학습되어 있다. 끝을 뜻하는 특수 토큰이 있어, 모델이 이 토큰을 고르면 생성을 멈춘다.</td></tr>
+        <tr><td class="n">12</td><td><strong>4.1. 긴 입력은 더 많은 맥락을 주지만 계산 비용을 높인다</strong><br>- Context Window는 한 번에 모델에 넣을 수 있는 토큰의 범위이다.<br>- 범위가 커지면 더 많은 내용을 입력할 수 있지만, Attention이 계산해야 할 양도 늘어난다.<br>- 입력이 길다고 언제나 답이 좋아지는 것은 아니며, 중요한 내용에 집중하기 어려워질 수도 있다.<br>- 모델을 설계할 때는 입력 길이와 계산 비용, 응답 속도 사이에서 균형을 맞춰야 한다.</td><td>Context Window는 모델에 한 번에 넣을 수 있는 토큰 수의 한도다. 한도가 크면 긴 문서도 넣을 수 있다. 하지만 Attention은 토큰끼리의 관계를 계산하므로, 토큰이 늘면 계산할 양도 늘어난다(원문 밖 일반 설명: 기본 방식에서는 토큰이 2배가 되면 관계 계산은 약 4배가 된다). 길게 넣는다고 답이 늘 좋아지지도 않는다. 중요한 내용이 많은 내용 사이에 묻혀 집중하기 어려울 수 있다. 그래서 모델을 설계할 때 입력 길이, 계산 비용, 응답 속도 사이에서 균형을 잡는다.</td></tr>
+        <tr><td class="n">13</td><td><strong>5.1. 대부분의 문제는 먼저 프롬프트와 지침으로 풀어본다</strong><br>- 프롬프트와 지침은 모델에 원하는 일과 답변 방식을 알려주는 입력이다.<br>- 일반적인 업무는 프롬프트와 지침만으로 해결할 수 있는 경우가 많다.<br>- 해결 방법을 고르기 전에 기술 이름보다 먼저 문제를 정확히 정의해야 한다.</td><td>프롬프트와 지침은 모델에 무엇을, 어떤 형식으로 하라고 알려 주는 입력이다. 모델 자체는 바뀌지 않는다. 일반적인 업무는 이것만으로 풀리는 경우가 많다. 그래서 순서는 이렇다. 먼저 문제가 무엇인지 정확히 정한다 → 프롬프트와 지침으로 풀어 본다. 기술 이름부터 고르지 않는다.</td></tr>
+        <tr><td class="n">14</td><td><strong>5.2. RAG는 바뀌는 정보를 찾아 입력에 더하는 방식이다</strong><br>- RAG는 필요한 정보를 찾아 모델의 입력에 더해 답을 만들게 하는 방식이다.<br>- 문서가 많거나 정보가 자주 바뀌면, 매번 모델을 다시 훈련하는 대신 필요한 내용을 찾아 넣는 편이 자연스럽다.<br>- RAG는 모델의 파라미터를 다시 학습시키는 것이 아니라, 검색한 내용을 프롬프트에 보태는 방식이다.</td><td>RAG는 질문과 관련된 문서를 먼저 검색하고, 찾은 내용을 질문과 함께 모델 입력에 넣는다. 모델은 넣어 준 내용을 근거로 답을 만든다. 모델의 파라미터는 바뀌지 않고, 바뀌는 것은 입력뿐이다. 그래서 문서가 많거나 정보가 자주 바뀔 때 알맞다. 정보가 바뀔 때마다 모델을 다시 훈련하지 않고, 검색 대상 문서만 바꾸면 된다.</td></tr>
+        <tr><td class="n">15</td><td><strong>5.3. 파인튜닝은 반복 작업과 비용을 줄여야 할 때 검토한다</strong><br>- 같은 형식이나 행동을 대규모로 반복해야 한다면 파인튜닝을 검토할 수 있다.<br>- 파인튜닝으로 모델이 원하는 응답 방식을 익히면, 매번 긴 지침을 입력하지 않아도 될 수 있다.<br>- 파인튜닝에는 추가 훈련이 필요하므로, 정보가 자주 바뀌는 문제에는 RAG가 더 알맞을 수 있다.<br>- 강의는 파인튜닝의 주요 검토 기준으로 반복적인 형식·행동, 특화된 작업, 비용 최적화를 든다.</td><td>파인튜닝은 모델을 추가로 훈련해 원하는 응답 방식을 가중치에 익히게 한다. 그러면 매번 긴 지침을 입력하지 않아도 될 수 있다. 추측: 입력이 짧아지면 호출 한 번의 비용이 줄고, 호출이 아주 많으면 그 차이가 커진다. 원문이 말한 비용 최적화를 이렇게 이해했다. 대신 훈련이 필요하다. 정보가 자주 바뀌면 그때마다 다시 훈련해야 하므로 RAG가 더 알맞을 수 있다. 원문이 든 검토 기준은 세 가지다: 반복적인 형식·행동, 특화된 작업, 비용 최적화.</td></tr>
+        <tr><td class="n">16</td><td><strong>5.4. 선택의 기준은 기술 이름이 아니라 문제의 조건이다</strong><br>- 모델을 고를 때는 회사의 보안·규정 조건과 실행 환경을 먼저 살펴야 한다.<br>- 모델 선택은 비용과 운영 방식에 따라 달라질 수 있으며, 한 모델로 계속 고정할 필요는 없다.<br>- 프롬프트와 RAG는 정보를 어떻게 입력할지 정하는 방식이고, 파인튜닝은 모델을 추가로 학습시키는 방식이다.<br>- 핵심은 문제를 보고 필요한 방법을 설명하고 선택할 수 있는 판단 기준을 갖추는 것이다.</td><td>먼저 조건을 본다. 회사의 보안·규정상 어떤 모델을 쓸 수 있는지, 어디서 실행해야 하는지다. 모델은 비용과 운영 방식에 따라 고르고, 나중에 바꿀 수도 있다. 세 방법의 차이는 이렇게 나뉜다. 프롬프트와 RAG는 모델에 무엇을 입력할지 정하는 방식이다(가중치는 그대로). 파인튜닝은 모델 자체를 추가로 학습시키는 방식이다(가중치가 바뀜). 목표는 기술 이름을 외우는 것이 아니라, 문제를 보고 어떤 방법이 왜 필요한지 설명할 수 있는 것이다.</td></tr>
+        <tr><td class="n">17</td><td><strong>6. 한눈에 보는 강의의 핵심</strong><br>1. 학습은 다음 토큰을 잘 예측하도록 모델의 가중치를 조정하는 과정이다.<br>2. 추론은 학습된 가중치를 사용해 입력 뒤에 올 토큰을 하나씩 만드는 과정이다.<br>3. 프롬프트는 지시를 입력하고, RAG는 필요한 정보를 찾아 입력에 더하며, 파인튜닝은 모델을 추가로 훈련한다.<br>4. 새 정보가 자주 바뀌면 RAG를, 반복 형식·특화 행동이나 큰 규모의 비용 절감이 중요하면 파인튜닝을 검토한다.<br>5. 먼저 문제를 정의하고, 가능한 경우 프롬프트와 지침부터 살펴본 뒤 다른 방법을 고르는 것이 강의의 판단 순서이다.</td><td>강의 정리다. 학습은 가중치를 고친다. 추론은 고정된 가중치로 토큰을 하나씩 만든다. 프롬프트는 지시를 입력하고, RAG는 찾은 정보를 입력에 더하고, 파인튜닝은 모델을 추가로 훈련한다. 판단 순서: 문제 정의 → 프롬프트와 지침으로 시도 → 정보가 자주 바뀌면 RAG, 반복 형식·특화 작업·대규모 비용 절감이 중요하면 파인튜닝.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="words" hidden>
+    <ul class="words">
+      <li><strong>LLM(엘엘엠)</strong>: Large Language Model(라지 랭귀지 모델)의 줄임말. 많은 글로 학습한 대형 언어 모델</li>
+      <li><strong>corpus(코퍼스)</strong>: 글 모음. 새 용어의 코퍼스</li>
+      <li><strong>dataset(데이터셋)</strong>: 학습용으로 정리한 자료 묶음</li>
+      <li><strong>SNS(에스엔에스)</strong>: Social Network Service(소셜 네트워크 서비스)의 줄임말</li>
+      <li><strong>UTF-8(유티에프 에이트)</strong>: 글자를 숫자로 바꾸는 규칙(인코딩) 중 하나</li>
+      <li><strong>encoding(인코딩)</strong>: 글자를 숫자로 바꾸는 일</li>
+      <li><strong>sequence(시퀀스)</strong>: 순서대로 늘어놓은 것</li>
+      <li><strong>Vocabulary(보캐뷸러리)</strong>: 모델이 쓰는 토큰 목록 (원문 정의: 모델이 쓰는 단위 목록)</li>
+      <li><strong>token(토큰)</strong>: 모델이 글을 다루는 단위</li>
+      <li><strong>ID(아이디)</strong>: 토큰마다 붙은 고유 번호</li>
+      <li><strong>parameter(파라미터)</strong>: 모델 안의 숫자들</li>
+      <li><strong>weight(웨이트)</strong>: 가중치</li>
+      <li><strong>backpropagation(백프로퍼게이션)</strong>: 역전파</li>
+      <li><strong>DJ(디제이)</strong>: 원문 비유에 나온, 음악을 트는 사람. 노브는 장비의 돌리는 손잡이(knob, 노브)</li>
+      <li><strong>Pre-training(프리트레이닝)</strong>: 사전 학습</li>
+      <li><strong>Base model(베이스 모델)</strong>: 기본 모델</li>
+      <li><strong>Post-training(포스트트레이닝)</strong>: 후속 학습. 원문의 포스트 트레이닝</li>
+      <li><strong>Fine-tuning(파인튜닝)</strong>: 파인튜닝. 원문은 파인 튜닝으로도 적었다</li>
+      <li><strong>TPO(티피오)</strong>: 원문 "TPO에 맞게 응답하도록". 추측: 보통 시간·장소·상황(Time, Place, Occasion)을 뜻한다. 녹취 중 다른 말이 잘못 적혔을 수 있어 확인이 필요하다</li>
+      <li><strong>embedding(임베딩)</strong>: 토큰 번호를 계산용 숫자 묶음으로 바꾸는 일</li>
+      <li><strong>Transformer(트랜스포머)</strong>: LLM이 다음 토큰을 예측할 때 쓰는 모델 구조</li>
+      <li><strong>Attention(어텐션)</strong>: 각 토큰이 다른 토큰과 얼마나 관련 있는지 계산해 맥락을 잡는 방법. 원문의 어텐션 메커니즘(mechanism, 메커니즘: 작동 방식)</li>
+      <li><strong>layer(레이어)</strong>: 층. 같은 종류의 계산을 겹겹이 쌓은 한 단</li>
+      <li><strong>Attention Head(어텐션 헤드)</strong>: 한 층 안에서 Attention을 따로따로 계산하는 여러 갈래 중 하나 (원문 밖 일반 설명)</li>
+      <li><strong>Logit(로짓)</strong>: 다음 토큰 후보마다 매긴 점수</li>
+      <li><strong>Softmax(소프트맥스)</strong>: 점수를 더하면 1이 되는 확률로 바꾸는 계산</li>
+      <li><strong>sampling(샘플링)</strong>: 확률에 따라 후보 중 하나를 뽑는 일</li>
+      <li><strong>Temperature(템퍼러처)</strong>: 온도. 높으면 여러 후보를 고르게, 낮으면 상위 후보 위주로 뽑게 하는 설정</li>
+      <li><strong>Top-K(톱 케이)</strong>: 확률이 높은 순서로 K개만 후보로 남기는 설정 (원문 밖 일반 설명)</li>
+      <li><strong>Top-P(톱 피)</strong>: 확률이 높은 순서로 더해 합이 P가 될 때까지만 후보로 남기는 설정 (원문 밖 일반 설명)</li>
+      <li><strong>Prefill(프리필)</strong>: 입력 전체의 맥락을 처음 계산하는 단계</li>
+      <li><strong>KV Cache(케이브이 캐시)</strong>: 이전 계산 결과를 저장해 다음 토큰 계산에 다시 쓰는 저장 공간. K는 Key(키), V는 Value(밸류) (원문 밖 일반 설명)</li>
+      <li><strong>Context Window(컨텍스트 윈도)</strong>: 한 번에 모델에 넣을 수 있는 토큰 범위</li>
+      <li><strong>prompt(프롬프트)</strong>: 모델에 주는 지시 입력</li>
+      <li><strong>RAG(래그)</strong>: Retrieval-Augmented Generation(리트리벌 오그멘티드 제너레이션)의 줄임말. 필요한 정보를 찾아 입력에 더해 답을 만드는 방식</li>
+    </ul>
+  </section>
+  <section class="panel" id="visual" hidden>
+    <p class="visual-kind"><strong>그림 종류:</strong> 플로우차트</p>
+    <p class="visual-reason"><strong>고른 이유:</strong> 학습과 추론이 각각 순서대로 되풀이되는 과정이고, 추론은 멈춤 토큰이 나왔는지에 따라 갈라지므로 화살표로 보여 주는 그림이 글보다 빠르다.</p>
+    <div class="visual-buttons">
+      <button type="button" data-src="summary.html">종합 정리</button>
+      <button type="button" data-src="diagram.html">그림 하나</button>
+      <button type="button" data-src="eli5.html">아주 쉽게</button>
+      <a id="visual-open" href="#" target="_blank" rel="noopener" hidden>새 탭으로 열기</a>
+    </div>
+    <iframe id="visual-frame" title="그림 보기" hidden></iframe>
+  </section>
+</main>
+<script>
+  const tabs = document.querySelectorAll('.tabs button');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabs.forEach(function (x) {
+        const on = x === b;
+        x.setAttribute('aria-selected', on);
+        document.getElementById(x.dataset.tab).hidden = !on;
+      });
+    });
+  });
+  const frame = document.getElementById('visual-frame');
+  const openLink = document.getElementById('visual-open');
+  const vbtns = document.querySelectorAll('.visual-buttons button[data-src]');
+  vbtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      vbtns.forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      frame.src = b.dataset.src;
+      frame.hidden = false;
+      openLink.href = b.dataset.src;
+      openLink.hidden = false;
+    });
+  });
+</script>
+</body>
+</html>
