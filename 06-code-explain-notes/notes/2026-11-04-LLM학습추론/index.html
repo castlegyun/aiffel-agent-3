@@ -18,6 +18,9 @@
   .terms { border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-bottom:20px; }
   .terms h2 { font-size:1rem; margin:0 0 6px; }
   .terms ul { margin:0; padding-left:20px; }
+  .terms summary { cursor:pointer; }
+  .terms ul { margin-top:8px; }
+  .flow-frame { width:100%; height:600px; border:1px solid var(--line); border-radius:8px; margin:0 0 16px; }
   .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:16px; flex-wrap:wrap; }
   .tabs button { background:none; border:0; border-bottom:3px solid transparent; padding:8px 14px; font:inherit; color:var(--muted); cursor:pointer; }
   .tabs button[aria-selected="true"] { color:var(--fg); border-bottom-color:var(--accent); font-weight:600; }
@@ -42,8 +45,8 @@
   <h1>LLM의 학습과 추론, 그리고 프롬프트·RAG·파인튜닝 고르기</h1>
   <p class="summary">LLM은 글을 토큰으로 바꿔 다음 토큰을 맞히도록 가중치를 고치며 학습하고, 추론 때는 고정된 가중치로 다음 토큰을 하나씩 골라 문장을 만든다. 문제를 먼저 정의하고 프롬프트부터 시도한 뒤, 필요하면 RAG나 파인튜닝을 고른다.</p>
 
-  <section class="terms">
-    <h2>새 용어</h2>
+  <details class="terms">
+    <summary><strong>새 용어 17개</strong> (눌러서 펼치기)</summary>
     <ul>
       <li><strong>학습</strong> = 글을 보여 주고 다음 토큰을 맞히게 한 뒤, 틀린 만큼 모델 안의 숫자를 고치는 일을 되풀이하는 과정</li>
       <li><strong>추론</strong> = 학습으로 정해진 숫자를 더 고치지 않고, 입력 뒤에 올 토큰을 하나씩 계산해 만드는 과정</li>
@@ -63,7 +66,7 @@
       <li><strong>맥락</strong> = 앞뒤 토큰이 서로 어떤 관계인지에 대한 정보</li>
       <li><strong>프롬프트</strong> = 모델에 원하는 일과 답변 방식을 알려 주는 입력</li>
     </ul>
-  </section>
+  </details>
 
   <div class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="flow">요약</button>
@@ -73,6 +76,7 @@
   </div>
 
   <section class="panel" id="flow">
+    <iframe class="flow-frame" src="diagram.html" title="학습과 추론 흐름 그림"></iframe>
     <ul class="points">
       <li>학습은 글을 토큰으로 바꾸고 다음 토큰을 맞히게 하면서, 틀린 만큼 가중치를 고치는 일을 아주 많이 되풀이하는 과정이다.</li>
       <li>사전 학습이 끝나면 글을 이어 쓰는 기본 모델이 생기고, 후속 학습(파인튜닝 등)으로 목적에 맞게 답하도록 다듬는다.</li>
