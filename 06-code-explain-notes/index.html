@@ -5,34 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>코드 해설 노트 보관함</title>
 <style>
-  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; }
+  /* 디자인 규칙: DESIGN.md (GitHub 스타일) */
+  :root {
+    --canvas:#ffffff; --subtle:#f6f8fa; --border:#d0d7de; --fg:#1f2328; --muted:#656d76; --link:#0969da;
+    --tab-line:#fd8c73; --count-bg:rgba(175,184,193,.2);
+    --blue-bg:#ddf4ff; --blue-fg:#0969da; --green-bg:#dafbe1; --green-fg:#1a7f37;
+    --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif;
+    --font-mono:ui-monospace,SFMono-Regular,Consolas,monospace;
   }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.7 system-ui, "Malgun Gothic", sans-serif; }
-  main { max-width:760px; margin:0 auto; padding:32px 16px 64px; }
-  h1 { font-size:1.6rem; margin:0 0 4px; }
-  .sub { color:var(--muted); margin:0 0 24px; }
-  ul { list-style:none; margin:0; padding:0; }
-  li { border:1px solid var(--line); border-radius:8px; margin-bottom:10px; }
-  li a { display:block; padding:12px 16px; color:inherit; text-decoration:none; }
-  li a:hover { border-color:var(--accent); background:rgba(127,127,127,.08); border-radius:8px; }
-  .title { font-weight:600; color:var(--accent); }
-  .date { color:var(--muted); font-size:.85rem; }
-  .msg { color:var(--muted); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --canvas:#0d1117; --subtle:#161b22; --border:#30363d; --fg:#e6edf3; --muted:#848d97; --link:#4493f8;
+      --tab-line:#f78166; --count-bg:rgba(110,118,129,.4);
+      --blue-bg:rgba(56,139,253,.15); --blue-fg:#4493f8; --green-bg:rgba(46,160,67,.15); --green-fg:#3fb950;
+    }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--canvas); color:var(--fg); font:400 .875rem/1.5 var(--font-body); word-break:keep-all; overflow-wrap:break-word; }
+  a { color:inherit; text-decoration:none; }
+  :focus-visible { outline:2px solid var(--link); outline-offset:2px; }
+
+  main { max-width:960px; margin:0 auto; padding:32px 16px 48px; }
+  h1 { font-size:1.5rem; line-height:1.25; font-weight:600; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 16px; max-width:68ch; }
+
+  .box { border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .head { display:flex; gap:8px; align-items:center; background:var(--subtle); border-bottom:1px solid var(--border); padding:0 16px; min-height:48px; flex-wrap:wrap; }
+  .tab { font:inherit; color:var(--muted); background:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; height:48px; padding:0 8px; display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .tab:hover { color:var(--fg); }
+  .tab[aria-pressed="true"] { color:var(--fg); font-weight:600; border-bottom-color:var(--tab-line); }
+  .count { background:var(--count-bg); border-radius:2em; padding:0 6px; font-size:.75rem; font-weight:500; line-height:18px; color:var(--fg); }
+
+  .rows { list-style:none; margin:0; padding:0; }
+  .row a { display:grid; grid-template-columns:1fr auto; gap:12px; padding:8px 16px; border-top:1px solid var(--border); }
+  .row:first-child a { border-top:0; }
+  .row a:hover { background:var(--subtle); }
+  .row a:hover .t { color:var(--link); }
+  .t { font-weight:600; font-size:.875rem; }
+  .lab { display:inline-block; font-size:.75rem; font-weight:500; line-height:18px; padding:0 7px; border-radius:2em; margin-left:6px; vertical-align:1px; }
+  .lab.text { background:var(--blue-bg); color:var(--blue-fg); }
+  .lab.code { background:var(--green-bg); color:var(--green-fg); }
+  .s { font-size:.75rem; color:var(--muted); margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .d { font:400 .75rem/1.5 var(--font-mono); color:var(--muted); align-self:center; white-space:nowrap; }
+  .msg { color:var(--muted); padding:16px; margin:0; }
+
+  @media (max-width:640px) { .row a { grid-template-columns:1fr; gap:2px; } .d { align-self:start; } }
 </style>
 </head>
 <body>
 <main>
   <h1>코드 해설 노트 보관함</h1>
-  <p class="sub">코드를 쉬운 주석, 단어장, 그림으로 바꿔 모아 둔 노트입니다. 최신 노트가 위에 있습니다.</p>
-  <ul id="list"></ul>
-  <p class="msg" id="msg">불러오는 중…</p>
+  <p class="lead">코드를 쉬운 주석, 단어장, 그림으로 바꿔 모아 둔 노트입니다. 최신 노트가 위에 있습니다.</p>
+
+  <section class="box">
+    <div class="head" role="group" aria-label="종류" id="tabs" hidden>
+      <button class="tab" data-f="all" aria-pressed="true">전체 <span class="count" id="c-all">0</span></button>
+      <button class="tab" data-f="code" aria-pressed="false">코드 <span class="count" id="c-code">0</span></button>
+      <button class="tab" data-f="text" aria-pressed="false">텍스트 <span class="count" id="c-text">0</span></button>
+    </div>
+    <ul class="rows" id="list"></ul>
+    <p class="msg" id="msg">불러오는 중…</p>
+  </section>
 </main>
 <script>
   const list = document.getElementById('list');
   const msg = document.getElementById('msg');
+  const tabsBox = document.getElementById('tabs');
 
   function show(text) { msg.textContent = text; msg.hidden = false; }
 
@@ -45,21 +83,56 @@
       if (!notes.length) { show('아직 노트가 없습니다. Claude Code에서 /explain-code 로 만들어 보세요.'); return; }
       notes.sort(function (a, b) { return b.date.localeCompare(a.date); });
       msg.hidden = true;
+
+      const codeCount = notes.filter(function (n) { return n.type !== 'text'; }).length;
+      document.getElementById('c-all').textContent = notes.length;
+      document.getElementById('c-code').textContent = codeCount;
+      document.getElementById('c-text').textContent = notes.length - codeCount;
+      tabsBox.hidden = false;
+
+      const rows = [];
       notes.forEach(function (n) {
         const li = document.createElement('li');
+        li.className = 'row';
+        const kind = n.type === 'text' ? 'text' : 'code';
+        li.dataset.kind = kind;
         const a = document.createElement('a');
         a.href = 'notes/' + encodeURIComponent(n.id) + '/index.html';
-        const t = document.createElement('div');
-        t.className = 'title';
-        t.textContent = (n.type === 'text' ? '[텍스트] ' : '[코드] ') + n.title;
+        const box = document.createElement('div');
+        const t = document.createElement('span');
+        t.className = 't';
+        t.textContent = n.title;
+        const lab = document.createElement('span');
+        lab.className = 'lab ' + kind;
+        lab.textContent = kind === 'text' ? '텍스트' : '코드';
         const s = document.createElement('div');
+        s.className = 's';
         s.textContent = n.summary;
-        const d = document.createElement('div');
-        d.className = 'date';
+        box.append(t, lab, s);
+        const d = document.createElement('span');
+        d.className = 'd';
         d.textContent = n.date;
-        a.append(t, s, d);
+        a.append(box, d);
         li.appendChild(a);
         list.appendChild(li);
+        rows.push(li);
+      });
+
+      function filter(f) {
+        let c = 0;
+        rows.forEach(function (r) {
+          const on = f === 'all' || r.dataset.kind === f;
+          r.hidden = !on;
+          if (on) c++;
+        });
+        if (!c) show('이 종류의 노트가 아직 없습니다.'); else msg.hidden = true;
+      }
+      const tabs = tabsBox.querySelectorAll('.tab');
+      tabs.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          tabs.forEach(function (x) { x.setAttribute('aria-pressed', x === btn ? 'true' : 'false'); });
+          filter(btn.dataset.f);
+        });
       });
     })
     .catch(function () {
