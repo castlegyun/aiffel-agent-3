@@ -49,7 +49,7 @@ description: 코드 또는 배운 내용(텍스트)을 코딩 입문자용 해�
 5. **그림 파일 만들기**: 아래 "그림 파일" 절을 따른다. 노트 폴더에 `summary.html`, `diagram.html`, `eli5.html` 을 만든다.
 6. **보관함 목록 갱신**: `06-code-explain-notes/notes/index.json` 을 읽어(없으면 `[]`) 맨 앞에 추가한다.
    `{"id": "폴더이름", "title": "제목", "summary": "결론 한 줄", "date": "YYYY-MM-DD", "type": "code 또는 text"}`
-7. **확인**: 만든 HTML 파일들에 `{{` 가 남아 있지 않은지, `index.json` 이 올바른 JSON인지, 그림 탭의 버튼이 가리키는 파일이 모두 있는지 확인한다.
+7. **확인**: 만든 HTML 파일들에 `{{` 가 남아 있지 않은지, `index.json` 이 올바른 JSON인지, 그림 탭의 버튼이 가리키는 파일이 모두 있는지, 첫 탭 맨 위 그림(`{{FLOW_FRAME}}`)이 `diagram.html` 과 맞는지 확인한다.
 8. **알리기**: 만든 파일 경로 하나와 결론 한 줄만 알린다. 커밋과 푸시는 사용자가 요청할 때만 한다.
 
 ## 코드 노트: `templates/note.html`
@@ -59,7 +59,9 @@ description: 코드 또는 배운 내용(텍스트)을 코딩 입문자용 해�
 | 자리 | 채울 것 |
 |---|---|
 | `{{TITLE}}` `{{SUMMARY}}` | 제목, 결론 한 줄 (코드가 무엇을 하는지) |
-| `{{TERMS}}` | `<li><strong>용어</strong> = 정의</li>` 여러 줄 |
+| `{{TERMS}}` | `<li><strong>용어</strong> = 정의</li>` 여러 줄. 새 용어 목록은 틀에서 항상 접혀 있다 |
+| `{{TERMS_COUNT}}` | 새 용어 개수 (숫자만) |
+| `{{FLOW_FRAME}}` | 첫 탭 맨 위에 보일 그림. `diagram.html` 이 있으면 `    <iframe class="flow-frame" src="diagram.html" title="그림 이름" style="height:Npx"></iframe>` (N은 그림 높이에 맞춰 정한다. 가로로 긴 그림은 300 안팎). `diagram.html` 이 없으면 이 줄을 통째로 지운다 |
 | `{{FLOW_ROWS}}` | 코드 줄마다 `<tr><td class="n">1</td><td><code>코드</code></td><td>전체에서 하는 역할(한 줄 이내)</td></tr>` |
 | `{{DETAIL_ROWS}}` | 같은 형식. 설명은 명령어가 실제로 어떻게 작동하는지, 값이 어떻게 바뀌는지. 설치 방법은 뺀다. |
 | `{{WORDS}}` | `<li><strong>단어</strong>(발음): 뜻</li>` 여러 줄 |
@@ -74,6 +76,7 @@ description: 코드 또는 배운 내용(텍스트)을 코딩 입문자용 해�
 |---|---|
 | `{{TITLE}}` `{{SUMMARY}}` | 제목, 결론 한 줄 (이 글이 말하는 핵심) |
 | `{{TERMS}}` | 코드 노트와 같음 |
+| `{{TERMS_COUNT}}` `{{FLOW_FRAME}}` | 코드 노트와 같음 |
 | `{{POINTS}}` | 핵심 3~5줄. `<li>핵심 한 문장</li>` |
 | `{{PARAGRAPH_ROWS}}` | 원문을 문단(또는 의미 단위)으로 나눠 `<tr><td class="n">1</td><td>원문</td><td>쉽게 풀어쓴 설명</td></tr>`. 풀어쓰기는 원리를 쉬운 말로 먼저, 용어 이름은 나중에. 비유는 쓰지 않는다. |
 | `{{WORDS}}` | 코드 노트와 같음 |
