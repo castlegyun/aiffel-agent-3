@@ -18,7 +18,7 @@ CSS 변수로만 쓴다. 다크 모드는 시스템 설정을 따른다(`prefers
 | `--subtle` | 헤더 줄, 접기 상자, 표 머리 | `#f6f8fa` | `#161b22` |
 | `--border` | 모든 테두리와 구분선 | `#d0d7de` | `#30363d` |
 | `--fg` | 본문과 제목 | `#1f2328` | `#e6edf3` |
-| `--muted` | 보조 글자 | `#656d76` | `#848d97` |
+| `--muted` | 보조 글자 | `#656d76` | `#a0a9b4` |
 | `--link` | 링크, 포커스 링 | `#0969da` | `#4493f8` |
 | `--tab-line` | 선택된 탭 밑줄 | `#fd8c73` | `#f78166` |
 | `--blue-bg` / `--blue-fg` | `텍스트` 라벨 | `#ddf4ff` / `#0969da` | `rgba(56,139,253,.15)` / `#4493f8` |
@@ -28,7 +28,7 @@ CSS 변수로만 쓴다. 다크 모드는 시스템 설정을 따른다(`prefers
 
 - 본문: 시스템 글꼴(`-apple-system, "Segoe UI", "Noto Sans KR", "Malgun Gothic", sans-serif`). 웹폰트를 받지 않는다.
 - 코드와 날짜 숫자: `ui-monospace, SFMono-Regular, Consolas, monospace`.
-- 크기: 보관함 제목 1.5rem(600), 목록 제목 .875rem(600), 본문 .9375rem, 보조 글자 .75~.8125rem. 줄 높이 1.5~1.6.
+- 크기: 제목 1.875rem(600), 노트 본문 1.0625rem(줄 높이 1.65), 보관함 목록 제목 1.0625rem(600)·요약 .9375rem·날짜와 라벨 .8125rem, 탭과 표 1rem. 큰 화면에서 작아 보이지 않도록 이 크기 밑으로 줄이지 않는다.
 - 한글은 단어 단위로 줄을 바꾼다(`word-break: keep-all; overflow-wrap: break-word`).
 - 한 줄 길이는 약 68자 이내(`max-width: 68ch`).
 
