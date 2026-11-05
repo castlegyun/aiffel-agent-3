@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI는 어떻게 배우나: 규칙 대신 데이터로 배우고, 데이터는 숫자가 된다 · 코드 해설 노트</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --code:#f0efe9; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --code:#262624; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.7 system-ui, "Malgun Gothic", sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  a { color:var(--accent); }
+  h1 { font-size:1.6rem; margin:8px 0 4px; }
+  .summary { color:var(--muted); margin:0 0 20px; }
+  .terms { border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-bottom:20px; }
+  .terms h2 { font-size:1rem; margin:0 0 6px; }
+  .terms ul { margin:0; padding-left:20px; }
+  .terms summary { cursor:pointer; }
+  .terms ul { margin-top:8px; }
+  .flow-frame { width:100%; height:300px; border:1px solid var(--line); border-radius:8px; margin:0 0 16px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:16px; flex-wrap:wrap; }
+  .tabs button { background:none; border:0; border-bottom:3px solid transparent; padding:8px 14px; font:inherit; color:var(--muted); cursor:pointer; }
+  .tabs button[aria-selected="true"] { color:var(--fg); border-bottom-color:var(--accent); font-weight:600; }
+  .panel[hidden] { display:none; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; vertical-align:top; padding:8px 10px; border-bottom:1px solid var(--line); }
+  td.n { width:2.5em; color:var(--muted); }
+  code, pre { background:var(--code); border-radius:4px; font:14px/1.5 Consolas, monospace; }
+  code { padding:1px 5px; white-space:pre-wrap; }
+  .words li, .points li { margin:4px 0; }
+  .nav { margin-bottom:8px; font-size:.9rem; }
+  .visual-kind, .visual-reason { margin:4px 0; }
+  .visual-buttons { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:12px 0; }
+  .visual-buttons button { font:inherit; padding:6px 14px; border:1px solid var(--line); border-radius:6px; background:none; color:var(--fg); cursor:pointer; }
+  .visual-buttons button[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); font-weight:600; }
+  #visual-frame { width:100%; height:75vh; border:1px solid var(--line); border-radius:8px; background:#fff; }
+</style>
+</head>
+<body>
+<main>
+  <div class="nav"><a href="../../index.html">← 노트 보관함</a></div>
+  <h1>AI는 어떻게 배우나: 규칙 대신 데이터로 배우고, 데이터는 숫자가 된다</h1>
+  <p class="summary">AI의 학습은 규칙을 일일이 적는 대신 예시(데이터)를 주고, 예측 → 오차 → 조정을 되풀이하며 규칙을 찾게 하는 일이다. 기계는 숫자만 다루므로 글은 토큰·벡터로, 그림은 밝기 숫자 격자(텐서)로 바꿔 넣는다.</p>
+
+  <details class="terms">
+    <summary><strong>새 용어 18개</strong> (눌러서 펼치기)</summary>
+    <ul>
+      <li><strong>인공지능</strong> = 규칙을 손으로 짠 방식과 데이터로 배우는 방식을 모두 포함하는 가장 넓은 갈래</li>
+      <li><strong>기계학습</strong> = 예시(데이터)를 보고 규칙을 스스로 찾게 하는 방식. 인공지능 안의 한 갈래</li>
+      <li><strong>딥러닝</strong> = 층을 여러 겹 쌓은 신경망으로 하는 기계학습</li>
+      <li><strong>신경망</strong> = 숫자를 받아 여러 층에서 계산해 결과 숫자를 내는 모델</li>
+      <li><strong>파라미터</strong> = 모델 안에서 학습하며 바뀌는 숫자 전체. 가중치와 편향이 여기에 든다</li>
+      <li><strong>가중치</strong> = 입력 숫자에 곱해져 그 입력이 얼마나 중요한지 정하는, 학습으로 바뀌는 숫자</li>
+      <li><strong>편향</strong> = 가중치를 곱해 더한 값에 한 번 더 더하는 숫자. 결과를 위아래로 옮긴다</li>
+      <li><strong>오차</strong> = 모델의 예측과 정답이 어긋난 정도</li>
+      <li><strong>경사하강</strong> = 오차가 줄어드는 방향으로 가중치를 조금씩 바꾸기를 되풀이해 오차의 가장 낮은 곳으로 내려가는 방법</li>
+      <li><strong>역전파</strong> = 최종 오차에 각 숫자가 얼마나 기여했는지 뒤에서 앞으로 계산해, 그만큼씩 고치게 하는 방법</li>
+      <li><strong>지도학습</strong> = 입력과 정답의 쌍으로 배우는 방식</li>
+      <li><strong>일반화</strong> = 학습에 쓰지 않은 새 입력에도 그럴듯하게 맞게 대응하는 것</li>
+      <li><strong>토큰</strong> = 글을 의미를 지닌 작은 조각으로 자른 것</li>
+      <li><strong>벡터</strong> = 순서가 있는 숫자 묶음. 숫자 2개면 평면의 점, 3개면 3차원 공간의 점</li>
+      <li><strong>임베딩</strong> = 비슷한 맥락에서 쓰이는 단어일수록 비슷해지도록 뜻을 담은 벡터</li>
+      <li><strong>텐서</strong> = 숫자를 여러 방향으로 늘어놓은 덩어리. 스칼라(숫자 하나), 벡터(한 줄), 행렬(격자)을 포함해 부르기도 한다</li>
+      <li><strong>은닉층</strong> = 입력과 출력 사이에 낀 층. 모델이 속으로만 계산한다</li>
+      <li><strong>활성화 함수</strong> = 층의 계산 결과를 한 번 바꿔서, 층을 쌓아도 직선으로 뭉개지지 않게 하는 함수</li>
+    </ul>
+  </details>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="flow">요약</button>
+    <button role="tab" aria-selected="false" data-tab="detail">풀어쓰기</button>
+    <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
+  </div>
+
+  <section class="panel" id="flow">
+    <iframe class="flow-frame" src="diagram.html" title="AI 학습 고리 그림"></iframe>
+    <ul class="points">
+      <li>규칙을 일일이 적으면 예외가 끝없이 늘어난다. 그래서 예시(데이터)를 잔뜩 주고 기계가 규칙을 스스로 찾게 하는 것이 학습이다.</li>
+      <li>학습은 예측 → 오차 계산 → 가중치 조정을 수많은 예시에 되풀이하는 일이다. 오차가 줄어드는 방향으로 조금씩 미는 방법이 경사하강이다.</li>
+      <li>학습의 결과물은 규칙집이 아니라 파라미터에 압축된 패턴이다. 일반화는 추정이라서 모델은 자신 있게 틀릴 수 있다.</li>
+      <li>기계는 숫자만 다룬다. 글은 토큰으로 자른 뒤 벡터(임베딩)로, 그림은 밝기 숫자의 격자(텐서)로 바꿔 넣는다.</li>
+      <li>신경망의 한 층은 곱하고(W), 더하고(b), 활성화 함수로 값을 바꾸는 세 박자다. 학습은 W와 b를 오차만큼 고치는 일이다.</li>
+    </ul>
+  </section>
+
+  <section class="panel" id="detail" hidden>
+    <table>
+      <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>인공지능은 생각보다 넓은 말입니다. 규칙을 하나하나 손으로 짜 넣은 방식도, 데이터를 보고 스스로 배우는 방식도 인공지능입니다. 오늘날의 사진 인식·글쓰기·번역은 거의 다 데이터로 배우는 쪽에서 나왔습니다.</td><td>인공지능이라는 말은 두 방식을 모두 가리킨다. 지금 흔히 보는 AI 기능은 대부분 데이터로 배우는 쪽이다.</td></tr>
+        <tr><td class="n">2</td><td>가장 넓은 원이 인공지능이고, 그 안에 머신러닝(기계학습), 다시 그 안에 여러 층의 신경망을 쌓는 딥러닝이 있습니다. 요즘의 생성형 AI도 대개 딥러닝 위에 서 있습니다.</td><td>범위는 인공지능 &gt; 기계학습 &gt; 딥러닝 순으로 좁아진다. 원문은 생성형 AI도 대개 딥러닝에 기반한다고 쓴다.</td></tr>
+        <tr><td class="n">3</td><td>개와 고양이를 구분하는 규칙을 직접 써 본다고 합시다. “귀가 뾰족하면 고양이”라고 적으면 폴드귀 고양이가 반례가 되고, “수염이 있으면”이라 하면 개도 수염이 있습니다. 스팸 메일도 ‘무료’를 막으면 ‘무 료’로 빠져나갑니다.</td><td>규칙을 적으면 규칙에 맞지 않는 예외가 나온다. 예외마다 규칙을 더하면 규칙이 끝없이 늘어난다.</td></tr>
+        <tr><td class="n">4</td><td>규칙을 사람이 다 적는 대신, 예시(데이터)를 잔뜩 주고 기계가 규칙을 스스로 찾게 하는 것, 이것이 인공지능의 “학습”입니다. 결과를 가르는 건 화려한 모델이 아니라 데이터입니다.</td><td>방향을 뒤집는다. 사람이 예시를 모으고, 기계가 예시에서 규칙을 찾는다. 원문이 반복해서 강조하는 결론은 “결과는 모델보다 데이터가 가른다”이다.</td></tr>
+        <tr><td class="n">5</td><td>1959년 아서 새뮤얼은 기계학습을 “명시적으로 프로그래밍하지 않고도 컴퓨터가 배우게 하는 연구 분야”라는 취지로 설명한 것으로 자주 인용됩니다.</td><td>규칙을 손으로 다 쓰는 방식에서 데이터로 패턴을 얻는 방식으로 관점이 바뀌었다는 뜻이다. 연도와 인용은 원문이 “자주 인용된다”고만 쓴 내용이며, 이 노트에서 출처를 따로 확인하지 않았다.</td></tr>
+        <tr><td class="n">6</td><td>1951년 클로드 섀넌은 사람에게 소설의 한 대목을 한 글자씩 맞히게 하는 실험을 했습니다. 언어는 통계적으로 예측 가능하고, 오늘의 거대 언어 모델이 하는 일이 바로 “다음 토큰 예측”입니다.</td><td>앞 글자를 보고 다음 글자를 맞히는 게임에서 출발했다. 지금의 거대 언어 모델도 앞 토큰을 보고 다음 토큰을 맞힌다. (실험 내용은 원문 기준, 출처 미확인)</td></tr>
+        <tr><td class="n">7</td><td>1958년 로젠블랫의 퍼셉트론: 예측해 보고, 틀리면 그 틀린 정도만큼 내부 숫자(가중치)를 살짝 고칩니다. 한 겹뿐이라 복잡한 패턴을 못 배웠고, 이를 푼 것이 1986년의 역전파입니다. 오늘날 GPT를 포함한 거의 모든 신경망이 이 방식으로 학습합니다.</td><td>맞히면 그대로 두고 틀리면 틀린 만큼 가중치를 고친다. 층이 여러 겹이면, 각 층의 숫자가 오차에 얼마나 기여했는지 뒤에서 앞으로 계산해 고친다(역전파). 연도와 인물은 원문 기준, 출처 미확인.</td></tr>
+        <tr><td class="n">8</td><td>학습은 이 고리의 반복입니다: 데이터 예시들 → 예측 → 틀린 정도(오차) 계산 → 내부 숫자(가중치) 조정 → 반복.</td><td>예시 하나로 예측하고, 정답과 비교해 오차를 구하고, 가중치를 고친다. 이 순서를 수많은 예시로 되풀이하면 예측이 정답에 가까워진다.</td></tr>
+        <tr><td class="n">9</td><td>학습의 결과물은 규칙집이 아니라 파라미터에 압축된 패턴입니다. 일반화는 어디까지나 추정입니다. 그래서 모델은 자신 있게 틀릴 수 있습니다.</td><td>학습이 끝나면 남는 것은 사람이 읽는 규칙이 아니라 숫자들(파라미터)이다. 새 입력에 대한 답은 그 숫자들로 추정한 값이라 틀릴 수 있다.</td></tr>
+        <tr><td class="n">10</td><td>모델이 5를 예측했는데 정답이 7이면 오차는 +2입니다. 오차를 줄이는 방향으로 가중치를 아주 조금 밀어 5.3, 5.6… 처럼 정답에 다가가게 합니다. 오차를 언덕이라 보면 가장 낮은 골짜기를 향해 한 걸음씩 내려가는 셈이라 경사하강이라 부릅니다.</td><td>정답 7 − 예측 5 = 오차 2. 예측이 5 → 5.3 → 5.6으로 정답에 가까워지게 가중치를 조금씩 바꾼다. 오차가 가장 작은 곳으로 한 걸음씩 가는 방법을 경사하강이라 한다.</td></tr>
+        <tr><td class="n">11</td><td>입력과 정답의 쌍으로 배우는 방식을 지도학습이라 합니다. 정답 없이 패턴만 묶는 비지도학습, 시행착오와 보상으로 배우는 강화학습도 있습니다.</td><td>지도학습은 예시마다 정답이 붙어 있다. 정답이 없는 방식과 보상으로 배우는 방식도 따로 있다는 사실만 원문이 언급한다.</td></tr>
+        <tr><td class="n">12</td><td>기계가 만질 수 있는 건 오직 숫자뿐입니다. 글은 의미를 지닌 작은 조각인 토큰으로 자르고, 각 토큰을 여러 숫자의 묶음인 벡터로 바꿉니다. 비슷한 맥락에서 쓰이는 단어일수록 비슷한 벡터가 되도록 맞춘 것이 임베딩입니다.</td><td>글은 조각(토큰)으로 자르고, 조각마다 숫자 묶음(벡터)을 붙인다. 쓰이는 맥락이 비슷한 단어는 비슷한 숫자 묶음이 되도록 만든 벡터를 임베딩이라 한다.</td></tr>
+        <tr><td class="n">13</td><td>사진은 작은 점(픽셀)들의 격자이고, 각 점은 밝기와 색을 나타내는 숫자입니다. 손글씨 한 장은 보통 28×28, 즉 784개의 밝기 숫자이고, 컬러 사진은 가로×세로×3만큼의 숫자 덩어리가 됩니다. 숫자를 여러 방향으로 쌓은 덩어리를 텐서라 합니다.</td><td>그림은 점마다 밝기 숫자가 있는 격자다. 흑백 28×28 = 784개, 컬러는 빨강·초록·파랑 세 장이라 높이×너비×3개다. 이런 숫자 덩어리를 텐서라 한다.</td></tr>
+        <tr><td class="n">14</td><td>숫자 2개면 평면 위의 점 (x, y), 3개면 3차원 공간의 점입니다. 두 점 사이의 “비슷함”은 거리로 잴 수 있습니다. A=(2, 3)과 B=(2, 4)는 거리 1이라 비슷하고, C=(9, 1)은 멉니다. 방향(두 화살표가 이루는 각도)으로도 잽니다. 점의 절대 위치가 아니라 점들 사이의 관계가 뜻을 만듭니다.</td><td>벡터를 좌표의 점으로 보면 가까운 점은 비슷하고 먼 점은 다르다고 읽는다. 크기가 달라도 같은 쪽을 가리키면 비슷하다고 보는 방법(방향)도 있다. 숫자(차원)를 늘리면 더 많은 특징을 동시에 담는다.</td></tr>
+        <tr><td class="n">15</td><td>스칼라(0차)는 숫자 하나, 벡터(1차)는 한 줄, 행렬(2차)은 격자, 텐서(3차 이상)는 격자를 겹친 것입니다. 즉 텐서는 “숫자를 몇 방향으로 늘어놓았나”를 일반화한 말이며 0차 스칼라·1차 벡터·2차 행렬을 모두 포함합니다.</td><td>숫자를 늘어놓는 방향이 0 → 1 → 2 → 3으로 늘어난다. 원문은 텐서를 두 뜻으로 쓴다. 사다리를 소개할 때는 좁은 뜻(3차 이상), “즉”으로 다시 정의할 때는 넓은 뜻(0·1·2차 포함)이다. 추측: 글쓴이에게 직접 확인한 것은 아니고 문장 순서로 읽은 의도다.</td></tr>
+        <tr><td class="n">16</td><td>숫자 7을 8×8로 줄여 칸마다 밝기(0=배경, 255에 가까울수록 밝은 획)를 적은 것입니다. 모델이 “보는” 것은 그림이 아니라 정확히 이 숫자들입니다.</td><td>모델의 입력은 그림이 아니라 이런 숫자 격자다. 학습은 이 숫자의 배열에서 “7다움”의 패턴을 찾는 일이다.</td></tr>
+        <tr><td class="n">17</td><td>은닉층은 입력과 출력 사이에 낀 층입니다. 한 층은 입력에 가중치를 곱하고 편향을 더합니다(Wx + b). 이것만 쌓으면 전체가 직선 하나로 뭉개지므로, 층마다 활성화 함수로 결과를 바꿉니다. 가장 흔한 ReLU는 음수면 0, 양수면 그대로 통과시킵니다.</td><td>한 층의 계산은 곱하기(W), 더하기(b), 활성화 함수 통과 세 박자다. 활성화 함수가 없으면 층을 몇 겹 쌓아도 직선 하나와 같아서 곡선 패턴을 못 그린다.</td></tr>
+        <tr><td class="n">18</td><td>입력 x=[2, 1], 가중치 W=[0.5, −1], 편향 b=0.2라면 2×0.5 + 1×(−1) + 0.2 = 0.2. 양수라 ReLU를 지나도 0.2입니다. 다음 층에서 W₂=3, b₂=−0.1이면 ReLU(3×0.2 − 0.1) = 0.5입니다.</td><td>직접 따라 계산해 보면 0.2 → 0.5가 맞다. 학습은 이 W와 b를 정답과 어긋난 만큼 조금씩 고치는 일이다. 실제 모델은 이런 층을 수백 겹, 숫자를 수억 개 쌓는다고 원문은 쓴다.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="words" hidden>
+    <ul class="words">
+      <li><strong>AI</strong>(에이아이): 인공지능(artificial intelligence)의 약어</li>
+      <li><strong>machine learning</strong>(머신 러닝): 기계학습의 영어 이름</li>
+      <li><strong>deep learning</strong>(딥 러닝): 층을 여러 겹 쌓은 신경망으로 하는 기계학습</li>
+      <li><strong>generative AI</strong>(제너레이티브 에이아이): 생성형 AI. 글이나 그림을 만들어 내는 모델</li>
+      <li><strong>neural network</strong>(뉴럴 네트워크): 신경망</li>
+      <li><strong>parameter</strong>(파라미터): 학습으로 바뀌는 숫자</li>
+      <li><strong>weight</strong>(웨이트): 가중치</li>
+      <li><strong>bias</strong>(바이어스): 편향</li>
+      <li><strong>gradient descent</strong>(그레이디언트 디센트): 경사하강</li>
+      <li><strong>backpropagation</strong>(백프로퍼게이션): 역전파</li>
+      <li><strong>supervised learning</strong>(슈퍼바이즈드 러닝): 지도학습</li>
+      <li><strong>token</strong>(토큰): 글을 자른 조각</li>
+      <li><strong>vector</strong>(벡터): 숫자 묶음</li>
+      <li><strong>embedding</strong>(임베딩): 뜻을 담은 벡터</li>
+      <li><strong>tensor</strong>(텐서): 숫자를 여러 방향으로 늘어놓은 덩어리</li>
+      <li><strong>scalar</strong>(스칼라): 숫자 하나(0차)</li>
+      <li><strong>matrix</strong>(매트릭스): 행렬. 숫자 격자(2차)</li>
+      <li><strong>pixel</strong>(픽셀): 사진을 이루는 점. 점마다 밝기·색 숫자가 있다</li>
+      <li><strong>MNIST</strong>(엠니스트): 손으로 쓴 숫자 이미지 모음(원문은 7만 장짜리라고 설명)</li>
+      <li><strong>hidden layer</strong>(히든 레이어): 은닉층</li>
+      <li><strong>activation function</strong>(액티베이션 펑션): 활성화 함수</li>
+      <li><strong>ReLU</strong>(렐루): 음수는 0으로, 양수는 그대로 통과시키는 활성화 함수</li>
+      <li><strong>Wx + b</strong>(더블유 엑스 플러스 비): 입력 x에 가중치 W를 곱하고 편향 b를 더하는 식</li>
+      <li><strong>GPT</strong>(지피티): 원문이 신경망의 예로 든 거대 언어 모델</li>
+    </ul>
+  </section>
+  <section class="panel" id="visual" hidden>
+    <p class="visual-kind"><strong>그림 종류:</strong> 플로우차트</p>
+    <p class="visual-reason"><strong>고른 이유:</strong> 숫자로 바꾼 뒤 예측 → 오차 → 조정을 되풀이하는 순서와 반복을 선으로 보면 글보다 빨리 읽힌다.</p>
+    <div class="visual-buttons">
+      <button type="button" data-src="summary.html">종합 정리</button>
+      <button type="button" data-src="diagram.html">그림 하나</button>
+      <button type="button" data-src="eli5.html">아주 쉽게</button>
+      <a id="visual-open" href="#" target="_blank" rel="noopener" hidden>새 탭으로 열기</a>
+    </div>
+    <iframe id="visual-frame" title="그림 보기" hidden></iframe>
+  </section>
+</main>
+<script>
+  const tabs = document.querySelectorAll('.tabs button');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabs.forEach(function (x) {
+        const on = x === b;
+        x.setAttribute('aria-selected', on);
+        document.getElementById(x.dataset.tab).hidden = !on;
+      });
+    });
+  });
+  const frame = document.getElementById('visual-frame');
+  const openLink = document.getElementById('visual-open');
+  const vbtns = document.querySelectorAll('.visual-buttons button[data-src]');
+  vbtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      vbtns.forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      frame.src = b.dataset.src;
+      frame.hidden = false;
+      openLink.href = b.dataset.src;
+      openLink.hidden = false;
+    });
+  });
+</script>
+</body>
+</html>

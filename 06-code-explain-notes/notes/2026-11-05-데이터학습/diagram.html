@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 학습 고리</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper:       #f5f5f5;
+      --ink:         #2d3142;
+      --muted:       #4f5d75;
+      --soft:        #5a6580;
+      --accent:      #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --node-fill:   #ffffff;
+      --node-stroke: #2d3142;
+      --font-sans:   'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:  'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:   'Geist Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:       #2d3142;
+        --ink:         #f5f5f5;
+        --muted:       #bfc0c0;
+        --soft:        #949eb2;
+        --accent:      #f08a59;
+        --accent-tint: rgba(240,138,89,0.10);
+        --node-fill:   rgba(245,245,245,0.04);
+        --node-stroke: rgba(245,245,245,0.45);
+      }
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 1.5rem 1rem;
+    }
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .caption { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; }
+    svg { width: 100%; min-width: 752px; display: block; }
+    .paper  { fill: var(--paper); }
+    .node   { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1; }
+    .focal  { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2; }
+    .line   { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .dashed { stroke-dasharray: 5,4; }
+    .head   { fill: var(--muted); }
+    .t-name { fill: var(--ink); font: 600 12px var(--font-sans); text-anchor: middle; }
+    .t-sub  { fill: var(--muted); font: 400 12px var(--font-sans); text-anchor: middle; }
+    .t-arrow { fill: var(--soft); font: 500 12px var(--font-sans); text-anchor: middle; }
+    .t-row  { fill: var(--muted); font: 600 12px var(--font-sans); }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flowchart · learning loop</p>
+    <h1>AI 학습 고리: 숫자로 바꾸고, 예측하고, 고친다</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 752 192" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="learn-loop-title learn-loop-desc">
+        <title id="learn-loop-title">AI 학습 고리</title>
+        <desc id="learn-loop-desc">글과 그림을 숫자로 바꾼 뒤, 예측하고 오차를 계산하고 가중치를 조정하는 일을 되풀이한다.</desc>
+        <defs>
+          <marker id="learn-loop-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
+        </defs>
+
+        <rect class="paper" width="100%" height="100%"/>
+
+        <text class="t-row" x="24" y="40">먼저 숫자로 바꾼다</text>
+        <text class="t-row" x="320" y="40">예측 → 오차 → 조정을 되풀이한다</text>
+
+        <!-- 연결선 먼저 -->
+        <line class="line" x1="136" y1="88" x2="172" y2="88" marker-end="url(#learn-loop-arrow)"/>
+        <line class="line" x1="284" y1="88" x2="320" y2="88" marker-end="url(#learn-loop-arrow)"/>
+        <line class="line" x1="432" y1="88" x2="468" y2="88" marker-end="url(#learn-loop-arrow)"/>
+        <line class="line" x1="580" y1="88" x2="616" y2="88" marker-end="url(#learn-loop-arrow)"/>
+        <path class="line" d="M672 120 V136 Q672 144 664 144 H384 Q376 144 376 136 V120" marker-end="url(#learn-loop-arrow)"/>
+        <rect class="paper" x="508" y="150" width="36" height="14"/>
+        <text class="t-arrow" x="526" y="161">반복</text>
+
+        <!-- 상자 -->
+        <rect class="paper" x="24" y="56" width="112" height="64" rx="6"/>
+        <rect class="node" x="24" y="56" width="112" height="64" rx="6"/>
+        <text class="t-name" x="80" y="84">글 · 그림</text>
+        <text class="t-sub" x="80" y="102">데이터 예시</text>
+
+        <rect class="paper" x="172" y="56" width="112" height="64" rx="6"/>
+        <rect class="focal" x="172" y="56" width="112" height="64" rx="6"/>
+        <text class="t-name" x="228" y="84">숫자로 바꿈</text>
+        <text class="t-sub" x="228" y="102">벡터 · 텐서</text>
+
+        <rect class="paper" x="320" y="56" width="112" height="64" rx="6"/>
+        <rect class="node" x="320" y="56" width="112" height="64" rx="6"/>
+        <text class="t-name" x="376" y="84">예측</text>
+        <text class="t-sub" x="376" y="102">지금의 가중치로</text>
+
+        <rect class="paper" x="468" y="56" width="112" height="64" rx="6"/>
+        <rect class="node" x="468" y="56" width="112" height="64" rx="6"/>
+        <text class="t-name" x="524" y="84">오차 계산</text>
+        <text class="t-sub" x="524" y="102">정답과의 차이</text>
+
+        <rect class="paper" x="616" y="56" width="112" height="64" rx="6"/>
+        <rect class="focal" x="616" y="56" width="112" height="64" rx="6"/>
+        <text class="t-name" x="672" y="84">가중치 조정</text>
+        <text class="t-sub" x="672" y="102">오차가 줄도록</text>
+      </svg>
+    </div>
+
+    <p class="caption">기계는 숫자만 다루므로 글과 그림을 먼저 숫자로 바꾼다. 그 뒤 예측하고, 정답과의 오차를 계산하고, 오차가 줄어드는 방향으로 가중치를 조금 고친다. 이 고리를 수많은 예시에 되풀이하는 것이 학습이다.</p>
+  </div>
+</body>
+</html>

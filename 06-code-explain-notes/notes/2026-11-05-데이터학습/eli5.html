@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 학습 아주 쉽게</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --card:#fff; --hot:#e8590c; --bar:#c9d8fb; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --card:#262624; --hot:#ffa94d; --bar:#33456b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 system-ui, "Malgun Gothic", sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.8rem; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 24px; }
+  h2 { font-size:1.2rem; margin:28px 0 10px; }
+  .note { color:var(--muted); font-size:.85rem; margin:6px 0 0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; }
+  .big { font-size:1.2rem; font-weight:700; margin:0; }
+  .small { color:var(--muted); font-size:.95rem; margin:0; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .four { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+  @media (max-width:560px) { .two { grid-template-columns:1fr; } .four { grid-template-columns:1fr 1fr; } }
+  .card.hot { border:3px solid var(--hot); }
+  .card.hot .big { color:var(--hot); }
+  .center { text-align:center; }
+  .arrow { text-align:center; color:var(--muted); font-size:1.2rem; line-height:1; margin:8px 0; }
+  .again { text-align:center; color:var(--hot); font-weight:700; margin:8px 0 0; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { background:var(--card); border:2px solid var(--accent); color:var(--accent); border-radius:8px; padding:4px 12px; font-weight:700; }
+  .chip.num { border-style:dashed; font-family:Consolas, monospace; }
+  .bars { display:grid; grid-template-columns:5em 1fr 3em; gap:6px 10px; align-items:center; }
+  .bars .lab { font-weight:700; }
+  .bars .track { border:1px solid var(--line); border-radius:6px; height:22px; overflow:hidden; }
+  .bars .fill { background:var(--bar); height:100%; display:block; }
+  .bars .fill.hot { background:var(--hot); }
+  .bars .val { font-family:Consolas, monospace; color:var(--muted); font-size:.9rem; }
+  .grid8 { display:grid; grid-template-columns:repeat(8, 1fr); gap:3px; max-width:320px; font-family:Consolas, monospace; font-size:.75rem; }
+  .grid8 span { background:var(--card); border:1px solid var(--line); border-radius:3px; text-align:center; padding:3px 0; color:var(--muted); }
+  .grid8 span.on { background:var(--hot); border-color:var(--hot); color:#fff; font-weight:700; }
+  .ladder { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; align-items:end; }
+  @media (max-width:560px) { .ladder { grid-template-columns:1fr 1fr; } }
+  .ladder .card { padding:10px 8px; text-align:center; }
+  .ladder code { font-family:Consolas, monospace; font-size:.9rem; }
+  .words { border-top:1px solid var(--line); margin-top:28px; padding-top:12px; color:var(--muted); font-size:.95rem; }
+  .words span { display:inline-block; margin-right:14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>AI의 학습, 아주 쉽게</h1>
+  <p class="lead">규칙을 적지 않고 예시를 주면, 기계가 숫자를 고치며 규칙을 찾는다.</p>
+
+  <h2>1. 규칙 대신 예시</h2>
+  <div class="two">
+    <div class="card"><p class="big">규칙을 적는다</p><p class="small">“귀가 뾰족하면 고양이”</p><p class="small">→ 접힌 귀 고양이가 나오면 틀린다.</p><p class="small">→ 규칙이 끝없이 늘어난다.</p></div>
+    <div class="card hot"><p class="big">예시를 준다</p><p class="small">개 사진 · 고양이 사진 잔뜩</p><p class="small">→ 기계가 규칙을 스스로 찾는다.</p><p class="small">→ 이것이 학습.</p></div>
+  </div>
+
+  <h2>2. 학습은 이 고리의 반복</h2>
+  <div class="four">
+    <div class="card center"><p class="big">예측</p><p class="small">답이 뭘까</p></div>
+    <div class="card center"><p class="big">오차</p><p class="small">정답과 얼마나 다른가</p></div>
+    <div class="card center hot"><p class="big">조정</p><p class="small">내부 숫자(가중치)를 고침</p></div>
+    <div class="card center"><p class="big">다시</p><p class="small">다음 예시로</p></div>
+  </div>
+  <p class="again">↻ 아주 많이 되풀이</p>
+
+  <h2>3. 한 걸음을 크게 보면</h2>
+  <div class="card">
+    <p class="small">정답이 7인 예시</p>
+    <div style="height:8px"></div>
+    <div class="bars">
+      <span class="lab">1번째</span><span class="track"><span class="fill" style="width:71%"></span></span><span class="val">5.0</span>
+      <span class="lab">2번째</span><span class="track"><span class="fill" style="width:76%"></span></span><span class="val">5.3</span>
+      <span class="lab">3번째</span><span class="track"><span class="fill" style="width:80%"></span></span><span class="val">5.6</span>
+      <span class="lab">정답</span><span class="track"><span class="fill hot" style="width:100%"></span></span><span class="val">7</span>
+    </div>
+    <p class="note">오차(+2)가 줄어드는 쪽으로 조금씩 민다. 오차의 가장 낮은 곳으로 내려가는 이 방법을 경사하강(gradient descent, 그레이디언트 디센트)이라 한다.</p>
+  </div>
+
+  <h2>4. 기계는 숫자만 안다</h2>
+  <div class="chips">
+    <span class="chip">로이는</span><span class="chip">고양이를</span><span class="chip">좋아한다</span>
+  </div>
+  <div class="arrow">↓ 토큰으로 자르고 숫자 묶음(벡터)으로</div>
+  <div class="chips">
+    <span class="chip num">[0.2, 0.9, …]</span><span class="chip num">[0.7, 0.1, …]</span><span class="chip num">[0.4, 0.6, …]</span>
+  </div>
+  <p class="note">예시 숫자. 실제 숫자 개수와 값은 모델마다 다르다.</p>
+  <div style="height:16px"></div>
+  <div class="card">
+    <p class="small">손글씨 7을 8×8로 줄이면, 칸마다 밝기 숫자 하나</p>
+    <div style="height:8px"></div>
+    <div class="grid8">
+      <span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span>
+      <span>0</span><span class="on">200</span><span class="on">220</span><span class="on">230</span><span class="on">230</span><span class="on">220</span><span class="on">200</span><span>0</span>
+      <span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span class="on">210</span><span class="on">190</span><span>0</span>
+      <span>0</span><span>0</span><span>0</span><span>0</span><span class="on">200</span><span class="on">210</span><span>0</span><span>0</span>
+      <span>0</span><span>0</span><span>0</span><span class="on">200</span><span class="on">210</span><span>0</span><span>0</span><span>0</span>
+      <span>0</span><span>0</span><span class="on">190</span><span class="on">210</span><span>0</span><span>0</span><span>0</span><span>0</span>
+      <span>0</span><span>0</span><span class="on">200</span><span class="on">180</span><span>0</span><span>0</span><span>0</span><span>0</span>
+      <span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span>
+    </div>
+    <p class="note">원문의 예. 실제 손글씨 데이터는 28×28 = 784칸이다.</p>
+  </div>
+
+  <h2>5. 숫자를 늘어놓는 방향이 늘어난다</h2>
+  <div class="ladder">
+    <div class="card"><p class="big">0방향</p><p class="small">숫자 하나</p><code>7</code></div>
+    <div class="card"><p class="big">1방향</p><p class="small">한 줄</p><code>[3, 5, 1]</code></div>
+    <div class="card"><p class="big">2방향</p><p class="small">격자</p><code>흑백 사진</code></div>
+    <div class="card hot"><p class="big">3방향 이상</p><p class="small">격자 겹침</p><code>컬러 사진</code></div>
+  </div>
+  <p class="note">사다리에서는 3방향 이상만 텐서라 부르고, 정의할 때는 0~2방향까지 모두 텐서라 부른다(원문이 두 뜻으로 쓴 것으로 읽힌다).</p>
+
+  <h2>6. 신경망의 한 층: 세 박자</h2>
+  <div class="four">
+    <div class="card center"><p class="big">곱하기</p><p class="small">가중치 W</p></div>
+    <div class="card center"><p class="big">더하기</p><p class="small">편향 b</p></div>
+    <div class="card center hot"><p class="big">바꾸기</p><p class="small">활성화 함수</p></div>
+    <div class="card center"><p class="big">다음 층</p><p class="small">결과가 입력이 됨</p></div>
+  </div>
+  <p class="note">학습은 W와 b를 오차만큼 고치는 일이다.</p>
+
+  <div class="words">
+    <span><b>AI(에이아이)</b> 인공지능</span>
+    <span><b>weight(웨이트)</b> 가중치</span>
+    <span><b>bias(바이어스)</b> 편향</span>
+    <span><b>vector(벡터)</b> 숫자 묶음</span>
+    <span><b>tensor(텐서)</b> 숫자 덩어리</span>
+    <span><b>MNIST(엠니스트)</b> 손글씨 숫자 데이터</span>
+  </div>
+</main>
+</body>
+</html>
