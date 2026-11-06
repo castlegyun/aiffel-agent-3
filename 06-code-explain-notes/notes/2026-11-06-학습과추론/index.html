@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>단순복붙+고급모델 실패작 · 코드 해설 노트</title>
+<style>
+  /* 디자인 규칙: DESIGN.md (GitHub 스타일) */
+  :root {
+    --canvas:#ffffff; --subtle:#f6f8fa; --border:#d0d7de; --fg:#1f2328; --muted:#656d76; --link:#0969da;
+    --tab-line:#fd8c73; --code-bg:rgba(175,184,193,.2);
+    --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif;
+    --font-mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --canvas:#0d1117; --subtle:#161b22; --border:#30363d; --fg:#e6edf3; --muted:#a0a9b4; --link:#4493f8;
+      --tab-line:#f78166; --code-bg:rgba(110,118,129,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--canvas); color:var(--fg); font:400 1.0625rem/1.65 var(--font-body); word-break:keep-all; overflow-wrap:break-word; }
+  main { max-width:920px; margin:0 auto; padding:24px 16px 48px; }
+  a { color:var(--link); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  :focus-visible { outline:2px solid var(--link); outline-offset:2px; }
+  h1 { font-size:1.875rem; line-height:1.25; font-weight:600; margin:8px 0 8px; }
+  .summary { color:var(--muted); font-size:1rem; margin:0 0 16px; max-width:68ch; }
+  .nav { margin-bottom:8px; font-size:.9375rem; }
+  .terms { background:var(--subtle); border:1px solid var(--border); border-radius:6px; padding:10px 16px; margin-bottom:16px; font-size:1rem; }
+  .terms h2 { font-size:1rem; margin:0 0 6px; }
+  .terms summary { cursor:pointer; }
+  .terms ul { margin:8px 0 0; padding-left:20px; color:var(--fg); }
+  .flow-frame { width:100%; height:600px; border:1px solid var(--border); border-radius:6px; margin:0 0 16px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px; flex-wrap:wrap; }
+  .tabs button { font:inherit; font-size:1rem; background:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; padding:10px 18px; color:var(--muted); cursor:pointer; border-radius:6px 6px 0 0; }
+  .tabs button:hover { color:var(--fg); background:var(--subtle); }
+  .tabs button[aria-selected="true"] { color:var(--fg); font-weight:600; border-bottom-color:var(--tab-line); }
+  .panel[hidden] { display:none; }
+  table { width:100%; border-collapse:collapse; font-size:1rem; }
+  th, td { text-align:left; vertical-align:top; padding:8px 14px; border:1px solid var(--border); }
+  th { background:var(--subtle); font-weight:600; }
+  td.n { width:2.5em; font-family:var(--font-mono); color:var(--muted); }
+  td:nth-child(2) { min-width:14em; }
+  code, pre { background:var(--code-bg); border-radius:6px; font:.85em/1.5 var(--font-mono); }
+  code { padding:.2em .4em; white-space:pre-wrap; }
+  pre { padding:12px 16px; overflow:auto; }
+  .words li, .points li { margin:4px 0; }
+  .visual-kind, .visual-reason { margin:4px 0; }
+  .visual-buttons { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:12px 0; }
+  .visual-buttons button { font:inherit; font-size:1rem; font-weight:500; padding:6px 18px; border:1px solid var(--border); border-radius:6px; background:var(--subtle); color:var(--fg); cursor:pointer; }
+  .visual-buttons button[aria-pressed="true"] { border-color:var(--link); color:var(--link); }
+  .visual-buttons button:disabled { opacity:.5; cursor:default; }
+  #visual-frame { width:100%; height:75vh; border:1px solid var(--border); border-radius:6px; background:#fff; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="nav"><a href="../../index.html">← 노트 보관함</a></div>
+  <h1>단순복붙+고급모델 실패작</h1>
+  <p class="summary">모델 안에서 글은 토큰 → 벡터(좌표로 읽는 숫자 묶음)가 되고, 어텐션이 토큰끼리 점수 → 비율 → 섞기로 문맥을 더한 뒤 다음 토큰을 고른다. 학습은 이 계산에 쓰는 가중치를 오차만큼 고치고, 추론은 가중치를 그대로 둔 채 토큰을 하나씩 이어 붙인다. 모든 토큰을 서로 맞대는 구조라서 토큰 수가 비용과 한계를 정한다.</p>
+
+  <details class="terms">
+    <summary><strong>새 용어 19개</strong> (눌러서 펼치기)</summary>
+    <ul>
+      <li><strong>벡터</strong> = 숫자를 순서대로 늘어놓은 묶음. 칸마다의 숫자를 좌표로 읽으면 공간의 점 하나가 된다</li>
+      <li><strong>칸 수</strong> = 벡터 하나에 든 숫자의 개수. 모델이 정하고, 입력 길이와 상관없이 같다</li>
+      <li><strong>토큰</strong> = 모델이 글을 다루는 조각. 학습도 추론도 이 단위로 계산하고, 요금과 한도도 이 단위로 센다</li>
+      <li><strong>토큰화</strong> = 글을 토큰으로 자르는 일</li>
+      <li><strong>임베딩</strong> = 토큰 번호마다 정해 둔 벡터를 꺼내는 일, 또는 그 벡터. 비슷하게 쓰이는 토큰일수록 가까운 자리에 놓인다</li>
+      <li><strong>가중치</strong> = 입력에 곱하는 숫자. 학습으로 정해지고, 추론 때는 바뀌지 않는다</li>
+      <li><strong>편향</strong> = 곱해서 더한 값에 한 번 더 더하는 숫자. 이것도 학습으로 정해진다</li>
+      <li><strong>행렬</strong> = 숫자를 가로세로 격자로 늘어놓은 표. 벡터에 곱하면 다른 벡터가 나온다</li>
+      <li><strong>오차</strong> = 모델의 예측과 정답이 어긋난 정도</li>
+      <li><strong>학습</strong> = 다음 토큰을 예측하고, 정답과 어긋난 만큼 가중치를 고치는 일을 되풀이하는 과정</li>
+      <li><strong>추론</strong> = 가중치를 고치지 않고, 다음 토큰을 하나씩 골라 입력 끝에 이어 붙이는 과정</li>
+      <li><strong>어텐션</strong> = 토큰마다 다른 토큰들과의 관련 점수를 매기고, 점수를 비율로 바꾸고, 그 비율만큼 정보를 섞는 계산</li>
+      <li><strong>어텐션 비율</strong> = 어텐션에서 점수를 바꿔 얻은, 합이 1인 비율. 입력이 들어올 때마다 새로 계산한다</li>
+      <li><strong>출력층</strong> = 모델 맨 끝에서 다음 토큰 후보마다 점수를 매기는 층</li>
+      <li><strong>캐시</strong> = 한 번 계산한 값을 저장해 두었다가 다시 꺼내 쓰는 것</li>
+      <li><strong>은닉 상태</strong> = 글을 앞에서부터 읽으며 지금까지 읽은 내용을 요약해 다음 단계로 넘기는 벡터</li>
+      <li><strong>고정벡터 병목</strong> = 문장 길이와 상관없이 크기가 정해진 벡터 하나에 다 담느라, 긴 문장의 정보가 뭉개지는 문제</li>
+      <li><strong>컨텍스트 윈도우</strong> = 모델이 한 번의 요청에서 참고할 수 있는 토큰의 범위</li>
+      <li><strong>단가</strong> = 토큰 일정 개수마다 매기는 가격. 입력 토큰과 출력 토큰의 가격이 따로 정해진다</li>
+    </ul>
+  </details>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="flow">요약</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
+    <button role="tab" aria-selected="false" data-tab="detail">풀어쓰기</button>
+    <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+  </div>
+
+  <section class="panel" id="flow">
+    <iframe class="flow-frame" src="diagram.html" title="토큰에서 비용까지, 학습과 추론의 두 고리" style="height:620px"></iframe>
+    <ul class="points">
+      <li>모델 안의 길은 하나다: 글 → 토큰 → 토큰 번호 → 벡터(임베딩) → 어텐션으로 서로 참고 → 다음 토큰 확률. 학습과 추론은 이 길을 쓰는 목적만 다르다.</li>
+      <li>벡터는 좌표로 읽는다. 숫자 하나하나에는 뜻이 없고, 점들끼리 가까운지·같은 방향인지가 뜻이 된다. 칸 수(GPT-2 small은 768칸)는 모델이 정하고, 벡터 개수는 토큰 수만큼 는다.</li>
+      <li>어텐션은 점수 → 비율 → 섞기다. Q와 K를 칸끼리 곱해 더해 점수를 내고, 소프트맥스로 비율을 만들고, 그 비율만큼 V를 섞는다.</li>
+      <li>‘가중치’는 두 가지를 가리킨다. 학습으로 정해져 추론 때 고정되는 W, 그리고 입력마다 새로 계산하는 어텐션 비율. 학습은 W를 고치고, 추론은 W를 그대로 쓴다.</li>
+      <li>모든 토큰을 서로 맞대므로 점수표는 n × n칸이다. 그래서 토큰 수가 요금·속도·한도를 정한다. 긴 입력의 가운데 정보는 놓치기 쉽고, 답은 추정이므로 따로 확인한다.</li>
+    </ul>
+  </section>
+
+  <section class="panel" id="detail" hidden>
+    <table>
+      <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>원본 강의 노트북 「트랜스포머 직관」 ‘하나를 알면 나머지가 읽힌다’<br>“새 모델 이름이 뉴스에 뜰 때마다 처음부터 다시 배우는 대신, ‘무엇을 토큰으로 잘랐나’와 ‘무엇이 무엇을 참고하게 만들었나’ 두 질문으로 대개 자리를 잡을 수 있습니다.”<br><br><a href="../2026-11-04-LLM학습추론/index.html">「LLM의 학습과 추론」</a> 풀어쓰기 17행<br>“학습은 다음 토큰을 잘 예측하도록 모델의 가중치를 조정하는 과정이다. 추론은 학습된 가중치를 사용해 입력 뒤에 올 토큰을 하나씩 만드는 과정이다.”</td><td>이 노트 전체의 뼈대다. 모델 안에서는 늘 같은 길을 지난다. 글을 조각으로 자르고 → 조각을 숫자 묶음으로 바꾸고 → 조각끼리 서로 참고하게 계산하고 → 다음 조각을 내놓는다. 이 길을 두 가지 목적으로 쓴다. 정답과 비교해 모델 안의 숫자를 고치면 학습(배울 때)이고, 숫자를 고치지 않고 다음 조각을 계속 이어 붙이면 추론(쓸 때)이다. <a href="../2026-11-05-데이터학습/index.html">「AI는 어떻게 배우나」</a>는 주로 학습 쪽을, <a href="../2026-11-06-토큰컨텍스트/index.html">「토큰은 비용을, 컨텍스트는 한계를 만든다」</a>는 추론에서 생기는 비용과 한계를 다뤘다. 이 노트는 글(토큰) 쪽 길만 잇는다. 그림(텐서)과 활성화 함수는 <a href="../2026-11-05-데이터학습/index.html">「AI는 어떻게 배우나」</a>에 있다.</td></tr>
+        <tr><td class="n">2</td><td><a href="../2026-11-05-데이터학습/index.html">「AI는 어떻게 배우나」</a> 풀어쓰기 14행<br>“숫자 2개면 평면 위의 점 (x, y), 3개면 3차원 공간의 점입니다. 두 점 사이의 ‘비슷함’은 거리로 잴 수 있습니다. A=(2, 3)과 B=(2, 4)는 거리 1이라 비슷하고, C=(9, 1)은 멉니다. 방향(두 화살표가 이루는 각도)으로도 잽니다. 점의 절대 위치가 아니라 점들 사이의 관계가 뜻을 만듭니다.”</td><td>벡터는 숫자를 순서대로 늘어놓은 묶음이고, 칸마다의 숫자를 좌표로 읽으면 공간 위의 점 하나가 된다. [0.9, 0.1]은 가로 0.9, 세로 0.1에 있는 점이고, [0.1, 0.9]는 가로 0.1, 세로 0.9에 있는 다른 점이다. 같은 숫자 두 개라도 칸의 순서가 다르면 자리도 방향도 다르다(이 예시는 이 노트에서 만든 것). 숫자 하나하나에는 뜻이 없다. 점들끼리 가까운지, 같은 방향을 가리키는지가 뜻이 된다. 비슷하게 쓰이는 토큰이 가까운 자리에 오도록 숫자를 정해 둔 벡터를 임베딩이라 부른다.</td></tr>
+        <tr><td class="n">3</td><td><a href="../2026-11-05-데이터학습/index.html">「AI는 어떻게 배우나」</a> 풀어쓰기 17·18행<br>“한 층은 입력에 가중치를 곱하고 편향을 더합니다(Wx + b).” “입력 x=[2, 1], 가중치 W=[0.5, −1], 편향 b=0.2라면 2×0.5 + 1×(−1) + 0.2 = 0.2.”</td><td>신경망 계산의 기본 동작은 칸끼리 곱해서 모두 더하기다. 입력 벡터의 칸마다 정해진 숫자를 곱하고, 결과를 다 더하고, 편향을 더한다. 이때 곱하는 숫자들이 가중치(W)다. 가중치를 여러 줄 쌓은 숫자 표(행렬)를 곱하면 벡터 하나가 다른 벡터 하나로 바뀐다(원본 강의 노트북 「트랜스포머 직관」의 설명: “벡터에 학습된 숫자 표(행렬)를 곱해 다른 벡터로 바꾸는 계산”). 모델 안의 가중치는 모두 학습으로 정해진다. 뒤에 나올 어텐션의 Q·K·V도 이 숫자 표 곱하기로 만든다.</td></tr>
+        <tr><td class="n">4</td><td><a href="../2026-11-04-LLM학습추론/index.html">「LLM의 학습과 추론」</a> 풀어쓰기 8행<br>“모델은 입력 문장을 토큰으로 나누고, 각 토큰을 고유한 숫자 ID로 바꾼다. 임베딩은 토큰 ID를 모델이 계산에 쓸 수 있는 숫자 표현으로 바꾸는 과정이다.”<br><br><a href="https://poloclub.github.io/transformer-explainer/" target="_blank" rel="noopener">Transformer Explainer</a><br>“GPT-2 (small) represents each token in the vocabulary as a 768-dimensional vector; the dimension of the vector depends on the model.”</td><td>순서는 자르기가 먼저다. ① 토큰화: 글을 토큰으로 자른다. ② 번호 붙이기: 토큰마다 토큰 목록에서의 번호(ID)를 붙인다. ③ 임베딩: 번호마다 정해 둔 벡터를 꺼낸다. 번호는 이미 숫자인데 왜 벡터로 또 바꿀까. 번호는 목록에서의 자리일 뿐이라 번호끼리 가깝다고 뜻이 비슷하지 않다(원문에 없는 보충). 뜻을 계산하려면 2행처럼 가깝고 먼 관계를 잴 수 있는 좌표가 필요하다. 여기서 두 수를 섞지 않는다. <strong>칸 수</strong>는 벡터 하나에 든 숫자 개수로, 모델이 정하고 바뀌지 않는다(GPT-2 small은 768칸). <strong>개수</strong>는 벡터가 몇 개인지로, 토큰 하나에 벡터 하나라서, GPT-2 small이라면 입력 토큰이 n개일 때 768칸 벡터가 n개다. 칸 수는 모델마다 다르다. 입력이 길어지면 칸 수가 아니라 개수가 는다. 덧붙여 ‘차원’이라는 말도 두 뜻으로 쓰인다. 벡터의 칸 수(예: GPT-2 small의 768차원)를 말할 때도 있고, 숫자를 몇 방향으로 늘어놓았나(텐서의 0차·1차·2차)를 말할 때도 있다. 이 노트는 앞의 뜻을 ‘칸 수’라고만 쓴다.</td></tr>
+        <tr><td class="n">5</td><td>원본 강의 노트북 「트랜스포머 직관」 ‘도서관에서 책을 찾듯 어텐션이 보는 것’<br>“<code>은행에 예금했다</code>의 <code>은행</code>과 <code>강가의 은행나무</code>의 <code>은행</code>은 표면은 같지만, 첫 문장에서는 <code>예금</code>이, 둘째에서는 <code>강가</code>와 <code>나무</code>가 강한 단서가 되어 같은 글자를 다른 문맥으로 갈라냅니다.”</td><td>임베딩에서 꺼낸 벡터는 번호마다 정해져 있다. 그래서 ‘은행’은 어느 문장에 있든 같은 벡터에서 출발한다(자리 정보는 따로 더해진다). 문맥은 계산 중에 섞어 넣는다. ‘은행에 예금했다’에서 ‘은행’의 벡터를 고칠 때, 모델은 같은 입력의 토큰마다 ① 관련 점수를 매기고(‘예금’이 높다) ② 점수를 합이 1인 비율로 바꾸고 ③ 그 비율만큼 각 토큰의 정보를 가져와 섞는다. 그러면 ‘은행’ 벡터가 돈과 관련된 쪽 자리로 옮겨 간다. ‘강가의 은행나무’에서는 ‘강가’와 ‘나무’에서 많이 가져와 다른 자리로 옮겨 간다. 이 점수 → 비율 → 섞기가 어텐션이다. 모든 토큰이 이 일을 동시에 한다.</td></tr>
+        <tr><td class="n">6</td><td>원본 강의 노트북 「트랜스포머 직관」 ‘Q/K/V는 무엇을 계산하나’<br>“모델은 학습한 세 개의 선형변환으로 그 표현에서 역할이 다른 세 벡터를 뽑아냅니다.” “모든 Q를 모든 K와 맞대 점수표를 만들고, 그 점수를 각 토큰을 얼마나 참고할지의 비율로 바꾼 뒤, 그 비율대로 V를 섞어 문맥이 반영된 새 표현을 내놓습니다.”</td><td>5행의 세 단계를 맡는 벡터가 셋이다. 토큰 벡터마다 숫자 표 세 개를 곱해(3행의 곱하기) Query·Key·Value를 만든다. Q는 이 토큰이 찾는 정보, K는 각 토큰이 내미는 단서, V는 실제로 건네줄 정보다. ① 점수: 내 Q를 각 토큰의 K와 칸끼리 곱해 모두 더한다(원본 노트북에 따르면 실제로는 이 값을 벡터 칸 수의 제곱근으로 한 번 나눠, 칸이 많아도 점수가 지나치게 벌어지지 않게 한다). 길이가 비슷하면 두 벡터가 같은 방향을 가리킬수록 큰 값이 나온다. 2행의 ‘방향으로 비슷함 재기’와 같은 종류의 계산이다(원본 노트북의 단어 유사도 실습도 같은 곱해 더하기로 비슷함을 잰다). ② 비율: 소프트맥스가 점수들을 0과 1 사이, 합이 1인 비율로 바꾼다. 점수를 그 합으로 그냥 나누는 것과는 다르다. <a href="../2026-11-04-LLM학습추론/index.html">「LLM의 학습과 추론」</a> 10행의 계산 예시에서 점수 2, 1, 0은 약 0.67, 0.24, 0.09가 된다. 그냥 나누면 0.67, 0.33, 0이다. ③ 섞기: 비율만큼 각 토큰의 V를 더해 새 벡터를 만든다. 숫자로 보면(이 노트에서 만든 두 칸짜리 예시): Q=[0.9, 0.1]이 K₁=[0.8, 0.2]와 만나면 0.9×0.8 + 0.1×0.2 = 0.74, K₂=[0.1, 0.9]와 만나면 0.9×0.1 + 0.1×0.9 = 0.18이다. 그래서 첫 토큰을 더 많이 참고한다. 실제 벡터는 두 칸이 아니라 수백 칸 이상이다.</td></tr>
+        <tr><td class="n">7</td><td>원본 강의 노트북 「트랜스포머 직관」 ‘Q/K/V는 무엇을 계산하나’<br>“<code>softmax</code>는 그 점수를 ‘각 토큰을 얼마나 참고할지’의 가중치로 바꿉니다.”<br><br><a href="../2026-11-05-데이터학습/index.html">「AI는 어떻게 배우나」</a> 새 용어<br>“가중치 = 입력 숫자에 곱해져 그 입력이 얼마나 중요한지 정하는, 학습으로 바뀌는 숫자”</td><td>같은 ‘가중치’라는 말이 서로 다른 두 가지를 가리킨다. <strong>뜻 1</strong>은 3행의 W처럼 학습으로 정해지는 숫자다. 학습이 끝나면 고정되고, 어떤 글이 들어와도 같다. Q·K·V를 만드는 숫자 표도 여기에 든다. <strong>뜻 2</strong>는 6행 ②의 비율이다. 입력이 들어올 때마다 새로 계산하고, 문장이 바뀌면 달라진다. 비율 자체는 저장되는 숫자가 아니고, 비율을 계산하는 데 쓰는 W가 학습된다. 원본 노트북과 <a href="https://poloclub.github.io/transformer-explainer/" target="_blank" rel="noopener">Transformer Explainer</a>(attention weights)는 둘 다 ‘가중치’라고 부른다. 이 노트에서는 뜻 2를 ‘어텐션 비율’이라고만 쓴다. 소프트맥스도 두 자리에서 쓰인다. 어텐션 안에서 점수를 비율로 바꿀 때, 그리고 맨 끝에서 다음 토큰 후보의 점수(로짓)를 확률로 바꿀 때다. 계산은 같고 대상만 다르다.</td></tr>
+        <tr><td class="n">8</td><td>원본 강의 노트북 「트랜스포머 직관」 ‘Q/K/V는 무엇을 계산하나’<br>“어텐션이 내놓는 것은 문맥을 반영한 표현의 갱신이지, 다음 토큰의 확률이 아닙니다. 다음에 올 토큰의 확률은 이렇게 갱신된 표현을 받아 맨 끝의 출력층이 계산합니다.”<br><br><a href="../2026-11-04-LLM학습추론/index.html">「LLM의 학습과 추론」</a> 풀어쓰기 10행<br>“모델은 다음 토큰 후보마다 먼저 Logit이라는 점수를 매긴다.”</td><td>어텐션은 다음 토큰을 직접 고르지 않는다. 토큰 벡터들을 문맥에 맞게 고칠 뿐이다. 이 고치기를 층마다 되풀이한다(GPT-2 small은 12층). 그다음 맨 끝 출력층이 마지막 벡터로 토큰 목록의 모든 후보에 점수(로짓)를 매긴다. 로짓은 ‘다음에 올 만한 정도’를 나타내는 점수이고, 소프트맥스를 거쳐 확률이 된다. 이 확률에 따라 토큰 하나를 고른다. 다음 토큰을 만드는 모델에서는 아직 만들지 않은 뒤쪽 토큰을 참고하지 못하게 막는다. 앞의 토큰과 자기 자신까지만 본다.</td></tr>
+        <tr><td class="n">9</td><td><a href="../2026-11-05-데이터학습/index.html">「AI는 어떻게 배우나」</a> 풀어쓰기 8행<br>“학습은 이 고리의 반복입니다: 데이터 예시들 → 예측 → 틀린 정도(오차) 계산 → 내부 숫자(가중치) 조정 → 반복.”<br><br><a href="../2026-11-04-LLM학습추론/index.html">「LLM의 학습과 추론」</a> 풀어쓰기 5행<br>“학습할 때는 문장의 마지막 토큰을 가리고, 모델이 그다음 토큰을 맞히게 한다.”</td><td>학습(배울 때)은 2~8행의 계산을 이렇게 쓴다. 문장 앞부분을 넣고 → 다음 토큰의 확률을 계산하고 → 가려 둔 실제 다음 토큰과 비교해 어긋난 정도(오차)를 구하고 → 오차가 줄어드는 쪽으로 가중치를 조금씩 고친다. 이것을 아주 많은 문장으로 되풀이한다. 바뀌는 것은 가중치(임베딩 벡터와 Q·K·V를 만드는 숫자 표도 포함)뿐이고, 계산의 순서와 구조는 그대로다.</td></tr>
+        <tr><td class="n">10</td><td><a href="../2026-11-04-LLM학습추론/index.html">「LLM의 학습과 추론」</a> 풀어쓰기 10·11행<br>“선택한 토큰은 다음 입력에 더해지고, 모델은 같은 과정을 반복해 문장을 만든다.” “KV Cache는 이전 계산에서 만든 정보를 저장해 다음 토큰을 계산할 때 다시 활용한다.”</td><td>추론(쓸 때)에서는 가중치를 고치지 않는다. 입력 토큰들로 계산해 다음 토큰을 하나 고르고 → 그 토큰을 입력 끝에 붙이고 → 늘어난 입력으로 같은 계산을 또 한다. 끝을 뜻하는 토큰이 나오면 멈춘다. 우리가 AI에게 질문하고 답을 받는 일이 추론이다. 매번 앞부분을 처음부터 다시 계산하면 느리다. 그래서 앞 토큰들의 K와 V는 저장해 두고 다시 쓴다. 이 저장소가 KV 캐시다. 새 토큰은 자기 Q·K·V만 새로 만들고, 자기 Q를 저장된 K 전부(자기 것 포함)와 맞댄다(원문에 없는 보충).</td></tr>
+        <tr><td class="n">11</td><td>원본 강의 노트북 「트랜스포머 직관」 ‘문장을 벡터 하나에 욱여넣기’<br>“열 단어짜리 문장이든 쉰 단어짜리 문장이든, 원문의 모든 정보가 반드시 크기가 고정된 벡터 하나를 통과해야 합니다. 이것이 고정벡터 병목(fixed-vector bottleneck)입니다.”<br><br>원본 강의 노트북 「트랜스포머 직관」 ‘되돌아보기로 병목을 깨다’<br>“인코더가 원문을 읽으며 만든 단어별 은닉 상태를 하나로 뭉개 버리지 않고 전부 남겨 둡니다. 그리고 디코더는 번역문의 단어를 하나 만들 때마다 원문의 모든 단어를 되돌아보며, 지금 이 순간 어느 단어가 중요한지 가중치를 매깁니다.”</td><td>어텐션은 번역 모델에서 처음 나왔다. 그전 방식은 원문을 앞에서부터 읽으며 지금까지의 요약을 벡터 하나(은닉 상태)에 계속 고쳐 썼고, 다 읽은 뒤 그 벡터 하나만 넘겨 번역문을 만들었다. 벡터 하나의 칸 수는 정해져 있다. 그래서 원문이 10단어든 50단어든 같은 칸 수에 다 담아야 했고, 긴 문장은 앞부분이 뭉개졌다(고정벡터 병목). 어텐션은 단어마다 만든 벡터를 버리지 않고 모두 남겨 두고, 번역 단어를 하나 만들 때마다 원문 단어 전부를 다시 본다. 이때는 번역문 쪽 토큰이 원문 쪽 토큰을 본다. GPT 같은 모델의 어텐션은 같은 입력 안의 토큰끼리 서로 본다. 점수 → 비율 → 섞기라는 순서는 같고(점수를 매기는 식은 연구마다 다르다), 보는 대상만 다르다. 여기서 맞바꿈이 보인다. 벡터 하나는 문장이 길어도 크기가 그대로라 계산이 가볍지만 정보가 뭉개진다. 모든 벡터를 남겨 다 맞대면 덜 뭉개지는 대신 토큰 수가 늘수록 계산이 커진다(두 내용을 이어 붙인 이 노트의 정리). 다음 행이 그 계산 이야기다.</td></tr>
+        <tr><td class="n">12</td><td><a href="../2026-11-06-토큰컨텍스트/index.html">「토큰은 비용을, 컨텍스트는 한계를 만든다」</a> 풀어쓰기 2행<br>“일반적인 밀집 어텐션으로 입력 전체를 처리할 때는 토큰 사이의 비교가 토큰 수의 제곱에 가깝게 늘어납니다. 입력이 두 배라면 이 비교 계산은 네 배 가까이 늘 수 있지만, 전체 응답 시간이나 청구 요금까지 네 배가 된다는 뜻은 아닙니다.”<br><br><a href="../2026-11-06-토큰컨텍스트/index.html">「토큰은 비용을, 컨텍스트는 한계를 만든다」</a> 풀어쓰기 9행<br>“첫째, 한국어는 22토큰, 영어는 16토큰으로 약 1.4배 차이가 납니다.”</td><td>6행에서 모든 Q를 모든 K와 맞댔다. 토큰이 n개면 점수표는 n × n칸이다. 1,000개면 약 100만 칸, 2,000개면 약 400만 칸이라, 입력이 두 배면 이 계산은 네 배 가까이 된다. 점수표의 칸 수를 정하는 것은 토큰 개수 n이다. 벡터 칸 수는 점수 한 칸을 계산하는 데 드는 곱하기·더하기 횟수에 영향을 줄 뿐, 입력이 길어져도 바뀌지 않는다. 요금은 이 계산량으로 매기지 않는다. 입력·출력 토큰 수에 단가를 곱해 매긴다. 원문 실습의 한 쌍(o200k_base 토크나이저)에서 같은 뜻의 문장이 한국어 22토큰, 영어 16토큰이었다. 이 비율이고 단가가 같다면 한국어가 약 1.4배 든다. 비율은 문장과 토크나이저마다 다르다. 다만 요금이나 응답 시간 전체가 네 배로 뛰지는 않는다.</td></tr>
+        <tr><td class="n">13</td><td><a href="../2026-11-06-토큰컨텍스트/index.html">「토큰은 비용을, 컨텍스트는 한계를 만든다」</a> 풀어쓰기 12·17행<br>“정확히 말하면 모델이 한 번의 요청에서 참고할 수 있는 토큰의 범위입니다.” “이 연구는 긴 입력에 정보를 담을 수 있는 능력과, 그 정보를 정확히 찾아 쓰는 능력이 다를 수 있음을 보여 줍니다.”</td><td>한 번에 맞댈 수 있는 토큰 개수에는 상한이 있다. 이것이 컨텍스트 윈도우이고, 범위 밖의 글은 그 요청에서 참고하지 못한다. 범위 안에 넣었다고 다 잘 쓰는 것도 아니다. 긴 입력에서 맨 앞과 맨 뒤의 정보는 잘 쓰고 가운데 정보는 놓치기 쉽다는 실험 결과(U자 곡선, Lost in the Middle)가 있다. 이 경향은 모델·과제마다 다르고, 원인을 어텐션 하나로 단정할 수 없다(원문이 직접 선을 긋는다). 그래서 많이 넣기보다 무엇을 넣을지 고른다.</td></tr>
+        <tr><td class="n">14</td><td><a href="../2026-11-05-데이터학습/index.html">「AI는 어떻게 배우나」</a> 풀어쓰기 9행<br>“학습의 결과물은 규칙집이 아니라 파라미터에 압축된 패턴입니다. 일반화는 어디까지나 추정입니다. 그래서 모델은 자신 있게 틀릴 수 있습니다.”<br><br><a href="../2026-11-06-토큰컨텍스트/index.html">「토큰은 비용을, 컨텍스트는 한계를 만든다」</a> 풀어쓰기 19행<br>“그래서 모델의 결론은 언제나 검증 장치와 함께 두어야 합니다.”</td><td>두 노트는 같은 곳에서 끝난다. 학습이 남기는 것은 사람이 읽을 규칙이 아니라 가중치 숫자이고, 추론은 그 숫자로 다음 토큰의 확률을 계산해 고르는 일이다. 어텐션도 관련 점수를 계산할 뿐, 내용이 맞는지 확인하는 단계는 없다. 그래서 답이 그럴듯해도 틀릴 수 있고, 따로 확인하는 절차와 함께 쓴다.</td></tr>
+        <tr><td class="n">15</td><td><a href="https://poloclub.github.io/transformer-explainer/" target="_blank" rel="noopener">Transformer Explainer</a> ‘Interactive Features’<br>“Interact with attention maps to see how the model focuses on different tokens in the input sequence.”</td><td>2~10행을 실제 모델(GPT-2 small)로 볼 수 있는 웹페이지다. 이 순서로 이것만 본다. ① 위쪽 Examples에서 예시 문장을 고른다. 내 문장을 넣으려면 모델(약 600MB)을 내려받아야 하므로 처음엔 예시로 본다. ② 왼쪽 Embedding 열: 문장이 토큰으로 잘린 모습이다. 돋보기를 누르면 토큰 → 번호 → 768칸 벡터 단계가 나온다(4행). ③ 가운데 Attention 격자: 토큰 수 × 토큰 수 점수표다(6·12행). 한쪽 삼각형이 비어 있는 것은 뒤쪽 토큰을 못 보게 막았기 때문이다(8행). 화면의 attention weights는 이 노트의 ‘어텐션 비율’이다(7행). ④ 오른쪽 Probabilities: 다음 토큰 후보와 확률이다(8행). Temperature를 움직이면 확률이 고르게 퍼지거나 1등에 몰린다. 건너뛸 것: MLP, Residual 같은 다른 블록은 이 노트 범위 밖이다. 이 사이트는 추론만 보여 주고, 학습(가중치 고치기)은 나오지 않는다. 영어 화면이고, 영어로 학습한 모델이다.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="words" hidden>
+    <ul class="words">
+      <li><strong>token</strong>(토큰): 토큰의 영어 이름</li>
+      <li><strong>vector</strong>(벡터): 벡터의 영어 이름</li>
+      <li><strong>embedding</strong>(임베딩): 임베딩의 영어 이름</li>
+      <li><strong>ID</strong>(아이디): 토큰 목록에서 토큰마다 붙은 번호</li>
+      <li><strong>weight</strong>(웨이트): 가중치의 영어 이름</li>
+      <li><strong>matrix</strong>(매트릭스): 행렬의 영어 이름</li>
+      <li><strong>Wx + b</strong>(더블유 엑스 플러스 비): 입력 x에 가중치 W를 곱하고 편향 b를 더하는 식</li>
+      <li><strong>attention</strong>(어텐션): 어텐션의 영어 이름</li>
+      <li><strong>Query</strong>(쿼리): 어텐션에서 지금 토큰이 찾는 정보를 나타내는 벡터. Q로 줄여 쓴다</li>
+      <li><strong>Key</strong>(키): 어텐션에서 각 토큰이 내미는 단서를 나타내는 벡터. K로 줄여 쓴다</li>
+      <li><strong>Value</strong>(밸류): 어텐션에서 참고하기로 정한 토큰이 실제로 건네주는 정보 벡터. V로 줄여 쓴다</li>
+      <li><strong>softmax</strong>(소프트맥스): 점수들을 0과 1 사이, 합이 1인 비율로 바꾸는 계산. 점수를 합으로 그냥 나누는 것과는 다르다</li>
+      <li><strong>logit</strong>(로짓): 출력층이 다음 토큰 후보마다 매긴 점수. 소프트맥스를 거쳐 확률이 된다</li>
+      <li><strong>attention weights</strong>(어텐션 웨이츠): 자료와 사이트에서 어텐션 비율을 부르는 이름. 학습으로 정하는 가중치 W와는 다르다</li>
+      <li><strong>KV cache</strong>(케이브이 캐시): 추론 때 앞 토큰들의 Key와 Value를 저장해 두고 다시 쓰는 캐시</li>
+      <li><strong>hidden state</strong>(히든 스테이트): 은닉 상태의 영어 이름</li>
+      <li><strong>fixed-vector bottleneck</strong>(픽스트 벡터 보틀넥): 고정벡터 병목의 영어 이름</li>
+      <li><strong>RNN</strong>(알엔엔): Recurrent Neural Network. 글을 앞에서부터 한 단어씩 읽으며 은닉 상태를 넘기는 신경망</li>
+      <li><strong>context window</strong>(컨텍스트 윈도우): 컨텍스트 윈도우의 영어 이름</li>
+      <li><strong>Lost in the Middle</strong>(로스트 인 더 미들): 긴 입력의 가운데 정보를 잘 못 쓰는 경향을 보고한 Liu 등(2023)의 연구 이름</li>
+      <li><strong>U자</strong>(유 자): 양 끝이 높고 가운데가 낮은 곡선 모양</li>
+      <li><strong>GPT</strong>(지피티): 다음 토큰을 이어 쓰는 언어 모델 계열</li>
+      <li><strong>GPT-2 small</strong>(지피티 투 스몰): Transformer Explainer가 쓰는 모델. 파라미터 1억 2,400만 개, 토큰마다 768칸 벡터, 12층</li>
+      <li><strong>Transformer Explainer</strong>(트랜스포머 익스플레이너): 조지아공대 Polo Club이 만든 웹페이지. GPT-2 small이 브라우저에서 돌아가는 과정을 보여 준다(MIT 라이선스)</li>
+      <li><strong>Temperature</strong>(템퍼러처): 로짓을 이 값으로 나눈 뒤 소프트맥스를 하는 설정. 낮으면 1등에 몰리고 높으면 고르게 퍼진다</li>
+      <li><strong>MLP</strong>(엠엘피): Multi-Layer Perceptron. 트랜스포머 블록 안에서 토큰마다 따로 계산하는 층. 이 노트 범위 밖이다</li>
+    </ul>
+  </section>
+  <section class="panel" id="visual" hidden>
+    <p class="visual-kind"><strong>그림 종류:</strong> 데이터 이동 구조도</p>
+    <p class="visual-reason"><strong>고른 이유:</strong> 글이 토큰 → 벡터 → 어텐션 → 다음 토큰으로 이동하는 한 길 위에서, 학습과 추론은 되돌아가는 곳만 다르다. 두 노트가 이 길의 어느 쪽을 다뤘는지도 함께 표시했다.</p>
+    <div class="visual-buttons">
+      <button type="button" data-src="summary.html">종합 정리</button>
+      <button type="button" data-src="diagram.html">그림 하나</button>
+      <button type="button" data-src="eli5.html">아주 쉽게</button>
+      <a id="visual-open" href="#" target="_blank" rel="noopener" hidden>새 탭으로 열기</a>
+    </div>
+    <iframe id="visual-frame" title="그림 보기" hidden></iframe>
+  </section>
+</main>
+<script>
+  const tabs = document.querySelectorAll('.tabs button');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabs.forEach(function (x) {
+        const on = x === b;
+        x.setAttribute('aria-selected', on);
+        document.getElementById(x.dataset.tab).hidden = !on;
+      });
+    });
+  });
+  const frame = document.getElementById('visual-frame');
+  const openLink = document.getElementById('visual-open');
+  const vbtns = document.querySelectorAll('.visual-buttons button[data-src]');
+  vbtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      vbtns.forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      frame.src = b.dataset.src;
+      frame.hidden = false;
+      openLink.href = b.dataset.src;
+      openLink.hidden = false;
+    });
+  });
+  // 그림(diagram.html)은 프레임 높이를 그림 크기에 맞춘다. 그림 파일은 고치지 않고 불러올 때 스타일을 얹는다.
+  function fitDiagram(f) {
+    try {
+      const d = f.contentDocument;
+      if (!d || !/diagram\.html$/.test(f.contentWindow.location.pathname)) { f.style.height = ''; return; }
+      if (d.getElementById('fit-fix')) return;
+      const st = d.createElement('style');
+      st.id = 'fit-fix';
+      st.textContent = 'body{min-height:0;display:flex;align-items:center;justify-content:center}';
+      d.head.appendChild(st);
+      const fit = function () { f.style.height = (d.body.offsetHeight + 2) + 'px'; };
+      fit();
+      if (d.fonts && d.fonts.ready) d.fonts.ready.then(fit);
+      if (f.contentWindow.ResizeObserver) new f.contentWindow.ResizeObserver(fit).observe(d.body);
+    } catch (e) { /* file:// 에서는 기본 높이를 유지한다 */ }
+  }
+  [document.querySelector('.flow-frame'), document.getElementById('visual-frame')].forEach(function (f) {
+    if (f) f.addEventListener('load', function () { fitDiagram(f); });
+  });
+</script>
+</body>
+</html>

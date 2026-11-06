@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>토큰에서 비용까지, 학습과 추론의 두 고리</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper:       #f5f5f5;
+      --ink:         #2d3142;
+      --muted:       #4f5d75;
+      --soft:        #5a6580;
+      --accent:      #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --node-fill:   #ffffff;
+      --node-stroke: #2d3142;
+      --font-sans:   'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:  'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:   'Geist Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:       #2d3142;
+        --ink:         #f5f5f5;
+        --muted:       #bfc0c0;
+        --soft:        #949eb2;
+        --accent:      #f08a59;
+        --accent-tint: rgba(240,138,89,0.10);
+        --node-fill:   rgba(245,245,245,0.04);
+        --node-stroke: rgba(245,245,245,0.45);
+      }
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 1.5rem 1rem;
+    }
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .caption { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; }
+    svg { width: 100%; min-width: 848px; display: block; }
+    .paper    { fill: var(--paper); }
+    .node     { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1; }
+    .focal    { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2; }
+    .boundary { fill: none; stroke: var(--soft); stroke-width: 1; stroke-dasharray: 4 3; }
+    .line     { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .head     { fill: var(--muted); }
+    .t-name   { fill: var(--ink); font: 600 12px var(--font-sans); text-anchor: middle; }
+    .t-sub    { fill: var(--muted); font: 400 12px var(--font-sans); text-anchor: middle; }
+    .t-row    { fill: var(--ink); font: 600 12px var(--font-sans); }
+    .t-note   { fill: var(--muted); font: 400 12px var(--font-sans); }
+    .t-label  { fill: var(--muted); font: 500 11px var(--font-sans); text-anchor: middle; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Data flow · learning and inference</p>
+    <h1>토큰에서 비용까지 한 길로: 학습과 추론</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 848 376" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="learn-infer-title learn-infer-desc">
+        <title id="learn-infer-title">토큰에서 비용까지, 학습과 추론의 두 고리</title>
+        <desc id="learn-infer-desc">글이 토큰, 벡터, 어텐션, 출력층을 지나 다음 토큰이 된다. 위 고리인 학습은 다음 토큰을 정답과 비교해 모델 안의 가중치를 고친다. 아래 고리인 추론은 가중치를 그대로 두고 고른 토큰을 입력 끝에 붙여 다시 계산하며, 이때 토큰 수가 점수표 크기와 요금과 창 한도를 정한다.</desc>
+        <defs>
+          <marker id="learn-infer-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
+        </defs>
+
+        <rect class="paper" width="100%" height="100%"/>
+
+        <!-- 고리 설명 -->
+        <text class="t-row"  x="24" y="40">학습(배울 때): 정답과 비교해 W를 고친다</text>
+        <text class="t-note" x="24" y="60">다룬 노트 「AI는 어떻게 배우나」</text>
+        <text class="t-row"  x="24" y="340">추론(쓸 때): W는 그대로, 고른 토큰을 붙여 다시 계산한다</text>
+        <text class="t-note" x="24" y="360">다룬 노트 「토큰은 비용을, 컨텍스트는 한계를 만든다」</text>
+
+        <!-- 모델 경계 -->
+        <rect class="boundary" x="276" y="100" width="428" height="132" rx="8"/>
+        <text class="t-note" x="292" y="120">모델 · 안의 숫자 W는 학습으로 정함</text>
+
+        <!-- 연결선 먼저 -->
+        <line class="line" x1="112" y1="168" x2="144" y2="168" marker-end="url(#learn-infer-arrow)"/>
+        <line class="line" x1="248" y1="168" x2="292" y2="168" marker-end="url(#learn-infer-arrow)"/>
+        <line class="line" x1="404" y1="168" x2="428" y2="168" marker-end="url(#learn-infer-arrow)"/>
+        <line class="line" x1="552" y1="168" x2="576" y2="168" marker-end="url(#learn-infer-arrow)"/>
+        <line class="line" x1="688" y1="168" x2="740" y2="168" marker-end="url(#learn-infer-arrow)"/>
+        <!-- 학습 고리 -->
+        <line class="line" x1="784" y1="132" x2="784" y2="80" marker-end="url(#learn-infer-arrow)"/>
+        <path class="line" d="M740 52 H498 Q490 52 490 60 V100" marker-end="url(#learn-infer-arrow)"/>
+        <!-- 추론 고리 -->
+        <path class="line" d="M784 204 V268 Q784 276 776 276 H600" marker-end="url(#learn-infer-arrow)"/>
+        <path class="line" d="M360 276 H204 Q196 276 196 268 V204" marker-end="url(#learn-infer-arrow)"/>
+
+        <!-- 화살표 글씨 (가림판 먼저) -->
+        <rect class="paper" x="584" y="44" width="72" height="16"/>
+        <text class="t-label" x="620" y="56">가중치 고침</text>
+        <rect class="paper" x="644" y="268" width="88" height="16"/>
+        <text class="t-label" x="688" y="280">입력 끝에 붙임</text>
+        <rect class="paper" x="248" y="268" width="64" height="16"/>
+        <text class="t-label" x="280" y="280">다시 계산</text>
+
+        <!-- 글 -->
+        <rect class="paper" x="24" y="132" width="88" height="72" rx="6"/>
+        <rect class="node" x="24" y="132" width="88" height="72" rx="6"/>
+        <text class="t-name" x="68" y="164">글</text>
+        <text class="t-sub" x="68" y="184">사람의 문장</text>
+
+        <!-- 토큰 -->
+        <rect class="paper" x="144" y="132" width="104" height="72" rx="6"/>
+        <rect class="node" x="144" y="132" width="104" height="72" rx="6"/>
+        <text class="t-name" x="196" y="156">토큰</text>
+        <text class="t-sub" x="196" y="176">자르기 → 번호</text>
+        <text class="t-sub" x="196" y="192">개수 n</text>
+
+        <!-- 벡터 -->
+        <rect class="paper" x="292" y="132" width="112" height="72" rx="6"/>
+        <rect class="node" x="292" y="132" width="112" height="72" rx="6"/>
+        <text class="t-name" x="348" y="156">벡터</text>
+        <text class="t-sub" x="348" y="176">임베딩</text>
+        <text class="t-sub" x="348" y="192">칸 수는 고정</text>
+
+        <!-- 어텐션 (초점) -->
+        <rect class="paper" x="428" y="132" width="124" height="72" rx="6"/>
+        <rect class="focal" x="428" y="132" width="124" height="72" rx="6"/>
+        <text class="t-name" x="490" y="156">어텐션</text>
+        <text class="t-sub" x="490" y="176">Q·K 점수 → 비율</text>
+        <text class="t-sub" x="490" y="192">→ V 섞기</text>
+
+        <!-- 출력층 -->
+        <rect class="paper" x="576" y="132" width="112" height="72" rx="6"/>
+        <rect class="node" x="576" y="132" width="112" height="72" rx="6"/>
+        <text class="t-name" x="632" y="156">출력층</text>
+        <text class="t-sub" x="632" y="176">로짓 → 확률</text>
+        <text class="t-sub" x="632" y="192">후보마다</text>
+
+        <!-- 다음 토큰 -->
+        <rect class="paper" x="740" y="132" width="88" height="72" rx="6"/>
+        <rect class="node" x="740" y="132" width="88" height="72" rx="6"/>
+        <text class="t-name" x="784" y="164">다음 토큰</text>
+        <text class="t-sub" x="784" y="184">확률로 고름</text>
+
+        <!-- 정답과 비교 (학습) -->
+        <rect class="paper" x="740" y="24" width="88" height="56" rx="6"/>
+        <rect class="node" x="740" y="24" width="88" height="56" rx="6"/>
+        <text class="t-name" x="784" y="48">정답과 비교</text>
+        <text class="t-sub" x="784" y="66">오차 계산</text>
+
+        <!-- 토큰 수가 정한다 (추론) -->
+        <rect class="paper" x="360" y="248" width="240" height="56" rx="6"/>
+        <rect class="node" x="360" y="248" width="240" height="56" rx="6"/>
+        <text class="t-name" x="480" y="272">토큰 수 n이 정한다</text>
+        <text class="t-sub" x="480" y="290">점수표 n × n · 요금 · 창 한도</text>
+      </svg>
+    </div>
+
+    <p class="caption">가운데 길(글 → 토큰 → 벡터 → 어텐션 → 출력층 → 다음 토큰)은 학습과 추론이 똑같이 지난다. 위 고리(학습)는 다음 토큰을 정답과 비교해 모델 안의 숫자 W를 고친다. 아래 고리(추론)는 W를 그대로 두고, 고른 토큰을 입력 끝에 붙여 다시 계산한다. 다시 계산할 때마다 토큰 수 n이 늘고, n이 점수표 크기(n × n)와 요금, 창 한도를 정한다. 벡터 한 줄의 칸 수는 모델마다 다르고, 한 모델 안에서는 어떤 글이 와도 같다(예: GPT-2 small은 768칸).</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>학습과 추론 아주 쉽게</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --card:#fff; --hot:#e8590c; --bar:#c9d8fb; --dim:#eee; --green:#2b8a3e; --cell:47,111,237; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --card:#262624; --hot:#ffa94d; --bar:#33456b; --dim:#2e2e2c; --green:#69db7c; --cell:122,162,255; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 system-ui, "Malgun Gothic", sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.8rem; margin:0 0 4px; line-height:1.3; }
+  .lead { color:var(--muted); margin:0 0 24px; }
+  h2 { font-size:1.2rem; margin:36px 0 10px; }
+  h2 .no { display:inline-block; width:1.6em; height:1.6em; line-height:1.6em; text-align:center; border-radius:50%; background:var(--accent); color:#fff; font-size:.85rem; margin-right:6px; vertical-align:2px; }
+  .note { color:var(--muted); font-size:.85rem; margin:8px 0 0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; }
+  .big { font-size:1.15rem; font-weight:700; margin:12px 0 0; }
+  .small { color:var(--muted); font-size:.95rem; margin:0 0 10px; }
+  .hot { color:var(--hot); font-weight:700; }
+  .acc { color:var(--accent); font-weight:700; }
+  .mono { font-family:Consolas, "Malgun Gothic", monospace; }
+  /* 1. 조각 → 번호 → 숫자 묶음 */
+  .pipe { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px 8px; text-align:center; }
+  .chip { display:inline-block; background:var(--card); border:2px solid var(--accent); color:var(--accent); border-radius:8px; padding:2px 10px; font-weight:700; }
+  .chip.hl { border-color:var(--hot); color:var(--hot); }
+  .idtag { font-family:Consolas, monospace; color:var(--muted); font-size:.9rem; }
+  .down { color:var(--muted); font-size:.9rem; line-height:1; }
+  .vec { display:inline-grid; grid-template-columns:repeat(2, 14px); gap:2px; }
+  .vec i { width:14px; height:14px; border-radius:3px; display:block; }
+  .rowlab { grid-column:1 / -1; text-align:left; font-size:.85rem; color:var(--muted); margin-top:2px; }
+  /* 2·5. 좌표 그림 */
+  .plots { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:600px) { .plots { grid-template-columns:1fr; } }
+  svg.plot { width:100%; height:auto; display:block; }
+  svg.plot .axis { stroke:var(--muted); stroke-width:1.5; fill:none; }
+  svg.plot .grid { stroke:var(--line); stroke-width:1; }
+  svg.plot text { fill:var(--muted); font:600 13px system-ui, "Malgun Gothic", sans-serif; }
+  svg.plot text.w { fill:var(--fg); font-size:15px; }
+  svg.plot text.a { fill:var(--accent); }
+  svg.plot text.h { fill:var(--hot); }
+  svg.plot .pa { fill:var(--accent); }
+  svg.plot .ph { fill:var(--hot); }
+  svg.plot .pm { fill:var(--muted); }
+  svg.plot .va { stroke:var(--accent); stroke-width:3; fill:none; }
+  svg.plot .vh { stroke:var(--hot); stroke-width:3; fill:none; }
+  svg.plot .mv { stroke:var(--hot); stroke-width:2.5; fill:none; }
+  svg.plot .mv2 { stroke:var(--green); stroke-width:2.5; fill:none; stroke-dasharray:6 4; }
+  svg.plot text.g { fill:var(--green); }
+  svg.plot .pg { fill:var(--green); }
+  .cap { text-align:center; font-weight:700; margin:4px 0 0; font-size:.95rem; }
+  /* 3. 개수와 칸 수 */
+  .rows { display:grid; gap:4px; }
+  .r { display:flex; align-items:center; gap:6px; }
+  .r .lab { flex:0 0 3.2em; font-size:.85rem; font-weight:700; text-align:right; }
+  .r .cells { display:flex; gap:2px; flex:1; min-width:0; overflow:hidden; }
+  .r .cells i { flex:0 0 12px; height:14px; border-radius:2px; background:var(--bar); display:block; }
+  .r .end { flex:0 0 4.6em; font-size:.8rem; color:var(--muted); font-family:Consolas, "Malgun Gothic", monospace; }
+  .r.new .lab { color:var(--hot); }
+  .r.new .cells i { background:var(--hot); opacity:.55; }
+  .split { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  @media (max-width:600px) { .split { grid-template-columns:1fr; } }
+  .pill { border:1px solid var(--line); border-radius:10px; padding:8px 12px; text-align:center; }
+  .pill b { display:block; font-size:1.05rem; }
+  /* 4. 어텐션 */
+  .sent { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .steps { display:grid; gap:14px; }
+  .step-h { font-weight:700; margin:0 0 6px; }
+  .step-h .no2 { display:inline-block; min-width:1.5em; padding:0 .3em; border-radius:6px; background:var(--dim); text-align:center; margin-right:6px; }
+  .bars { display:grid; grid-template-columns:3.4em 1fr 4.2em; gap:6px 10px; align-items:center; }
+  .bars .lab { font-weight:700; text-align:right; }
+  .bars .track { border:1px solid var(--line); border-radius:6px; height:22px; overflow:hidden; }
+  .bars .fill { background:var(--bar); height:100%; display:block; }
+  .bars .fill.hot { background:var(--hot); }
+  .bars .val { font-family:Consolas, monospace; color:var(--muted); font-size:.9rem; }
+  .mix { display:flex; height:30px; border-radius:6px; overflow:hidden; border:1px solid var(--line); }
+  .mix span { display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; }
+  .qk { font-family:Consolas, "Malgun Gothic", monospace; background:var(--dim); border-radius:8px; padding:8px 12px; font-size:.95rem; overflow-x:auto; white-space:nowrap; }
+  /* 5. 가중치 두 뜻 */
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:600px) { .two { grid-template-columns:1fr; } }
+  .two .card { border-width:2px; }
+  .two .w { border-color:var(--accent); }
+  .two .a { border-color:var(--hot); }
+  .two h3 { margin:0 0 6px; font-size:1.05rem; }
+  .two ul { margin:0; padding-left:1.1em; }
+  .two li { margin:2px 0; }
+  /* 6. 두 고리 */
+  svg.loop { width:100%; height:auto; display:block; }
+  svg.loop .box { fill:var(--card); stroke:var(--line); stroke-width:1.5; }
+  svg.loop .box.w { stroke:var(--accent); }
+  svg.loop .box.h { stroke:var(--hot); }
+  svg.loop .ln { stroke:var(--muted); stroke-width:1.8; fill:none; }
+  svg.loop .hd { fill:var(--muted); }
+  svg.loop text { fill:var(--fg); font:700 14px system-ui, "Malgun Gothic", sans-serif; text-anchor:middle; }
+  svg.loop text.s { fill:var(--muted); font-weight:600; font-size:12px; }
+  svg.loop text.t { font-size:16px; text-anchor:start; }
+  svg.loop text.t.a { fill:var(--accent); }
+  svg.loop text.t.h { fill:var(--hot); }
+  /* 7. 점수표와 창 */
+  .grids { display:flex; gap:28px; align-items:flex-end; flex-wrap:wrap; }
+  .grid { display:grid; gap:2px; }
+  .grid span { width:18px; height:18px; border-radius:3px; background:var(--bar); }
+  .g4 { grid-template-columns:repeat(4, 18px); }
+  .g8 { grid-template-columns:repeat(8, 18px); }
+  .g8 span { background:var(--hot); }
+  .gcap { margin:8px 0 0; font-weight:700; }
+  .strip { display:flex; gap:3px; flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; }
+  .strip span { flex:0 0 22px; height:30px; border-radius:4px; background:var(--bar); }
+  .strip span.out { background:var(--dim); border:1px dashed var(--muted); }
+  .bracket { display:flex; gap:3px; margin-top:4px; font-size:.85rem; font-weight:700; }
+  .bracket .in { flex:0 0 calc(14 * 22px + 13 * 3px); border-top:3px solid var(--accent); color:var(--accent); padding-top:2px; text-align:center; }
+  .bracket .outside { flex:1; border-top:3px dashed var(--muted); color:var(--muted); padding-top:2px; text-align:center; min-width:120px; }
+  /* 8. 마무리 */
+  .three { display:grid; grid-template-columns:1.1fr 1fr 0.9fr; gap:8px; }
+  @media (max-width:600px) { .three { grid-template-columns:1fr; } }
+  .three .card { text-align:center; }
+  .three .mark { font-size:1.4rem; font-weight:700; color:var(--accent); margin:0; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>글이 답이 되기까지, 아주 쉽게</h1>
+  <p class="lead">글은 숫자가 된다. 숫자끼리 서로 보고, 다음 조각을 고른다. 배울 때는 숫자를 고치고, 쓸 때는 고치지 않고 그대로 쓴다.</p>
+
+  <!-- 1 -->
+  <h2><span class="no">1</span>자르고 → 번호 붙이고 → 숫자 묶음으로</h2>
+  <div class="card">
+    <div class="pipe">
+      <div><span class="chip hl">은행</span></div><div><span class="chip">에</span></div><div><span class="chip">예금</span></div><div><span class="chip">했다</span></div>
+      <div class="rowlab">① 조각(토큰)으로 자른다</div>
+      <div class="idtag">#4821</div><div class="idtag">#57</div><div class="idtag">#9130</div><div class="idtag">#612</div>
+      <div class="rowlab">② 조각마다 번호를 붙인다. 번호는 목록의 자리일 뿐, 뜻이 없다</div>
+      <div><span class="vec"><i style="background:rgba(var(--cell),.9)"></i><i style="background:rgba(var(--cell),.2)"></i><i style="background:rgba(var(--cell),.5)"></i><i style="background:rgba(var(--cell),.7)"></i><i style="background:rgba(var(--cell),.15)"></i><i style="background:rgba(var(--cell),.6)"></i></span></div>
+      <div><span class="vec"><i style="background:rgba(var(--cell),.3)"></i><i style="background:rgba(var(--cell),.8)"></i><i style="background:rgba(var(--cell),.1)"></i><i style="background:rgba(var(--cell),.4)"></i><i style="background:rgba(var(--cell),.9)"></i><i style="background:rgba(var(--cell),.2)"></i></span></div>
+      <div><span class="vec"><i style="background:rgba(var(--cell),.85)"></i><i style="background:rgba(var(--cell),.25)"></i><i style="background:rgba(var(--cell),.55)"></i><i style="background:rgba(var(--cell),.75)"></i><i style="background:rgba(var(--cell),.1)"></i><i style="background:rgba(var(--cell),.5)"></i></span></div>
+      <div><span class="vec"><i style="background:rgba(var(--cell),.2)"></i><i style="background:rgba(var(--cell),.6)"></i><i style="background:rgba(var(--cell),.7)"></i><i style="background:rgba(var(--cell),.1)"></i><i style="background:rgba(var(--cell),.35)"></i><i style="background:rgba(var(--cell),.8)"></i></span></div>
+      <div class="rowlab">③ 번호마다 정해 둔 숫자 묶음(벡터)을 꺼낸다. 칸 하나 = 숫자 하나 (진할수록 큰 숫자)</div>
+    </div>
+    <p class="big">뜻은 번호가 아니라 <span class="acc">숫자 묶음</span>에 담긴다</p>
+    <p class="note">모양만 그린 예시다. 번호와 칸의 진하기는 실제 값이 아니고, 실제 모델은 조각을 다르게 자를 수 있다. 실제 숫자 묶음은 6칸이 아니라 수백 칸 이상이다.</p>
+  </div>
+
+  <!-- 2 -->
+  <h2><span class="no">2</span>숫자 묶음은 점 하나다</h2>
+  <div class="card">
+    <p class="small">칸의 숫자를 좌표로 읽는다. 1번 칸 = 가로, 2번 칸 = 세로.</p>
+    <div class="plots">
+      <div>
+        <svg class="plot" viewBox="0 0 320 320" role="img" aria-label="[0.9, 0.1]과 [0.1, 0.9]는 서로 다른 자리에 있는 두 점이다">
+          <line class="grid" x1="40" y1="160" x2="280" y2="160"/><line class="grid" x1="160" y1="40" x2="160" y2="280"/>
+          <path class="axis" d="M40 20 V280 H300"/>
+          <line class="va" x1="40" y1="280" x2="256" y2="256"/>
+          <line class="vh" x1="40" y1="280" x2="64" y2="64"/>
+          <circle class="pa" cx="256" cy="256" r="7"/>
+          <circle class="ph" cx="64" cy="64" r="7"/>
+          <text class="a" x="250" y="240" text-anchor="end">[0.9, 0.1]</text>
+          <text class="h" x="76" y="60">[0.1, 0.9]</text>
+          <text x="300" y="304" text-anchor="end">1번 칸 →</text>
+          <text x="34" y="30" text-anchor="end">2번</text>
+          <text x="34" y="46" text-anchor="end">칸</text>
+        </svg>
+        <p class="cap">같은 숫자, 순서가 다르면 <span class="hot">다른 자리</span></p>
+      </div>
+      <div>
+        <svg class="plot" viewBox="0 0 320 320" role="img" aria-label="돈과 예금은 위 오른쪽에, 나무와 강가는 아래 왼쪽에 모여 있고, 은행은 그 사이에 있다">
+          <line class="grid" x1="40" y1="160" x2="280" y2="160"/><line class="grid" x1="160" y1="40" x2="160" y2="280"/>
+          <path class="axis" d="M40 20 V280 H300"/>
+          <circle class="pm" cx="227" cy="74" r="6"/><text class="w" x="239" y="70">돈</text>
+          <circle class="pm" cx="251" cy="107" r="6"/><text class="w" x="246" y="130" text-anchor="middle">예금</text>
+          <circle class="pm" cx="83" cy="222" r="6"/><text class="w" x="72" y="206" text-anchor="middle">나무</text>
+          <circle class="pm" cx="112" cy="251" r="6"/><text class="w" x="124" y="256">강가</text>
+          <circle class="ph" cx="160" cy="160" r="8"/><text class="w h" x="172" y="152">은행</text>
+        </svg>
+        <p class="cap">비슷하게 쓰이는 말은 <span class="acc">가까이</span> 놓인다</p>
+      </div>
+    </div>
+    <p class="big">숫자 하나에는 뜻이 없다. <span class="acc">점끼리 가까운지, 같은 방향인지</span>가 뜻이다</p>
+    <p class="note">오른쪽은 모양만 그린 예시다. ‘은행’은 두 뜻으로 쓰여서 사이에 그렸다. 실제는 칸이 수백 개라 그림처럼 평면에 그릴 수 없지만, 가깝고 먼 관계를 재는 방법은 같다.</p>
+  </div>
+
+  <!-- 3 -->
+  <h2><span class="no">3</span>개수와 칸 수는 다르다</h2>
+  <div class="card">
+    <p class="small">조각 하나 = 숫자 묶음 한 줄. GPT-2 small(지피티 투 스몰) 기준 한 줄은 768칸.</p>
+    <div class="rows">
+      <div class="r"><span class="lab">은행</span><span class="cells"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="end">… 768칸</span></div>
+      <div class="r"><span class="lab">에</span><span class="cells"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="end">… 768칸</span></div>
+      <div class="r"><span class="lab">예금</span><span class="cells"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="end">… 768칸</span></div>
+      <div class="r"><span class="lab">했다</span><span class="cells"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="end">… 768칸</span></div>
+      <div class="r new"><span class="lab">+조각</span><span class="cells"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="end">… 768칸</span></div>
+      <div class="r new"><span class="lab">+조각</span><span class="cells"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="end">… 768칸</span></div>
+    </div>
+    <div class="split">
+      <div class="pill">줄 수<b class="hot">조각 개수 n</b>글이 길어지면 늘어난다</div>
+      <div class="pill">줄 길이<b class="acc">칸 수</b>모델마다 다르고, 정해지면 그대로다 (GPT-2 small은 768)</div>
+    </div>
+    <p class="note">‘차원’이라는 말이 둘 다를 가리킬 때가 있어 헷갈린다. 여기서는 개수와 칸 수로만 부른다.</p>
+  </div>
+
+  <!-- 4 -->
+  <h2><span class="no">4</span>조각끼리 서로 본다: 점수 → 비율 → 섞기</h2>
+  <div class="card">
+    <div class="sent"><span class="chip hl">은행</span><span class="chip">에</span><span class="chip">예금</span><span class="chip">했다</span></div>
+    <p class="small">‘은행’의 숫자 묶음을 고칠 차례. 같은 문장의 모든 조각을 본다.</p>
+    <div class="steps">
+      <div>
+        <p class="step-h"><span class="no2">①</span>점수: 얼마나 관련 있나</p>
+        <div class="bars">
+          <span class="lab">은행</span><span class="track"><span class="fill" style="width:40%"></span></span><span class="val">1.0</span>
+          <span class="lab">에</span><span class="track"><span class="fill" style="width:8%"></span></span><span class="val">0.2</span>
+          <span class="lab">예금</span><span class="track"><span class="fill hot" style="width:100%"></span></span><span class="val">2.5</span>
+          <span class="lab">했다</span><span class="track"><span class="fill" style="width:40%"></span></span><span class="val">1.0</span>
+        </div>
+        <p class="note">점수 하나 = ‘은행’의 Query(쿼리)와 그 조각의 Key(키)를 칸끼리 곱해 모두 더한 값이다(실제 모델은 이 값을 일정한 수로 한 번 더 나눈다).</p>
+        <div class="qk">두 칸짜리 예: [0.9, 0.1] · [0.8, 0.2] → 0.9×0.8 + 0.1×0.2 = <b>0.74</b></div>
+      </div>
+      <div>
+        <p class="step-h"><span class="no2">②</span>비율: 합이 1이 되게 바꾼다 (소프트맥스)</p>
+        <div class="bars">
+          <span class="lab">은행</span><span class="track"><span class="fill" style="width:14.4%"></span></span><span class="val">14.4%</span>
+          <span class="lab">에</span><span class="track"><span class="fill" style="width:6.5%"></span></span><span class="val">6.5%</span>
+          <span class="lab">예금</span><span class="track"><span class="fill hot" style="width:64.7%"></span></span><span class="val">64.7%</span>
+          <span class="lab">했다</span><span class="track"><span class="fill" style="width:14.4%"></span></span><span class="val">14.4%</span>
+        </div>
+        <p class="note">점수를 그 합(4.7)으로 그냥 나누면 21%, 4%, 53%, 21%가 된다. 소프트맥스는 큰 점수 쪽으로 비율을 더 몰아준다.</p>
+      </div>
+      <div>
+        <p class="step-h"><span class="no2">③</span>섞기: 비율만큼 각 조각의 Value(밸류)를 가져와 더한다</p>
+        <div class="mix" aria-label="새 은행 = 은행 14.4%, 에 6.5%, 예금 64.7%, 했다 14.4%">
+          <span style="width:14.4%;background:#868e96">은행</span>
+          <span style="width:6.5%;background:#adb5bd"></span>
+          <span style="width:64.7%;background:var(--hot)">예금 64.7%</span>
+          <span style="width:14.4%;background:#868e96">했다</span>
+        </div>
+        <p class="note">새 ‘은행’ 숫자 묶음 = 0.144×은행 + 0.065×에 + 0.647×예금 + 0.144×했다 (각각 그 조각의 Value)</p>
+      </div>
+    </div>
+    <div class="plots" style="margin-top:14px">
+      <div>
+        <svg class="plot" viewBox="0 0 320 320" role="img" aria-label="은행에 예금했다에서는 은행 점이 돈과 예금 쪽으로, 강가의 은행나무에서는 나무와 강가 쪽으로 옮겨 간다">
+          <line class="grid" x1="40" y1="160" x2="280" y2="160"/><line class="grid" x1="160" y1="40" x2="160" y2="280"/>
+          <path class="axis" d="M40 20 V280 H300"/>
+          <defs>
+            <marker id="mvh" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0, 10 4, 0 8" style="fill:var(--hot)"/></marker>
+            <marker id="mvg" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0, 10 4, 0 8" style="fill:var(--green)"/></marker>
+          </defs>
+          <circle class="pm" cx="227" cy="74" r="6"/><text class="w" x="239" y="70">돈</text>
+          <circle class="pm" cx="251" cy="107" r="6"/><text class="w" x="262" y="112">예금</text>
+          <circle class="pm" cx="83" cy="222" r="6"/><text class="w" x="72" y="206" text-anchor="middle">나무</text>
+          <circle class="pm" cx="112" cy="251" r="6"/><text class="w" x="124" y="256">강가</text>
+          <line class="mv" x1="166" y1="154" x2="210" y2="118" marker-end="url(#mvh)"/>
+          <line class="mv2" x1="154" y1="166" x2="114" y2="208" marker-end="url(#mvg)"/>
+          <circle class="ph" cx="160" cy="160" r="7"/>
+          <text class="w" x="176" y="176">은행</text>
+          <circle class="ph" cx="218" cy="112" r="6"/>
+          <circle class="pg" cx="107" cy="215" r="6"/>
+        </svg>
+      </div>
+      <div style="align-self:center">
+        <p class="big" style="margin-top:0"><span class="hot">은행에 예금했다</span> → 은행 점이 돈·예금 쪽으로</p>
+        <p class="big"><span style="color:var(--green)">강가의 은행나무</span> → 은행 점이 나무·강가 쪽으로</p>
+        <p class="note">같은 ‘은행’에서 출발해도, 함께 쓰인 조각에 따라 다른 자리로 간다. 이것이 문맥이 섞인다는 뜻이다. 모양만 그린 예시다(점수와 자리는 실제 값 아니고, 비율은 그 점수로 실제 계산했다).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <h2><span class="no">5</span>‘가중치’라는 말은 두 가지를 가리킨다</h2>
+  <div class="two">
+    <div class="card w">
+      <h3 class="acc">W (가중치)</h3>
+      <ul>
+        <li>배울 때 정해진다</li>
+        <li>쓸 때는 <b>그대로</b></li>
+        <li>어떤 글이 와도 같다</li>
+        <li>Q·K·V를 만드는 숫자도 여기 든다</li>
+      </ul>
+    </div>
+    <div class="card a">
+      <h3 class="hot">어텐션 비율</h3>
+      <ul>
+        <li>글이 들어올 때마다 <b>새로</b> 계산</li>
+        <li>문장이 바뀌면 달라진다</li>
+        <li>4번 ②의 64.7% 같은 값</li>
+        <li>자료에서는 attention weights(어텐션 웨이츠)라고도 부른다</li>
+      </ul>
+    </div>
+  </div>
+  <p class="big">배울 때 고치는 것은 <span class="acc">W</span>다. 비율은 W로 매번 계산해 낸 결과다</p>
+
+  <!-- 6 -->
+  <h2><span class="no">6</span>배울 때와 쓸 때: 같은 길, 다른 고리</h2>
+  <div class="card">
+    <svg class="loop" viewBox="0 0 680 300" role="img" aria-label="학습 고리는 다음 조각 예측, 정답과 비교, W 고침을 되풀이한다. 추론 고리는 다음 조각 고르기, 끝에 붙이기, 다시 계산을 되풀이하고 W는 그대로다">
+      <defs><marker id="lh" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon class="hd" points="0 0, 9 3.5, 0 7"/></marker></defs>
+      <text class="t a" x="16" y="30">학습 (배울 때)</text>
+      <rect class="box" x="16" y="48" width="180" height="64" rx="10"/><text x="106" y="76">다음 조각 예측</text><text class="s" x="106" y="96">문장 앞부분을 넣고</text>
+      <rect class="box" x="250" y="48" width="180" height="64" rx="10"/><text x="340" y="76">정답과 비교</text><text class="s" x="340" y="96">어긋난 정도 = 오차</text>
+      <rect class="box w" x="484" y="48" width="180" height="64" rx="10"/><text x="574" y="76">W 고침</text><text class="s" x="574" y="96">오차가 줄어드는 쪽으로</text>
+      <line class="ln" x1="196" y1="80" x2="246" y2="80" marker-end="url(#lh)"/>
+      <line class="ln" x1="430" y1="80" x2="480" y2="80" marker-end="url(#lh)"/>
+      <path class="ln" d="M574 112 V128 Q574 136 566 136 H114 Q106 136 106 128 V116" marker-end="url(#lh)"/>
+      <text class="s" x="340" y="130">아주 많은 문장으로 되풀이</text>
+
+      <text class="t h" x="16" y="186">추론 (쓸 때)</text>
+      <rect class="box" x="16" y="204" width="180" height="64" rx="10"/><text x="106" y="232">다음 조각 고르기</text><text class="s" x="106" y="252">확률에 따라 하나</text>
+      <rect class="box h" x="250" y="204" width="180" height="64" rx="10"/><text x="340" y="232">끝에 붙이기</text><text class="s" x="340" y="252">조각이 하나 늘어난다</text>
+      <rect class="box" x="484" y="204" width="180" height="64" rx="10"/><text x="574" y="232">다시 계산</text><text class="s" x="574" y="252">W는 그대로</text>
+      <line class="ln" x1="196" y1="236" x2="246" y2="236" marker-end="url(#lh)"/>
+      <line class="ln" x1="430" y1="236" x2="480" y2="236" marker-end="url(#lh)"/>
+      <path class="ln" d="M574 268 V284 Q574 292 566 292 H114 Q106 292 106 284 V272" marker-end="url(#lh)"/>
+      <text class="s" x="340" y="286">끝 표시 조각이 나올 때까지</text>
+    </svg>
+    <p class="big">학습은 <span class="acc">W를 고치고</span>, 추론은 <span class="hot">W를 그대로 쓴다</span></p>
+    <p class="note">우리가 AI에게 묻고 답을 받는 것은 추론이다. 두 고리 모두 1~4번 계산을 똑같이 지난다.</p>
+  </div>
+
+  <!-- 7 -->
+  <h2><span class="no">7</span>조각이 많으면: 점수표가 커지고, 창이 찬다</h2>
+  <div class="card">
+    <p class="small">모든 조각이 모든 조각과 점수를 낸다. 칸 하나 = 점수 하나.</p>
+    <div class="grids">
+      <div>
+        <div class="grid g4">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="gcap">4조각 → <span class="hot">16</span>칸</p>
+      </div>
+      <div>
+        <div class="grid g8">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="gcap">8조각 → <span class="hot">64</span>칸</p>
+      </div>
+    </div>
+    <p class="big">조각이 <span class="hot">2배</span>면 점수표는 약 <span class="hot">4배</span>. 크기를 정하는 건 칸 수가 아니라 <span class="hot">조각 개수</span>다</p>
+    <p class="note">요금은 이 계산량이 아니라 조각(토큰) 수에 단가를 곱해 매긴다. 요금이나 응답 시간 전체가 4배가 되지는 않는다.</p>
+    <p class="small" style="margin-top:18px">한 번에 볼 수 있는 조각 수에는 한도가 있다. context window(컨텍스트 윈도우)</p>
+    <div class="strip" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      <span class="out"></span><span class="out"></span><span class="out"></span><span class="out"></span><span class="out"></span>
+    </div>
+    <div class="bracket"><span class="in">이번 요청에서 보는 범위</span><span class="outside">범위 밖: 참고 못 함</span></div>
+    <p class="note">범위 안에 넣어도 다 잘 쓰지는 못한다. 긴 입력의 맨 앞·맨 뒤는 잘 쓰고 가운데는 놓치기 쉽다는 실험 결과가 있다(모델과 과제마다 다르다).</p>
+  </div>
+
+  <!-- 8 -->
+  <h2><span class="no">8</span>그래서</h2>
+  <div class="three">
+    <div class="card"><p class="mark">조각 개수</p><p class="small">글자 수가 아니라 조각 개수가 계산과 요금을 정한다</p></div>
+    <div class="card"><p class="mark">W는 배울 때만</p><p class="small">쓸 때 바뀌는 것은 비율이지 W가 아니다</p></div>
+    <div class="card"><p class="mark">확인</p><p class="small">답은 숫자로 추정한 것이라 따로 확인한다</p></div>
+  </div>
+  <p class="note" style="margin-top:16px">직접 눌러 보기: <a href="https://poloclub.github.io/transformer-explainer/" target="_blank" rel="noopener">Transformer Explainer(트랜스포머 익스플레이너)</a>. 실제 모델(GPT-2 small)이 1~4번과 다음 조각 확률을 계산하는 모습을 보여 준다. 영어 화면이고, 학습 과정은 나오지 않는다.</p>
+</main>
+</body>
+</html>
