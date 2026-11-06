@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>토큰과 컨텍스트 아주 쉽게</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --card:#fff; --hot:#e8590c; --bar:#c9d8fb; --dim:#eee; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --card:#262624; --hot:#ffa94d; --bar:#33456b; --dim:#2e2e2c; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 system-ui, "Malgun Gothic", sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.8rem; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 24px; }
+  h2 { font-size:1.2rem; margin:32px 0 10px; }
+  h2 .no { display:inline-block; width:1.6em; height:1.6em; line-height:1.6em; text-align:center; border-radius:50%; background:var(--accent); color:#fff; font-size:.85rem; margin-right:6px; vertical-align:2px; }
+  .note { color:var(--muted); font-size:.85rem; margin:6px 0 0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; }
+  .big { font-size:1.2rem; font-weight:700; margin:0; }
+  .small { color:var(--muted); font-size:.95rem; margin:0 0 8px; }
+  .hotword { color:var(--hot); font-weight:700; }
+  /* 토큰 조각 */
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { background:var(--card); border:2px solid var(--accent); color:var(--accent); border-radius:8px; padding:2px 10px; font-weight:700; font-family:Consolas, "Malgun Gothic", monospace; }
+  .chip.broken { border-color:var(--hot); color:var(--hot); background:transparent; }
+  .count { font-family:Consolas, monospace; font-weight:700; color:var(--hot); }
+  /* 막대 */
+  .bars { display:grid; grid-template-columns:5.5em 1fr 4.5em; gap:8px 10px; align-items:center; }
+  .bars .lab { font-weight:700; }
+  .bars .track { border:1px solid var(--line); border-radius:6px; height:26px; overflow:hidden; }
+  .bars .fill { background:var(--bar); height:100%; display:block; }
+  .bars .fill.hot { background:var(--hot); }
+  .bars .val { font-family:Consolas, monospace; color:var(--muted); font-size:.95rem; }
+  /* 비교 격자 */
+  .grids { display:flex; gap:28px; align-items:flex-end; flex-wrap:wrap; }
+  .grid { display:grid; gap:2px; }
+  .grid span { width:18px; height:18px; border-radius:3px; background:var(--bar); }
+  .g4 { grid-template-columns:repeat(4, 18px); }
+  .g8 { grid-template-columns:repeat(8, 18px); }
+  .g8 span { background:var(--hot); }
+  .gcap { margin:8px 0 0; font-weight:700; }
+  .gcap .count { font-size:1.1rem; }
+  /* 컨텍스트 윈도우 */
+  .strip { display:flex; gap:3px; flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; }
+  .strip span { flex:0 0 22px; height:30px; border-radius:4px; background:var(--bar); }
+  .strip span.out { background:var(--dim); border:1px dashed var(--muted); }
+  .bracket { display:flex; gap:3px; margin-top:4px; font-size:.85rem; font-weight:700; }
+  .bracket .in { flex:0 0 calc(14 * 22px + 13 * 3px); border-top:3px solid var(--accent); color:var(--accent); padding-top:2px; text-align:center; }
+  .bracket .outside { flex:1; border-top:3px dashed var(--muted); color:var(--muted); padding-top:2px; text-align:center; min-width:120px; }
+  /* U자 곡선 */
+  svg.u { width:100%; height:auto; display:block; }
+  svg.u .axis { stroke:var(--muted); stroke-width:1.5; fill:none; }
+  svg.u .curve { stroke:var(--hot); stroke-width:4; fill:none; stroke-linecap:round; }
+  svg.u text { fill:var(--muted); font:600 14px system-ui, "Malgun Gothic", sans-serif; }
+  svg.u .dot { fill:var(--hot); }
+  /* 마무리 */
+  .three { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+  @media (max-width:560px) { .three { grid-template-columns:1fr; } }
+  .three .card { text-align:center; }
+  .three .mark { font-size:1.6rem; font-weight:700; color:var(--accent); margin:0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>토큰과 컨텍스트, 아주 쉽게</h1>
+  <p class="lead">AI는 글을 조각으로 잘라 읽는다. 조각이 많을수록 비싸고 느리다. 한 번에 볼 수 있는 조각 수에도 한도가 있다.</p>
+
+  <h2><span class="no">1</span>글은 조각(토큰)으로 잘린다</h2>
+  <div class="card">
+    <p class="small">“계약 기간은 체결일로부터 1년으로 하며, 자동 갱신됩니다.”를 GPT(지피티) 방식으로 자르면</p>
+    <div class="chips">
+      <span class="chip">계</span><span class="chip">약</span><span class="chip">␣기간</span><span class="chip">은</span><span class="chip">␣체</span><span class="chip">결</span><span class="chip">일</span><span class="chip">로</span><span class="chip">부터</span><span class="chip">␣</span><span class="chip">1</span><span class="chip">년</span><span class="chip">으로</span><span class="chip">␣하</span><span class="chip">며</span><span class="chip">,</span><span class="chip">␣자동</span><span class="chip broken">␣�</span><span class="chip broken">�</span><span class="chip">신</span><span class="chip">됩니다</span><span class="chip">.</span>
+    </div>
+    <p class="big" style="margin-top:10px">32글자 → <span class="count">22</span>조각</p>
+    <p class="note">␣ = 띄어쓰기. 주황색 두 조각은 ‘갱’ 한 글자가 둘로 갈라진 것이다.</p>
+  </div>
+
+  <h2><span class="no">2</span>요금은 글자 수가 아니라 조각 수로 센다</h2>
+  <div class="card">
+    <p class="small">같은 뜻의 문장, 조각 수</p>
+    <div class="bars">
+      <span class="lab">한국어</span><span class="track"><span class="fill hot" style="width:100%"></span></span><span class="val">22조각</span>
+      <span class="lab">영어</span><span class="track"><span class="fill" style="width:73%"></span></span><span class="val">16조각</span>
+    </div>
+    <p class="big" style="margin-top:10px">한국어가 약 <span class="hotword">1.4배</span> 많다 → 그만큼 요금이 더 든다</p>
+    <p class="note">영어 문장은 81글자로 더 길지만 조각은 더 적다. 원문 실습 결과이고, 단가가 같을 때의 이야기다.</p>
+  </div>
+
+  <h2><span class="no">3</span>모든 조각이 서로를 하나씩 비교한다</h2>
+  <div class="card">
+    <p class="small">어텐션(attention, 어텐션): 조각마다 다른 모든 조각과 관련도를 계산한다. 칸 하나 = 비교 한 번.</p>
+    <div class="grids">
+      <div>
+        <div class="grid g4">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="gcap">4조각 → <span class="count">16</span>번</p>
+      </div>
+      <div>
+        <div class="grid g8">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="gcap">8조각 → <span class="count">64</span>번</p>
+      </div>
+    </div>
+    <p class="big" style="margin-top:10px">조각이 <span class="hotword">2배</span>면 비교는 약 <span class="hotword">4배</span></p>
+    <p class="note">늘어나는 것은 이 비교 계산이다. 요금이나 응답 시간 전체가 4배가 되지는 않는다.</p>
+  </div>
+
+  <h2><span class="no">4</span>한 번에 볼 수 있는 조각 수에는 한도가 있다</h2>
+  <div class="card">
+    <p class="small">context window(컨텍스트 윈도우): 한 번의 요청에서 참고할 수 있는 조각의 범위</p>
+    <div class="strip" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      <span class="out"></span><span class="out"></span><span class="out"></span><span class="out"></span><span class="out"></span>
+    </div>
+    <div class="bracket"><span class="in">이번 요청에서 보는 범위</span><span class="outside">범위 밖: 참고 못 함</span></div>
+    <p class="note">한도는 모델마다 다르고 바뀐다. 쓰기 직전에 공식 문서로 확인한다.</p>
+  </div>
+
+  <h2><span class="no">5</span>길게 넣으면 가운데를 놓치기 쉽다</h2>
+  <div class="card">
+    <p class="small">중요한 정보를 긴 입력의 어디에 두었나 → 모델이 그 정보를 찾아 쓴 성적</p>
+    <svg class="u" viewBox="0 0 600 260" role="img" aria-label="정보가 맨 앞과 맨 뒤에 있으면 성적이 높고 가운데에 있으면 낮은 U자 곡선">
+      <path class="axis" d="M60 20 V210 H580"/>
+      <path class="curve" d="M80 50 C 200 200, 440 200, 560 60"/>
+      <circle class="dot" cx="80" cy="50" r="7"/>
+      <circle class="dot" cx="320" cy="164" r="7"/>
+      <circle class="dot" cx="560" cy="60" r="7"/>
+      <text x="80" y="236" text-anchor="middle">맨 앞</text>
+      <text x="320" y="236" text-anchor="middle">가운데</text>
+      <text x="560" y="236" text-anchor="middle">맨 뒤</text>
+      <text x="52" y="36" text-anchor="end">높음</text>
+      <text x="52" y="206" text-anchor="end">낮음</text>
+    </svg>
+    <p class="big">맨 앞·맨 뒤는 잘 쓰고, <span class="hotword">가운데</span>는 놓치기 쉽다</p>
+    <p class="note">모양만 그린 그림이다(실제 수치 아님). Liu 등(2023)의 Lost in the Middle(로스트 인 더 미들) 연구가 보고한 경향이며, 모델과 과제마다 다르다.</p>
+  </div>
+
+  <h2><span class="no">6</span>그래서</h2>
+  <div class="three">
+    <div class="card"><p class="mark">조각 수</p><p class="small">글자 수가 아니라 조각 수로 길이를 잰다</p></div>
+    <div class="card"><p class="mark">많이 ≠ 좋게</p><p class="small">많이 넣는다고 답이 좋아지지 않는다</p></div>
+    <div class="card"><p class="mark">확인</p><p class="small">AI의 답은 따로 확인하고 쓴다</p></div>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>토큰·컨텍스트가 만드는 비용과 한계</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper:       #f5f5f5;
+      --ink:         #2d3142;
+      --muted:       #4f5d75;
+      --soft:        #5a6580;
+      --accent:      #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --node-fill:   #ffffff;
+      --node-stroke: #2d3142;
+      --font-sans:   'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:  'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:   'Geist Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:       #2d3142;
+        --ink:         #f5f5f5;
+        --muted:       #bfc0c0;
+        --soft:        #949eb2;
+        --accent:      #f08a59;
+        --accent-tint: rgba(240,138,89,0.10);
+        --node-fill:   rgba(245,245,245,0.04);
+        --node-stroke: rgba(245,245,245,0.45);
+      }
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 1.5rem 1rem;
+    }
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .caption { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; }
+    svg { width: 100%; min-width: 752px; display: block; }
+    .paper  { fill: var(--paper); }
+    .node   { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1; }
+    .focal  { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2; }
+    .line   { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .head   { fill: var(--muted); }
+    .t-name { fill: var(--ink); font: 600 12px var(--font-sans); text-anchor: middle; }
+    .t-sub  { fill: var(--muted); font: 400 12px var(--font-sans); text-anchor: middle; }
+    .t-row  { fill: var(--muted); font: 600 12px var(--font-sans); }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Tree · cost and limits</p>
+    <h1>토큰은 비용을, 컨텍스트는 한계를 만든다</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 752 264" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="token-tree-title token-tree-desc">
+        <title id="token-tree-title">토큰·컨텍스트가 만드는 비용과 한계</title>
+        <desc id="token-tree-desc">모든 토큰을 서로 비교하는 어텐션에서 두 갈래가 나온다. 토큰 수가 늘면 비교 계산이 제곱에 가깝게 늘어 비용이 커지고, 컨텍스트 윈도우를 길게 채울수록 부담이 커지며 한도와 활용의 한계가 생긴다.</desc>
+        <defs>
+          <marker id="token-tree-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
+        </defs>
+
+        <rect class="paper" width="100%" height="100%"/>
+
+        <text class="t-row" x="24" y="96">같은 구조에서</text>
+        <text class="t-row" x="208" y="32">토큰은 비용을 만든다</text>
+        <text class="t-row" x="208" y="156">컨텍스트는 한계를 만든다</text>
+
+        <!-- 연결선 먼저 -->
+        <path class="line" d="M172 130 H182 Q190 130 190 122 V88 Q190 80 198 80 H208" marker-end="url(#token-tree-arrow)"/>
+        <path class="line" d="M172 154 H182 Q190 154 190 162 V196 Q190 204 198 204 H208" marker-end="url(#token-tree-arrow)"/>
+        <line class="line" x1="356" y1="80" x2="392" y2="80" marker-end="url(#token-tree-arrow)"/>
+        <line class="line" x1="540" y1="80" x2="576" y2="80" marker-end="url(#token-tree-arrow)"/>
+        <line class="line" x1="356" y1="204" x2="392" y2="204" marker-end="url(#token-tree-arrow)"/>
+        <line class="line" x1="540" y1="204" x2="576" y2="204" marker-end="url(#token-tree-arrow)"/>
+
+        <!-- 뿌리 -->
+        <rect class="paper" x="24" y="104" width="148" height="76" rx="6"/>
+        <rect class="focal" x="24" y="104" width="148" height="76" rx="6"/>
+        <text class="t-name" x="98" y="130">어텐션</text>
+        <text class="t-sub" x="98" y="150">모든 토큰을</text>
+        <text class="t-sub" x="98" y="166">서로 비교한다</text>
+
+        <!-- 갈래 1: 토큰 → 비용 -->
+        <rect class="paper" x="208" y="44" width="148" height="72" rx="6"/>
+        <rect class="node" x="208" y="44" width="148" height="72" rx="6"/>
+        <text class="t-name" x="282" y="68">토큰 수</text>
+        <text class="t-sub" x="282" y="88">글을 자른 조각</text>
+        <text class="t-sub" x="282" y="104">요금을 세는 단위</text>
+
+        <rect class="paper" x="392" y="44" width="148" height="72" rx="6"/>
+        <rect class="node" x="392" y="44" width="148" height="72" rx="6"/>
+        <text class="t-name" x="466" y="68">비교 ≈ 토큰 수²</text>
+        <text class="t-sub" x="466" y="88">토큰이 2배면</text>
+        <text class="t-sub" x="466" y="104">비교는 약 4배</text>
+
+        <rect class="paper" x="576" y="44" width="148" height="72" rx="6"/>
+        <rect class="node" x="576" y="44" width="148" height="72" rx="6"/>
+        <text class="t-name" x="650" y="68">비용</text>
+        <text class="t-sub" x="650" y="88">요금·지연 증가</text>
+        <text class="t-sub" x="650" y="104">요금까지 4배는 아님</text>
+
+        <!-- 갈래 2: 컨텍스트 → 한계 -->
+        <rect class="paper" x="208" y="168" width="148" height="72" rx="6"/>
+        <rect class="node" x="208" y="168" width="148" height="72" rx="6"/>
+        <text class="t-name" x="282" y="192">컨텍스트 윈도우</text>
+        <text class="t-sub" x="282" y="212">한 번에 참고하는</text>
+        <text class="t-sub" x="282" y="228">토큰 범위</text>
+
+        <rect class="paper" x="392" y="168" width="148" height="72" rx="6"/>
+        <rect class="node" x="392" y="168" width="148" height="72" rx="6"/>
+        <text class="t-name" x="466" y="192">길게 채울수록</text>
+        <text class="t-sub" x="466" y="212">계산·메모리 부담</text>
+        <text class="t-sub" x="466" y="228">중요한 문장이 묻힘</text>
+
+        <rect class="paper" x="576" y="168" width="148" height="72" rx="6"/>
+        <rect class="node" x="576" y="168" width="148" height="72" rx="6"/>
+        <text class="t-name" x="650" y="192">한계</text>
+        <text class="t-sub" x="650" y="212">한도 밖은 못 넣음</text>
+        <text class="t-sub" x="650" y="228">넣어도 다 쓰진 못함</text>
+      </svg>
+    </div>
+
+    <p class="caption">어텐션은 모든 토큰을 서로 비교한다. 그래서 토큰이 늘면 비교 계산이 제곱에 가깝게 늘어 요금과 응답 시간이 커진다(위). 한 번에 참고할 수 있는 토큰 범위에는 한도가 있고, 길게 채워도 다 쓰지는 못한다(아래). 긴 입력의 가운데 정보를 놓치는 경향은 실험에서 관찰된 것이며, 원문은 그 원인을 어텐션 하나로 단정할 수 없다고 쓴다.</p>
+  </div>
+</body>
+</html>

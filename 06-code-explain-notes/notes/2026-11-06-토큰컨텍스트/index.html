@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>토큰은 비용을, 컨텍스트는 한계를 만든다 · 코드 해설 노트</title>
+<style>
+  /* 디자인 규칙: DESIGN.md (GitHub 스타일) */
+  :root {
+    --canvas:#ffffff; --subtle:#f6f8fa; --border:#d0d7de; --fg:#1f2328; --muted:#656d76; --link:#0969da;
+    --tab-line:#fd8c73; --code-bg:rgba(175,184,193,.2);
+    --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif;
+    --font-mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --canvas:#0d1117; --subtle:#161b22; --border:#30363d; --fg:#e6edf3; --muted:#a0a9b4; --link:#4493f8;
+      --tab-line:#f78166; --code-bg:rgba(110,118,129,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--canvas); color:var(--fg); font:400 1.0625rem/1.65 var(--font-body); word-break:keep-all; overflow-wrap:break-word; }
+  main { max-width:920px; margin:0 auto; padding:24px 16px 48px; }
+  a { color:var(--link); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  :focus-visible { outline:2px solid var(--link); outline-offset:2px; }
+  h1 { font-size:1.875rem; line-height:1.25; font-weight:600; margin:8px 0 8px; }
+  .summary { color:var(--muted); font-size:1rem; margin:0 0 16px; max-width:68ch; }
+  .nav { margin-bottom:8px; font-size:.9375rem; }
+  .terms { background:var(--subtle); border:1px solid var(--border); border-radius:6px; padding:10px 16px; margin-bottom:16px; font-size:1rem; }
+  .terms h2 { font-size:1rem; margin:0 0 6px; }
+  .terms summary { cursor:pointer; }
+  .terms ul { margin:8px 0 0; padding-left:20px; color:var(--fg); }
+  .flow-frame { width:100%; height:600px; border:1px solid var(--border); border-radius:6px; margin:0 0 16px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px; flex-wrap:wrap; }
+  .tabs button { font:inherit; font-size:1rem; background:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; padding:10px 18px; color:var(--muted); cursor:pointer; border-radius:6px 6px 0 0; }
+  .tabs button:hover { color:var(--fg); background:var(--subtle); }
+  .tabs button[aria-selected="true"] { color:var(--fg); font-weight:600; border-bottom-color:var(--tab-line); }
+  .panel[hidden] { display:none; }
+  table { width:100%; border-collapse:collapse; font-size:1rem; }
+  th, td { text-align:left; vertical-align:top; padding:8px 14px; border:1px solid var(--border); }
+  th { background:var(--subtle); font-weight:600; }
+  td.n { width:2.5em; font-family:var(--font-mono); color:var(--muted); }
+  td:nth-child(2) { min-width:14em; }
+  code, pre { background:var(--code-bg); border-radius:6px; font:.85em/1.5 var(--font-mono); }
+  code { padding:.2em .4em; white-space:pre-wrap; }
+  pre { padding:12px 16px; overflow:auto; }
+  .words li, .points li { margin:4px 0; }
+  .visual-kind, .visual-reason { margin:4px 0; }
+  .visual-buttons { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:12px 0; }
+  .visual-buttons button { font:inherit; font-size:1rem; font-weight:500; padding:6px 18px; border:1px solid var(--border); border-radius:6px; background:var(--subtle); color:var(--fg); cursor:pointer; }
+  .visual-buttons button[aria-pressed="true"] { border-color:var(--link); color:var(--link); }
+  .visual-buttons button:disabled { opacity:.5; cursor:default; }
+  #visual-frame { width:100%; height:75vh; border:1px solid var(--border); border-radius:6px; background:#fff; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="nav"><a href="../../index.html">← 노트 보관함</a></div>
+  <h1>토큰은 비용을, 컨텍스트는 한계를 만든다</h1>
+  <p class="summary">AI의 요금과 속도는 글자 수가 아니라 토큰 수를 따라가고, 밀집 어텐션은 토큰끼리 모두 비교하므로 입력이 두 배면 비교 계산이 네 배 가까이 는다. 컨텍스트 윈도우가 커도 긴 입력의 가운데 정보는 놓치기 쉬워서, 많이 넣기보다 무엇을 넣을지 설계하는 일이 중요하다.</p>
+
+  <details class="terms">
+    <summary><strong>새 용어 16개</strong> (눌러서 펼치기)</summary>
+    <ul>
+      <li><strong>토큰</strong> = 모델이 글을 다루는 가장 작은 조각. 요금과 한 번에 넣을 수 있는 양을 세는 단위</li>
+      <li><strong>토큰화</strong> = 글을 토큰으로 쪼개는 일. 쪼개는 규칙은 모델마다 다르다</li>
+      <li><strong>토크나이저</strong> = 토큰화를 하는 프로그램</li>
+      <li><strong>어텐션</strong> = 토큰마다 다른 토큰들과의 관련도 점수를 계산하고, 그 비율대로 정보를 섞는 계산</li>
+      <li><strong>밀집 어텐션</strong> = 모든 토큰을 다른 모든 토큰과 빠짐없이 비교하는 어텐션. 비교 횟수가 토큰 수의 제곱에 가깝다</li>
+      <li><strong>캐시</strong> = 한 번 계산한 값을 메모리에 저장해 두었다가 다시 꺼내 쓰는 것</li>
+      <li><strong>응답 지연</strong> = 요청을 보내고 답이 올 때까지 걸리는 시간</li>
+      <li><strong>단가</strong> = 토큰 일정 개수마다 매기는 가격. 입력 토큰과 출력 토큰의 가격이 따로 정해진다</li>
+      <li><strong>컨텍스트 윈도우</strong> = 모델이 한 번의 요청에서 참고할 수 있는 토큰의 범위</li>
+      <li><strong>위치 인코딩</strong> = 어텐션은 순서를 모르므로, 토큰마다 몇 번째 자리인지 정보를 넣어 주는 방법</li>
+      <li><strong>바이트</strong> = 컴퓨터가 글자를 저장하는 숫자 단위. 한글 한 글자는 보통 3바이트로 저장된다</li>
+      <li><strong>잔차 연결</strong> = 입력이 몇 개 층을 건너뛰어 출력에 그대로 더해지게 하는 연결. 깊은 신경망의 학습을 돕는다</li>
+      <li><strong>고정벡터 병목</strong> = 문장 전체를 크기가 정해진 벡터 하나에 담다 보니, 문장이 길면 정보가 뭉개지는 문제</li>
+      <li><strong>트랜스포머</strong> = 순서대로 읽는 구조 없이 어텐션만으로 토큰들을 한꺼번에 처리하는 신경망 구조</li>
+      <li><strong>거대 언어 모델</strong> = 트랜스포머로 만든, 앞 토큰들을 보고 다음 토큰을 예측하는 아주 큰 모델</li>
+      <li><strong>검증 장치</strong> = 모델의 결론이 맞는지 따로 확인하는 절차</li>
+    </ul>
+  </details>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="flow">요약</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
+    <button role="tab" aria-selected="false" data-tab="detail">풀어쓰기</button>
+    <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+  </div>
+
+  <section class="panel" id="flow">
+    <iframe class="flow-frame" src="diagram.html" title="토큰·컨텍스트가 비용·한계를 만드는 관계" style="height:516px"></iframe>
+    <ul class="points">
+      <li>요금과 응답 시간은 글자 수가 아니라 토큰 수를 따라 움직인다. 원문 예시에서 같은 뜻의 문장이 한국어는 22토큰, 영어는 16토큰으로 약 1.4배 차이가 났다.</li>
+      <li>밀집 어텐션은 모든 토큰 쌍을 비교한다. 토큰이 두 배면 이 비교 계산은 네 배 가까이 는다. 다만 전체 요금이나 응답 시간이 네 배가 된다는 뜻은 아니다.</li>
+      <li>컨텍스트 윈도우는 한 번에 참고할 수 있는 토큰 범위다. 크게 채울수록 요금·시간이 늘고, 중요한 정보가 묻히고, 서로 다른 자료가 섞이면 기준이 흔들린다.</li>
+      <li>긴 입력에서는 맨 앞·맨 뒤 정보는 잘 쓰고 가운데 정보는 놓치기 쉽다(U자 곡선). 담을 수 있는 능력과 찾아 쓰는 능력은 다르다.</li>
+      <li>토큰 한도·가격은 외우지 말고 쓰기 직전에 공식 문서로 확인한다. 모델은 사실 확인을 보장하지 않으므로 결론은 검증 장치와 함께 쓴다.</li>
+    </ul>
+  </section>
+
+  <section class="panel" id="detail" hidden>
+    <table>
+      <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>이제 이 강의를 열었던 질문으로 돌아갑니다. 문서를 더 많이 넣었는데 왜 답은 더 좋아지지 않았을까요. 역사는 여기서 끝나지 않고 이 모델을 돌리는 비용 구조로 곧장 이어집니다.</td><td>강의 맨 앞의 질문은 이것이었다. 80쪽 문서를 통째로 넣고 요약을 시켰더니 가운데 내용이 뭉개지고, 응답은 느려지고, 요금은 커졌다. 이 장은 그 이유를 모델이 글을 처리하는 방식에서 찾는다.</td></tr>
+        <tr><td class="n">2</td><td>일반적인 밀집 어텐션으로 입력 전체를 처리할 때는 토큰 사이의 비교가 토큰 수의 제곱에 가깝게 늘어납니다. 입력이 두 배라면 이 비교 계산은 네 배 가까이 늘 수 있지만, 전체 응답 시간이나 청구 요금까지 네 배가 된다는 뜻은 아닙니다.</td><td>어텐션은 토큰마다 다른 모든 토큰과 관련도를 계산한다. 토큰이 n개면 비교는 n × n번에 가깝다. 1,000개면 약 100만 번, 2,000개면 약 400만 번이다. 그래서 입력이 두 배면 이 비교 계산은 네 배 가까이 된다. 원문은 여기서 선을 긋는다. 응답 시간 전체나 요금이 네 배가 된다는 뜻은 아니다.</td></tr>
+        <tr><td class="n">3</td><td>생성 중에는 앞서 본 KV cache로 이전 토큰의 Key와 Value를 재사용해 계산을 줄입니다. 대신 문맥이 길어질수록 저장할 캐시와 새 토큰이 참고할 정보가 늘어납니다. 실제 요금은 모델별 입력·출력 토큰 단가와 캐시 정책을 따릅니다.</td><td>답을 한 토큰씩 만들 때, 앞 토큰들에 대해 이미 계산한 값(Key와 Value)은 저장해 두고 다시 쓴다. 그래서 매번 처음부터 계산하지는 않는다. 대신 입력이 길수록 저장할 값이 많아져 메모리를 더 쓰고, 새 토큰 하나가 참고할 앞 토큰도 많아진다. 요금은 이 계산량으로 매기지 않고, 제공사가 정한 입력·출력 토큰 단가와 캐시 규칙으로 매긴다.</td></tr>
+        <tr><td class="n">4</td><td>그래서 트랜스포머를 이해하면 비용이 다르게 보입니다. “글자를 몇 자 썼는가”가 아니라 “모델이 토큰을 몇 개나 서로 비교해야 하는가”를 보게 됩니다.</td><td>비용을 볼 때 세는 단위가 바뀐다. 글자 수가 아니라 토큰 수, 그리고 그 토큰들이 서로 몇 번 비교되는지를 본다.</td></tr>
+        <tr><td class="n">5</td><td>토큰(Token)은 모델이 글을 다루는 가장 작은 단위이자, 우리가 비용과 문맥을 세는 단위입니다. 문장이 토큰으로 쪼개지는 과정은 앞서 이미 보았습니다. 여기서 다시 볼 것은 그 쪼개짐이 왜 비용과 한계가 되는가입니다.</td><td>모델은 글을 토큰이라는 조각으로 잘라 읽는다. 요금도, 한 번에 넣을 수 있는 양도 토큰 개수로 센다. 추측: “앞서 이미 보았다”는 쪼개는 과정은 이 노트북 앞부분에 따로 나오지 않는다(토큰으로 나눠 읽는다는 말만 있다). 이전 강의를 가리키는 것으로 보인다.</td></tr>
+        <tr><td class="n">6</td><td>한국어 문장에서는 조사, 어미, 띄어쓰기, 희귀한 전문용어 때문에 체감보다 토큰이 늘어날 수 있습니다. 그래서 “10쪽이라 별로 길지 않다”는 사람의 감각이 API 비용과 응답 지연에서는 맞지 않을 수 있습니다. — AI에게 일을 시킬 때 비용은 글자 수가 아니라 토큰 수에 가깝게 움직이고, 긴 입력은 곧 긴 계산입니다.</td><td>같은 쪽수라도 한국어는 조사·어미가 붙고 드문 전문용어가 섞여 토큰이 많아질 수 있다. 토큰이 많으면 요금이 오르고, 계산이 길어져 답도 늦게 온다. 그래서 “몇 쪽인가”보다 “몇 토큰인가”로 길이를 판단한다.</td></tr>
+        <tr><td class="n">7</td><td>특정 모델의 토큰화 방식, 입력 한도, 가격은 제공사마다 다르고 시점마다 바뀝니다. 그래서 숫자를 외우는 대신, 요청 직전에 공식 문서와 토큰 확인 도구에서 다시 확인하는 습관을 만듭니다.</td><td>쪼개는 규칙, 넣을 수 있는 최대 토큰 수, 토큰당 가격은 회사와 모델마다 다르고 자주 바뀐다. 숫자를 외우지 말고 쓰기 직전에 공식 문서와 토큰 세기 도구로 확인한다. 원문은 OpenAI의 Tokenizer 페이지와 Models 문서를 확인할 곳의 예로 든다.</td></tr>
+        <tr><td class="n">8</td><td>(실습 코드) 같은 뜻의 한국어·영어 문장 두 쌍을 <code>o200k_base</code> 토크나이저로 세고, 첫 한국어 문장을 GPT 방식과 한국어 모델(<code>koelectra</code>) 토크나이저로 각각 쪼개 비교합니다. 모델 가중치는 필요 없고 토크나이저만 있으면 됩니다.</td><td>코드는 세 가지를 한다. ① <code>tiktoken</code>으로 o200k_base 방식을, <code>transformers</code>로 한국어 모델의 토크나이저를 불러온다. ② 문장마다 글자 수(<code>len(s)</code>)와 토큰 수(<code>len(gpt_tok.encode(s))</code>)를 세어 “토큰 하나에 글자 몇 개”까지 출력한다. ③ 첫 한국어 문장을 두 토크나이저로 쪼갠 조각 목록을 나란히 출력한다.</td></tr>
+        <tr><td class="n">9</td><td>32자 → 22토큰 (토큰당 글자 1.45) 계약 기간은 체결일로부터 1년으로 하며, 자동 갱신됩니다.<br>81자 → 16토큰 (토큰당 글자 5.06) The contract term is one year from the date of execution, with automatic renewal.<br>(둘째 쌍: 25자 → 17토큰, 52자 → 12토큰)<br>첫째, 한국어는 22토큰, 영어는 16토큰으로 약 1.4배 차이가 납니다. 컨텍스트 창이 128K라고 적혀 있어도 한국어 문서에 들어가는 내용은 줄어들고, 같은 단가를 적용하면 요금도 그만큼 더 듭니다.</td><td>영어 문장은 글자가 81자로 더 많은데도 토큰은 16개로 더 적다. 한국어는 32자인데 22토큰이다. 토큰 수로 보면 22 ÷ 16 ≈ 1.4배, 토큰 하나에 든 글자 수로 보면 5.06 ÷ 1.45 ≈ 3.5배 차이다(이 노트에서 직접 계산해 원문 숫자와 맞는지 확인했다). 창 크기와 단가가 같다면, 이 비율에서는 한국어 문서가 창을 1.4배 빨리 채우고 요금도 1.4배 든다.</td></tr>
+        <tr><td class="n">10</td><td>둘째, <code>갱</code>이라는 한 글자가 <code> �</code>, <code>�</code> 두 조각으로 깨져 있습니다. 글자를 바이트 단위로 다루다 보니 한글 한 글자가 여러 조각으로 갈라진 것입니다. 한국어를 많이 본 토크나이저는 같은 문장을 <code>계약</code>, <code>기간</code>처럼 뜻이 살아 있는 단위로 자르고 토큰 수도 17개로 더 적습니다.</td><td>컴퓨터는 글자를 바이트라는 숫자로 저장한다. ‘갱’은 3바이트다(원문에 없는 보충, UTF-8 기준). GPT 방식은 이 바이트들을 두 토큰에 나눠 담았고, 한 토큰만으로는 글자가 완성되지 않아 화면에 �로 보인다. 한국어 모델은 ‘계약’, ‘갱신’처럼 낱말 단위로 잘라 17개로 끝났다. 덧붙여 GPT 방식 조각 앞의 빈칸(<code> 기간</code>)은 띄어쓰기까지 토큰에 함께 들어간 것이고, 한국어 모델 조각 앞의 <code>##</code>는 앞 조각에 띄어쓰기 없이 이어진다는 표시다(## 설명은 원문에 없는 보충).</td></tr>
+        <tr><td class="n">11</td><td>셋째, 이것이 앞에서 본 어텐션 비용과 곧장 연결됩니다. 밀집 어텐션에서 조각 수가 두 배가 되면 이 비교 계산은 네 배 가까이 됩니다. 한국어라서 토큰이 더 나온다는 사실은 요금표 한 줄로 끝나지 않고 속도와 한계까지 함께 밀어 올립니다.</td><td>토큰이 많다는 것은 요금 한 줄의 문제가 아니다. 같은 규칙을 이 예시에 적용하면, 토큰이 1.4배일 때 비교 계산은 1.4 × 1.4 ≈ 2배 가까이 된다(원문의 “두 배 → 네 배”와 같은 계산법으로 이 노트에서 계산). 그래서 처리 시간도 늘고, 창에 남는 자리도 빨리 줄어든다.</td></tr>
+        <tr><td class="n">12</td><td>토큰이 낱장의 종이라면, 컨텍스트 윈도우(Context Window)는 그 종이를 한 번에 펼쳐 놓는 작업대입니다. 정확히 말하면 모델이 한 번의 요청에서 참고할 수 있는 토큰의 범위입니다.</td><td>한 번 요청할 때 모델이 참고할 수 있는 토큰 개수에는 상한이 있다. 이 범위가 컨텍스트 윈도우다. 범위 밖의 글은 그 요청에서 참고하지 못한다.</td></tr>
+        <tr><td class="n">13</td><td>지원하는 길이는 모델과 모드, 제공 시점에 따라 다르므로 특정 숫자로 단정하지 않습니다. 사용하려는 모델의 공식 사양에서 입력과 출력 한도를 확인합니다.</td><td>창 크기도 외울 숫자가 아니다. 모델·모드·시기마다 다르니, 쓰려는 모델의 공식 사양에서 입력 한도와 출력 한도를 따로 확인한다. 원문은 Google의 Long context 문서를 예로 든다.</td></tr>
+        <tr><td class="n">14</td><td>큰 작업대에는 세 가지 문제가 따라옵니다. 1. 자료를 많이 올릴수록 검토 비용과 시간이 늘어납니다. 2. 중요한 종이가 어디 있는지 찾기 어려워집니다. 3. 서로 충돌하는 자료를 함께 올리면 모델이 어떤 기준을 우선할지 흔들립니다.</td><td>창이 커서 많이 넣을 수 있게 되면 세 가지가 따라온다. ① 토큰이 늘어 요금과 시간이 는다. ② 정작 필요한 문장이 많은 토큰 사이에 묻혀 모델이 그것을 찾아 쓰기 어렵다. ③ 서로 다른 말을 하는 자료가 함께 들어가면 모델이 어느 쪽을 따를지 일정하지 않다.</td></tr>
+        <tr><td class="n">15</td><td>컨텍스트 윈도우가 크면 더 많은 자료를 담을 수 있습니다. 다만 실제로 입력을 길게 채울수록 계산 부담이 커지고, 답의 품질까지 자동으로 좋아지는 것은 아닙니다. 참고로 모델마다 다룰 수 있는 길이가 다른 이유 하나가 앞서 본 위치 인코딩 방식의 차이입니다. RoPE나 ALiBi처럼 상대적 거리를 다루는 방식은 학습할 때보다 긴 입력으로 넓히는 데 상대적으로 유리합니다.</td><td>창 크기는 “넣을 수 있는 최대량”일 뿐, “넣으면 잘 쓴다”는 약속이 아니다. 어텐션은 그 자체로는 토큰 순서를 모르기 때문에, 토큰마다 몇 번째 자리인지 정보를 따로 넣는다(위치 인코딩). 이 방식이 모델마다 다르다. 두 토큰이 몇 칸 떨어졌는지를 쓰는 방식(RoPE, ALiBi)은 학습 때보다 긴 입력으로 늘리기에 상대적으로 유리하다.</td></tr>
+        <tr><td class="n">16</td><td>Liu 등(2023)의 “Lost in the Middle” 연구는, 중요한 정보가 입력의 맨 앞이나 맨 뒤에 있을 때 성능이 가장 높고, 긴 입력의 중간에 있을 때 성능이 눈에 띄게 떨어지는 U자 모양의 곡선을 보고했습니다. 심지어 긴 컨텍스트를 표방하는 모델에서도 이 경향이 나타났습니다.</td><td>같은 정보를 긴 입력의 어디에 두느냐에 따라 모델이 그 정보를 찾아 쓰는 성적이 달랐다. 맨 앞이나 맨 뒤에 두면 높고, 가운데에 두면 낮았다. 위치를 가로축, 성적을 세로축으로 그리면 양 끝이 높고 가운데가 꺼진 U자가 된다. 강의 처음의 “80쪽 문서 가운데가 뭉개졌다”는 경험이 이 모양과 같다.</td></tr>
+        <tr><td class="n">17</td><td>이 연구는 긴 입력에 정보를 담을 수 있는 능력과, 그 정보를 정확히 찾아 쓰는 능력이 다를 수 있음을 보여 줍니다. 다만 이런 경향은 모델과 과제에 따라 달라지며, 모든 토큰을 비교하는 어텐션 구조만으로 원인을 단정할 수는 없습니다. 제곱에 가까운 계산 비용과 정보 활용의 정확도는 구분해서 기억합니다.</td><td>두 가지를 따로 기억한다. ① 계산 비용: 토큰이 늘면 비교가 제곱에 가깝게 는다. 구조에서 바로 나오는 사실이다. ② 정확도: 긴 입력의 가운데 정보를 놓치는 경향이 있다. 실험에서 관찰된 경향이고, 모델·과제마다 다르며, 원인을 어텐션 하나로 단정할 수 없다.</td></tr>
+        <tr><td class="n">18</td><td>이미지 분야는 깊이의 벽을 잔차 연결로 넘었고, 언어 분야는 고정벡터 병목을 어텐션으로 완화했습니다. 어텐션으로 쌓은 트랜스포머가 거대 언어 모델을 낳았으며, 이 모델에서는 토큰 수와 컨텍스트 길이가 비용과 한계를 좌우합니다. 그래서 이 모델을 다루는 일은 더 긴 입력을 넣는 것이 아니라, 구조가 만드는 비용과 한계를 읽는 것입니다. (입력이 길어질 때 계산 부담이 커지는 이유와, 긴 입력에서도 중요한 정보를 놓칠 수 있다는 한계를 설명할 수 있다면 이해한 것입니다.)</td><td>강의 전체를 한 줄로 줄인 문단이다. 층을 깊게 쌓다 막힌 이미지는 층을 건너뛰는 연결로, 문장을 벡터 하나에 담다 막힌 언어는 어텐션으로 벽을 넘었다. 어텐션으로 만든 트랜스포머가 지금의 거대 언어 모델이 되었다. 이 모델을 잘 쓰려면 많이 넣기보다 무엇을 얼마나 넣을지 정해야 한다. 이 장의 목표는 두 가지를 설명할 수 있는 것이다. 입력이 길면 왜 계산이 커지는지, 긴 입력에서 왜 정보를 놓칠 수 있는지.</td></tr>
+        <tr><td class="n">19</td><td>트랜스포머는 문맥을 보는 구조지만, 그것이 사실 확인 능력이나 책임 판단을 보장하지는 않습니다. 긴 컨텍스트에 공식 문서를 넣어도 모델이 잘못 인용할 수 있고, 근거가 서로 충돌하면 그럴듯한 절충안을 만들 수 있습니다. 그래서 모델의 결론은 언제나 검증 장치와 함께 두어야 합니다.</td><td>어텐션은 토큰 사이의 관련도를 계산할 뿐, 내용이 맞는지 확인하는 단계가 없다. 그래서 정확한 문서를 넣어도 틀리게 옮겨 쓸 수 있고, 자료끼리 말이 다르면 둘을 섞은 그럴듯한 답을 낼 수 있다. 결론은 따로 확인하는 절차(검증 장치)와 함께 쓴다.</td></tr>
+        <tr><td class="n">20</td><td>(핵심 정리 표에서) 토큰은 왜 중요한가: 비용과 지연, 컨텍스트 한계가 글자 수보다 토큰 수에 가깝게 움직입니다. 어텐션은 왜 비용이 되나: 토큰 사이의 비교가 토큰 수의 제곱에 가깝게 늘어납니다. 컨텍스트 윈도우는 무엇인가: 한 번에 펼치는 작업대이며, 길어진 만큼 서로 비교할 토큰이 늘어납니다.<br>— 토큰은 비용을 만들고, 컨텍스트는 한계를 만듭니다. 둘 다 어텐션이 모든 토큰을 서로 참고하게 하는 같은 구조에서 나옵니다.</td><td>모든 토큰이 서로를 참고하는 구조이기 때문에, 토큰이 많을수록 계산이 커지고(비용), 한 번에 다룰 수 있는 양에 선이 생긴다(한계). 추측: 닫는 문장의 “한계”는 창 크기와 계산·메모리 부담을 가리키는 것으로 읽었다. 바로 앞(17번)에서 원문이 가운데 정보를 놓치는 현상의 원인은 어텐션 구조만으로 단정할 수 없다고 했기 때문이다.</td></tr>
+        <tr><td class="n">21</td><td>오늘의 회고. 머리: 트랜스포머 구조가 왜 곧 비용과 한계가 되는지, 달라진 관점을 한 문장으로 적어 봅니다. 손: 「손으로 돌려보기」에서 직접 잰 내 문장의 토큰 수와, 같은 뜻의 영어 문장과의 차이를 적어 봅니다. 마음: AI의 답을 대하는 태도에서 무엇이 달라졌는지 적어 봅니다.</td><td>직접 적어 볼 세 가지 숙제다. 손 항목은 8번의 실습 코드에서 <code>PAIRS</code> 안의 문장을 내 문장으로 바꿔 돌리면 채울 수 있다.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="words" hidden>
+    <ul class="words">
+      <li><strong>token</strong>(토큰): 토큰의 영어 이름</li>
+      <li><strong>tokenizer</strong>(토크나이저): 토크나이저의 영어 이름</li>
+      <li><strong>attention</strong>(어텐션): 어텐션의 영어 이름</li>
+      <li><strong>Transformer</strong>(트랜스포머): 트랜스포머의 영어 이름. 2017년 논문 Attention Is All You Need에서 나왔다</li>
+      <li><strong>LLM</strong>(엘엘엠): large language model. 거대 언어 모델의 약어</li>
+      <li><strong>Query</strong>(쿼리): 어텐션에서 지금 토큰이 “나를 이해하려면 무엇이 필요한가”를 묻는 벡터. Q로 줄여 쓴다</li>
+      <li><strong>Key</strong>(키): 어텐션에서 각 토큰이 “나는 이런 정보와 관련 있다”고 내미는 벡터. K로 줄여 쓴다</li>
+      <li><strong>Value</strong>(밸류): 어텐션에서 참고하기로 정한 토큰에서 실제로 가져오는 정보 벡터. V로 줄여 쓴다</li>
+      <li><strong>KV cache</strong>(케이브이 캐시): 답을 한 토큰씩 만들 때 앞 토큰들의 Key와 Value를 저장해 두고 다시 쓰는 캐시</li>
+      <li><strong>cache</strong>(캐시): 캐시의 영어 이름</li>
+      <li><strong>API</strong>(에이피아이): 프로그램이 다른 서비스에 요청을 보내는 창구. 여기서 API 비용은 프로그램으로 AI 모델을 부를 때 내는 요금</li>
+      <li><strong>context window</strong>(컨텍스트 윈도우): 컨텍스트 윈도우의 영어 이름</li>
+      <li><strong>128K</strong>(백이십팔 케이): K는 천(1,000)을 뜻하는 표시. 128K는 약 12만 8천 토큰</li>
+      <li><strong>positional encoding</strong>(포지셔널 인코딩): 위치 인코딩의 영어 이름</li>
+      <li><strong>RoPE</strong>(로프): Rotary Position Embedding. Q와 K 벡터를 위치만큼 회전시켜, 두 토큰이 몇 칸 떨어졌는지가 계산에 반영되게 하는 위치 인코딩</li>
+      <li><strong>ALiBi</strong>(알리바이): Attention with Linear Biases. 멀리 떨어진 토큰일수록 어텐션 점수를 거리에 비례해 깎는 방식</li>
+      <li><strong>Lost in the Middle</strong>(로스트 인 더 미들): “가운데에서 길을 잃다”. 긴 입력의 가운데 정보를 잘 못 쓰는 경향을 보고한 Liu 등(2023)의 연구 이름</li>
+      <li><strong>U자</strong>(유 자): 양 끝이 높고 가운데가 낮은 곡선 모양</li>
+      <li><strong>byte</strong>(바이트): 바이트의 영어 이름</li>
+      <li><strong>UTF-8</strong>(유티에프 에이트): 글자를 바이트로 저장하는 가장 흔한 방식. 한글 한 글자는 3바이트</li>
+      <li><strong>OpenAI</strong>(오픈에이아이): ChatGPT를 만든 회사. 원문은 이 회사의 Tokenizer 페이지와 Models 문서를 확인할 곳의 예로 든다</li>
+      <li><strong>GPT</strong>(지피티): OpenAI의 언어 모델 계열. 실습 출력의 “GPT 방식”은 o200k_base 토큰화를 말한다</li>
+      <li><strong>Google Colab</strong>(구글 코랩): 브라우저에서 파이썬 노트북을 실행하는 구글 서비스. 원문이 실습 환경으로 권한다</li>
+      <li><strong>pip install</strong>(핍 인스톨): 파이썬 패키지를 내려받아 설치하는 명령. 노트북 셀에서는 앞에 !를 붙여 실행한다</li>
+      <li><strong>tiktoken</strong>(틱토큰): OpenAI가 공개한 토큰 세기 파이썬 라이브러리</li>
+      <li><strong>transformers</strong>(트랜스포머스): 여러 공개 모델과 그 토크나이저를 불러오는 파이썬 라이브러리</li>
+      <li><strong>o200k_base</strong>(오 이백케이 베이스): 원문 주석에 따르면 최근 OpenAI 모델 계열이 쓰는 토큰화 방식 이름</li>
+      <li><strong>AutoTokenizer</strong>(오토 토크나이저): 모델 이름을 주면 그 모델에 맞는 토크나이저를 불러오는 도구</li>
+      <li><strong>KoELECTRA</strong>(코일렉트라): 실습에 쓴 한국어 모델(monologg/koelectra-small-v3-discriminator). 원문은 “한국어 모델 방식”이라 부른다</li>
+      <li><strong>encode</strong>(인코드): 글을 토큰 번호 목록으로 바꾸는 함수. 목록의 길이가 토큰 수다</li>
+      <li><strong>decode</strong>(디코드): 토큰 번호를 다시 글자로 바꾸는 함수</li>
+      <li><strong>tokenize</strong>(토크나이즈): 글을 토큰 조각(글자 그대로) 목록으로 나누는 함수</li>
+      <li><strong>len</strong>(렌): 글자 수나 목록의 길이를 세는 파이썬 함수</li>
+      <li><strong>##</strong>(샵샵): 한국어 모델 출력에서 앞 조각에 띄어쓰기 없이 붙는 조각이라는 표시 (원문에 설명 없음)</li>
+    </ul>
+  </section>
+  <section class="panel" id="visual" hidden>
+    <p class="visual-kind"><strong>그림 종류:</strong> 개념 관계도</p>
+    <p class="visual-reason"><strong>고른 이유:</strong> “모든 토큰을 서로 비교하는 구조” 하나에서 비용(토큰 수)과 한계(컨텍스트 길이) 두 갈래가 나오는 관계라서, 갈래 그림으로 보면 글보다 한눈에 들어온다.</p>
+    <div class="visual-buttons">
+      <button type="button" data-src="summary.html">종합 정리</button>
+      <button type="button" data-src="diagram.html">그림 하나</button>
+      <button type="button" data-src="eli5.html">아주 쉽게</button>
+      <a id="visual-open" href="#" target="_blank" rel="noopener" hidden>새 탭으로 열기</a>
+    </div>
+    <iframe id="visual-frame" title="그림 보기" hidden></iframe>
+  </section>
+</main>
+<script>
+  const tabs = document.querySelectorAll('.tabs button');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabs.forEach(function (x) {
+        const on = x === b;
+        x.setAttribute('aria-selected', on);
+        document.getElementById(x.dataset.tab).hidden = !on;
+      });
+    });
+  });
+  const frame = document.getElementById('visual-frame');
+  const openLink = document.getElementById('visual-open');
+  const vbtns = document.querySelectorAll('.visual-buttons button[data-src]');
+  vbtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      vbtns.forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      frame.src = b.dataset.src;
+      frame.hidden = false;
+      openLink.href = b.dataset.src;
+      openLink.hidden = false;
+    });
+  });
+  // 그림(diagram.html)은 프레임 높이를 그림 크기에 맞춘다. 그림 파일은 고치지 않고 불러올 때 스타일을 얹는다.
+  function fitDiagram(f) {
+    try {
+      const d = f.contentDocument;
+      if (!d || !/diagram\.html$/.test(f.contentWindow.location.pathname)) { f.style.height = ''; return; }
+      if (d.getElementById('fit-fix')) return;
+      const st = d.createElement('style');
+      st.id = 'fit-fix';
+      st.textContent = 'body{min-height:0;display:flex;align-items:center;justify-content:center}';
+      d.head.appendChild(st);
+      const fit = function () { f.style.height = (d.body.offsetHeight + 2) + 'px'; };
+      fit();
+      if (d.fonts && d.fonts.ready) d.fonts.ready.then(fit);
+      if (f.contentWindow.ResizeObserver) new f.contentWindow.ResizeObserver(fit).observe(d.body);
+    } catch (e) { /* file:// 에서는 기본 높이를 유지한다 */ }
+  }
+  [document.querySelector('.flow-frame'), document.getElementById('visual-frame')].forEach(function (f) {
+    if (f) f.addEventListener('load', function () { fitDiagram(f); });
+  });
+</script>
+</body>
+</html>
