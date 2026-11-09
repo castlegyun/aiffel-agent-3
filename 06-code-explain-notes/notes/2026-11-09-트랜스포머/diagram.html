@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>어텐션 한 번에 일어나는 일</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper:       #f5f5f5;
+      --ink:         #2d3142;
+      --muted:       #4f5d75;
+      --accent:      #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --node-fill:   #ffffff;
+      --node-stroke: #2d3142;
+      --font-sans:   'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:  'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:   'Geist Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:       #2d3142;
+        --ink:         #f5f5f5;
+        --muted:       #bfc0c0;
+        --accent:      #f08a59;
+        --accent-tint: rgba(240,138,89,0.10);
+        --node-fill:   rgba(245,245,245,0.04);
+        --node-stroke: rgba(245,245,245,0.45);
+      }
+    }
+    body { font-family: var(--font-sans); background: var(--paper); color: var(--ink); min-height: 100vh; padding: 1.5rem 1rem; }
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 1rem; }
+    .caption { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; }
+    svg { width: 100%; min-width: 752px; display: block; }
+    .paper  { fill: var(--paper); }
+    .node   { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1; }
+    .focal  { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2; }
+    .line   { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .head   { fill: var(--muted); }
+    .t-name { fill: var(--ink); font: 600 13px var(--font-sans); text-anchor: middle; }
+    .t-sub  { fill: var(--muted); font: 400 12px var(--font-sans); text-anchor: middle; }
+    .t-row  { fill: var(--muted); font: 600 12px var(--font-sans); }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flowchart · one attention step</p>
+    <h1>어텐션 한 번에 일어나는 일</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 768 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="att-title att-desc">
+        <title id="att-title">어텐션 한 번에 일어나는 일</title>
+        <desc id="att-desc">토큰 하나의 표현에서 Q, K, V를 만들고, Q를 모든 K와 맞대 점수를 얻고, 점수를 비율로 바꾸고, 그 비율대로 V를 섞어 문맥이 반영된 새 표현을 만든다.</desc>
+        <defs>
+          <marker id="att-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
+        </defs>
+        <rect class="paper" width="100%" height="100%"/>
+        <text class="t-row" x="8" y="22">토큰 하나의 새 표현을 만드는 순서(다른 토큰의 K·V도 같은 방식으로 만들어져 있다)</text>
+
+        <line class="line" x1="144" y1="82" x2="160" y2="82" marker-end="url(#att-arrow)"/>
+        <line class="line" x1="298" y1="82" x2="314" y2="82" marker-end="url(#att-arrow)"/>
+        <line class="line" x1="452" y1="82" x2="468" y2="82" marker-end="url(#att-arrow)"/>
+        <line class="line" x1="606" y1="82" x2="622" y2="82" marker-end="url(#att-arrow)"/>
+
+        <rect class="paper" x="8" y="36" width="136" height="92" rx="6"/>
+        <rect class="node" x="8" y="36" width="136" height="92" rx="6"/>
+        <text class="t-name" x="76" y="62">1 Q·K·V 뽑기</text>
+        <text class="t-sub" x="76" y="84">모든 토큰의 표현에</text>
+        <text class="t-sub" x="76" y="100">선형변환을 곱해</text>
+        <text class="t-sub" x="76" y="116">Q·K·V를 만듦</text>
+
+        <rect class="paper" x="162" y="36" width="136" height="92" rx="6"/>
+        <rect class="node" x="162" y="36" width="136" height="92" rx="6"/>
+        <text class="t-name" x="230" y="62">2 Q·K 맞대기</text>
+        <text class="t-sub" x="230" y="84">Q를 모든 토큰의</text>
+        <text class="t-sub" x="230" y="100">K와 하나씩 비교</text>
+        <text class="t-sub" x="230" y="116">점수표를 만듦</text>
+
+        <rect class="paper" x="316" y="36" width="136" height="92" rx="6"/>
+        <rect class="node" x="316" y="36" width="136" height="92" rx="6"/>
+        <text class="t-name" x="384" y="62">3 점수 → 비율</text>
+        <text class="t-sub" x="384" y="84">칸 수의 제곱근으로</text>
+        <text class="t-sub" x="384" y="100">점수를 누른 뒤</text>
+        <text class="t-sub" x="384" y="116">softmax로 비율</text>
+
+        <rect class="paper" x="470" y="36" width="136" height="92" rx="6"/>
+        <rect class="node" x="470" y="36" width="136" height="92" rx="6"/>
+        <text class="t-name" x="538" y="62">4 V 섞기</text>
+        <text class="t-sub" x="538" y="84">비율만큼 각 토큰의</text>
+        <text class="t-sub" x="538" y="100">V를 더해 섞음</text>
+
+        <rect class="paper" x="624" y="36" width="136" height="92" rx="6"/>
+        <rect class="focal" x="624" y="36" width="136" height="92" rx="6"/>
+        <text class="t-name" x="692" y="62">5 새 표현</text>
+        <text class="t-sub" x="692" y="84">문맥이 반영된</text>
+        <text class="t-sub" x="692" y="100">벡터 (확률 아님)</text>
+      </svg>
+    </div>
+    <p class="caption">다음 토큰의 확률은 이 새 표현을 받은 맨 끝 출력층이 계산한다. 어텐션은 표현을 갱신할 뿐이다.</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>트랜스포머와 어텐션 아주 쉽게</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --card:#fff; --hot:#e8590c; --bar:#c9d8fb; --dim:#eee; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --card:#262624; --hot:#ffa94d; --bar:#33456b; --dim:#2e2e2c; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 system-ui, "Malgun Gothic", sans-serif; word-break:keep-all; overflow-wrap:break-word; }
+  main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.8rem; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 24px; }
+  h2 { font-size:1.2rem; margin:32px 0 10px; }
+  h2 .no { display:inline-block; width:1.6em; height:1.6em; line-height:1.6em; text-align:center; border-radius:50%; background:var(--accent); color:#fff; font-size:.85rem; margin-right:6px; vertical-align:2px; }
+  .note { color:var(--muted); font-size:.85rem; margin:6px 0 0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; }
+  .big { font-size:1.2rem; font-weight:700; margin:10px 0 0; }
+  .small { color:var(--muted); font-size:.95rem; margin:0 0 8px; }
+  .hotword { color:var(--hot); font-weight:700; }
+  .row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:6px 0; }
+  .row .lab { width:5.5em; font-weight:700; font-size:.95rem; }
+  .chip { background:var(--card); border:2px solid var(--accent); color:var(--accent); border-radius:8px; padding:2px 10px; font-weight:700; }
+  .chip.hot { border-color:var(--hot); color:var(--hot); }
+  .chip.off { border-style:dashed; border-color:var(--muted); color:var(--muted); text-decoration:line-through; }
+  .arrow { color:var(--muted); font-weight:700; }
+  .wait { color:var(--muted); font-size:.85rem; }
+  .eq { font-family:Consolas, monospace; font-size:1.05rem; font-weight:700; margin:8px 0; }
+  .eq .r { color:var(--hot); }
+  .list { margin:6px 0 0; padding-left:1.3em; }
+  .list li { margin:4px 0; }
+  .three { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+  @media (max-width:560px) { .three { grid-template-columns:1fr; } }
+  .three .card { text-align:center; }
+  .three .mark { font-size:1.6rem; font-weight:700; color:var(--accent); margin:0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>트랜스포머와 어텐션, 아주 쉽게</h1>
+  <p class="lead">어텐션은 토큰마다 “다른 토큰들을 얼마씩 섞을지” 정하고, 그대로 섞어 새 숫자 묶음을 만드는 계산이다.</p>
+
+  <h2><span class="no">1</span>토큰 하나는 숫자 묶음 하나</h2>
+  <div class="card">
+    <div class="row"><span class="chip">A</span><span class="chip">B</span><span class="chip">C</span><span class="wait">토큰 3개 = 숫자 묶음 3개</span></div>
+    <p class="big">이 숫자 묶음이 벡터(vector, 벡터)다</p>
+  </div>
+
+  <h2><span class="no">2</span>어텐션은 숫자 묶음을 섞어 새로 만든다</h2>
+  <div class="card">
+    <p class="small">새 A를 만들 때 (예시 숫자이고, 실제 모델 값이 아님)</p>
+    <p class="eq">새 A = <span class="r">0.7</span> × A + <span class="r">0.2</span> × B + <span class="r">0.1</span> × C</p>
+    <p class="big">0.7, 0.2, 0.1이 <span class="hotword">비율</span>이다. 다 더하면 1이다.</p>
+    <p class="note">비율이 큰 토큰의 정보가 새 A에 더 많이 들어간다. 새 B, 새 C도 같은 방식으로 만든다. 비율만 다르다.</p>
+  </div>
+
+  <h2><span class="no">3</span>비율은 이렇게 정한다</h2>
+  <div class="card">
+    <ol class="list">
+      <li>토큰마다 같은 숫자 묶음에 숫자 표를 곱해 Q, K, V 세 묶음을 만든다.</li>
+      <li>A의 Q를 A, B, C의 K와 하나씩 맞댄다. 비슷할수록 점수가 크다. 점수가 3개 나온다.</li>
+      <li>점수 3개를 합이 1인 비율로 바꾼다.</li>
+      <li>그 비율을 각 토큰의 V에 곱해서 더한다. 이것이 새 A다.</li>
+    </ol>
+    <p class="big">Q와 K는 비율을 정하는 데만 쓰인다. 섞이는 내용은 <span class="hotword">V</span>다.</p>
+    <p class="note">Q·K·V는 Query(쿼리), Key(키), Value(밸류)의 줄임말이다.</p>
+  </div>
+
+  <h2><span class="no">4</span>그래서 한꺼번에 계산할 수 있다</h2>
+  <div class="card">
+    <div class="row"><span class="lab">예전 구조</span>
+      <span class="chip">B 계산</span><span class="arrow">→</span><span class="chip">C 계산</span>
+      <span class="wait">B 결과가 있어야 C를 계산</span></div>
+    <div class="row"><span class="lab">어텐션</span>
+      <span class="chip hot">새 A</span><span class="chip hot">새 B</span><span class="chip hot">새 C</span>
+      <span class="wait">원래 숫자 묶음만 있으면 됨</span></div>
+    <p class="big">서로의 계산 결과를 기다리지 않아서 <span class="hotword">동시에</span> 계산한다</p>
+    <p class="note">학습할 때와 입력을 읽을 때 그렇다. 답을 이어 쓸 때는 여전히 한 토큰씩 쓴다.</p>
+  </div>
+
+  <h2><span class="no">5</span>뒤의 토큰은 가린다 (인과 마스크)</h2>
+  <div class="card">
+    <p class="small">“나는 오늘 밥을 먹었다”로 다음 글자 맞히기를 연습할 때</p>
+    <div class="row"><span class="lab">“오늘” 계산</span>
+      <span class="chip hot">나는</span><span class="chip hot">오늘</span><span class="chip off">밥을</span><span class="chip off">먹었다</span></div>
+    <p class="big">정답을 미리 보지 못하게 <span class="hotword">뒤 토큰은 가린다</span></p>
+    <p class="note">가린다 = 그 토큰의 비율을 0으로 만든다. 이 규칙의 이름이 인과 마스크(causal mask, 코절 마스크)다. 글을 이어 쓰는 쪽에서 쓴다.</p>
+  </div>
+
+  <h2><span class="no">6</span>순서는 따로 알려 준다</h2>
+  <div class="card">
+    <div class="row"><span class="chip">dog</span><span class="chip">bites</span><span class="chip">man</span></div>
+    <div class="row"><span class="chip">man</span><span class="chip">bites</span><span class="chip">dog</span></div>
+    <p class="big">같은 토큰이라 어텐션 계산만으로는 구별이 안 된다 → <span class="hotword">자리 정보</span>를 더한다</p>
+    <p class="note">dog(도그) bites(바이츠) man(맨). 자리 정보를 넣는 방법이 위치 인코딩(positional encoding, 포지셔널 인코딩)이다.</p>
+  </div>
+
+  <h2><span class="no">7</span>기억할 것</h2>
+  <div class="three">
+    <div class="card"><p class="mark">섞는다</p>비율대로 다른 토큰을 섞어 새 숫자 묶음을 만든다</div>
+    <div class="card"><p class="mark">동시에</p>서로의 결과를 기다리지 않아서 한꺼번에 계산한다</div>
+    <div class="card"><p class="mark">가린다·더한다</p>뒤 토큰은 가리고, 자리 정보는 따로 더한다</div>
+  </div>
+</main>
+</body>
+</html>
