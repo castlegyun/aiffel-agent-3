@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>노트 안쪽 화면 (Brightpath 시안)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&family=Noto+Sans+KR:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --color-background:#fcfbff; --color-surface:#ffffff; --color-border:#dcd8e7;
+    --color-text:#231f2b; --color-muted:#656070;
+    --color-primary:#005ab0; --color-on-primary:#ffffff;
+    --color-accent:#8d6dc9; --color-on-accent:#000000;
+    --font-body:"Inter","Noto Sans KR",system-ui,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,monospace;
+    --shadow-sm:0 1px 2px rgb(0 0 0 / .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --color-background:#15131b; --color-surface:#23202b; --color-border:#393642;
+      --color-text:#f3f1f6; --color-muted:#b2afbc;
+      --color-primary:#59a3ff; --color-on-primary:#111111;
+      --color-accent:#c0a2ff; --color-on-accent:#000000;
+    }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--color-background); color:var(--color-text); font:400 .9375rem/1.6 var(--font-body); }
+  a { color:var(--color-primary); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  :focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
+
+  .bar { background:var(--color-surface); border-bottom:1px solid var(--color-border); }
+  .bar div { max-width:860px; margin:0 auto; padding:0 16px; height:48px; display:flex; align-items:center; gap:10px; }
+  .logo { width:22px; height:22px; border-radius:6px; background:var(--color-primary); }
+  .bar b { font-weight:700; color:var(--color-text); }
+  .bar span { margin-left:auto; color:var(--color-muted); font-size:.8rem; }
+
+  main { max-width:860px; margin:0 auto; padding:20px 16px 48px; }
+  .crumb { font-size:.8rem; color:var(--color-muted); margin:0 0 12px; }
+  .meta { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .badge { background:var(--color-accent); color:var(--color-on-accent); font-size:.64rem; font-weight:600; line-height:1.4; padding:2px 8px; border-radius:4px; }
+  .date { font:400 .8rem/1.5 var(--font-mono); color:var(--color-muted); }
+  h1 { font-size:1.563rem; line-height:1.3; letter-spacing:-.01em; font-weight:700; margin:0 0 8px; max-width:34em; }
+  .summary { color:var(--color-muted); font-size:.875rem; margin:0 0 16px; max-width:68ch; }
+
+  .terms { background:var(--color-surface); border:1px solid var(--color-border); border-radius:16px; box-shadow:var(--shadow-sm); padding:12px 16px; margin-bottom:16px; font-size:.875rem; }
+  .terms summary { cursor:pointer; font-weight:600; }
+  .terms ul { margin:8px 0 0; padding-left:20px; color:var(--color-muted); }
+  .terms li { margin:2px 0; } .terms li b { color:var(--color-text); }
+
+  .tabs { display:flex; gap:4px; margin-bottom:16px; flex-wrap:wrap; }
+  .tabs button { font:600 .8rem/1 var(--font-body); padding:10px 14px; border-radius:8px; border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text); cursor:pointer; }
+  .tabs button[aria-selected="true"] { background:var(--color-primary); border-color:var(--color-primary); color:var(--color-on-primary); }
+  .panel[hidden] { display:none; }
+  .card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:16px; box-shadow:var(--shadow-sm); padding:16px; margin-bottom:16px; }
+
+  .fig { height:240px; display:grid; place-items:center; border:1px dashed var(--color-border); border-radius:8px; color:var(--color-muted); font-size:.8rem; text-align:center; }
+  .points { margin:16px 0 0; padding-left:20px; } .points li { margin:6px 0; }
+
+  table { width:100%; border-collapse:collapse; font-size:.875rem; }
+  th { text-align:left; font-size:.8rem; font-weight:600; color:var(--color-muted); padding:8px 10px; border-bottom:1px solid var(--color-border); }
+  td { vertical-align:top; padding:10px; border-bottom:1px solid var(--color-border); }
+  td.n { width:2.5em; font-family:var(--font-mono); color:var(--color-muted); }
+  tr:last-child td { border-bottom:0; }
+  code { font:400 .8rem/1.5 var(--font-mono); background:rgba(141,109,201,.12); padding:1px 5px; border-radius:4px; }
+  .words { margin:0; padding:0; list-style:none; } .words li { padding:8px 0; border-bottom:1px solid var(--color-border); } .words li:last-child { border-bottom:0; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+<header class="bar"><div><span class="logo" aria-hidden="true"></span><b>코드 해설 노트</b><span>시안 · 노트 안쪽 화면</span></div></header>
+<main>
+  <p class="crumb"><a href="#">← 노트 보관함</a></p>
+  <div class="meta"><span class="badge">텍스트</span><span class="date">2026-11-05</span></div>
+  <h1>AI는 어떻게 배우나: 규칙 대신 데이터로 배우고, 데이터는 숫자가 된다</h1>
+  <p class="summary">AI의 학습은 규칙을 일일이 적는 대신 예시(데이터)를 주고, 예측 → 오차 → 조정을 되풀이하며 규칙을 찾게 하는 일이다. 기계는 숫자만 다루므로 글은 토큰·벡터로, 그림은 밝기 숫자 격자(텐서)로 바꿔 넣는다.</p>
+
+  <details class="terms">
+    <summary>새 용어 3개 (눌러서 펼치기)</summary>
+    <ul>
+      <li><b>토큰</b> — 글을 잘게 나눈 조각</li>
+      <li><b>벡터</b> — 숫자를 한 줄로 늘어놓은 것</li>
+      <li><b>텐서</b> — 숫자를 격자나 여러 겹으로 쌓은 것</li>
+    </ul>
+  </details>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="flow">요약</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
+    <button role="tab" aria-selected="false" data-tab="detail">풀어쓰기</button>
+    <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+  </div>
+
+  <section class="panel" id="flow">
+    <div class="card">
+      <div class="fig">여기에 흐름 그림이 들어갑니다<br>(예측 → 오차 → 조정 되풀이)</div>
+      <ul class="points">
+        <li>규칙을 적는 대신 예시(데이터)를 줍니다.</li>
+        <li>예측하고, 틀린 만큼 조정하는 일을 되풀이합니다.</li>
+        <li>기계는 숫자만 다루므로 글과 그림을 숫자로 바꿔 넣습니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel" id="visual" hidden>
+    <div class="card"><div class="fig">그림 보기 영역 (iframe)</div></div>
+  </section>
+
+  <section class="panel" id="detail" hidden>
+    <div class="card">
+      <table>
+        <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td>(원문 문단 예시)</td><td>(쉬운 말로 풀어쓴 예시)</td></tr>
+          <tr><td class="n">2</td><td>(원문 문단 예시)</td><td>(쉬운 말로 풀어쓴 예시 · <code>용어</code> 표시)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="words" hidden>
+    <div class="card">
+      <ul class="words">
+        <li><b>토큰</b> — 글을 잘게 나눈 조각</li>
+        <li><b>벡터</b> — 숫자를 한 줄로 늘어놓은 것</li>
+        <li><b>텐서</b> — 숫자를 격자나 여러 겹으로 쌓은 것</li>
+      </ul>
+    </div>
+  </section>
+</main>
+<script>
+  var tabs = document.querySelectorAll('.tabs button');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabs.forEach(function (x) {
+        var on = x === b;
+        x.setAttribute('aria-selected', on);
+        document.getElementById(x.dataset.tab).hidden = !on;
+      });
+    });
+  });
+</script>
+</body>
+</html>

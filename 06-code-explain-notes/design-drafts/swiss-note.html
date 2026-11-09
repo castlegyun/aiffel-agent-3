@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>노트 안쪽 화면 (스위스 미니멀 시안)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap">
+<style>
+  :root { --bg:#ffffff; --fg:#111111; --muted:#6b6b6b; --line:#e5e5e5; --violet:#6d28d9; --tint:#f3eefc; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#121212; --fg:#f2f2f2; --muted:#a3a3a3; --line:#2e2e2e; --violet:#a78bfa; --tint:#241b3a; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:300 1rem/1.75 "Noto Sans KR",system-ui,sans-serif; }
+  a { color:var(--violet); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  :focus-visible { outline:2px solid var(--violet); outline-offset:3px; }
+  main { max-width:720px; margin:0 auto; padding:48px 24px 96px; }
+  .back { font-size:.875rem; margin:0 0 48px; }
+  .kind { font-size:.8125rem; color:var(--muted); margin:0 0 12px; }
+  .kind i { display:inline-block; width:3px; height:12px; vertical-align:-1px; margin-right:6px; background:var(--violet); }
+  h1 { font-size:1.875rem; font-weight:300; letter-spacing:-.02em; line-height:1.35; margin:0 0 20px; }
+  .summary { color:var(--muted); margin:0 0 32px; max-width:60ch; }
+
+  details { border-left:3px solid var(--violet); padding:2px 0 2px 18px; margin-bottom:40px; }
+  summary { cursor:pointer; font-weight:700; font-size:.9375rem; }
+  details ul { margin:12px 0 0; padding:0; list-style:none; color:var(--muted); font-size:.9375rem; }
+  details li { margin:4px 0; } details li b { color:var(--fg); font-weight:700; }
+
+  .tabs { display:flex; gap:28px; border-bottom:1px solid var(--line); margin-bottom:32px; }
+  .tabs button { font:inherit; font-size:.9375rem; background:none; border:0; padding:0 0 12px; margin-bottom:-1px; color:var(--muted); cursor:pointer; border-bottom:3px solid transparent; }
+  .tabs button[aria-selected="true"] { color:var(--fg); font-weight:700; border-bottom-color:var(--violet); }
+  .panel[hidden] { display:none; }
+
+  .fig { height:220px; display:grid; place-items:center; background:var(--tint); color:var(--muted); font-size:.875rem; text-align:center; margin-bottom:28px; }
+  .points { margin:0; padding:0; list-style:none; }
+  .points li { padding:0 0 14px 18px; margin-bottom:14px; border-left:3px solid var(--violet); }
+
+  table { width:100%; border-collapse:collapse; font-size:.9375rem; }
+  th { text-align:left; font-weight:400; font-size:.8125rem; color:var(--muted); padding:8px 12px 8px 0; border-bottom:1px solid var(--fg); }
+  td { vertical-align:top; padding:14px 12px 14px 0; border-bottom:1px solid var(--line); }
+  td.n { width:2em; color:var(--muted); }
+  .words { margin:0; padding:0; list-style:none; } .words li { padding:12px 0; border-bottom:1px solid var(--line); } .words b { font-weight:700; }
+</style>
+</head>
+<body>
+<main>
+  <p class="back"><a href="#">← 노트 보관함</a></p>
+  <p class="kind"><i></i>텍스트 노트 · 2026-11-05</p>
+  <h1>AI는 어떻게 배우나: 규칙 대신 데이터로 배우고, 데이터는 숫자가 된다</h1>
+  <p class="summary">AI의 학습은 규칙을 일일이 적는 대신 예시(데이터)를 주고, 예측 → 오차 → 조정을 되풀이하며 규칙을 찾게 하는 일이다. 기계는 숫자만 다루므로 글은 토큰·벡터로, 그림은 밝기 숫자 격자(텐서)로 바꿔 넣는다.</p>
+
+  <details>
+    <summary>새 용어 3개 (눌러서 펼치기)</summary>
+    <ul>
+      <li><b>토큰</b> 글을 잘게 나눈 조각</li>
+      <li><b>벡터</b> 숫자를 한 줄로 늘어놓은 것</li>
+      <li><b>텐서</b> 숫자를 격자나 여러 겹으로 쌓은 것</li>
+    </ul>
+  </details>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="flow">요약</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
+    <button role="tab" aria-selected="false" data-tab="detail">풀어쓰기</button>
+    <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+  </div>
+
+  <section class="panel" id="flow">
+    <div class="fig">여기에 흐름 그림이 들어갑니다<br>(예측 → 오차 → 조정 되풀이)</div>
+    <ul class="points">
+      <li>규칙을 적는 대신 예시(데이터)를 줍니다.</li>
+      <li>예측하고, 틀린 만큼 조정하는 일을 되풀이합니다.</li>
+      <li>기계는 숫자만 다루므로 글과 그림을 숫자로 바꿔 넣습니다.</li>
+    </ul>
+  </section>
+  <section class="panel" id="visual" hidden><div class="fig">그림 보기 영역</div></section>
+  <section class="panel" id="detail" hidden>
+    <table>
+      <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>(원문 문단 예시)</td><td>(쉬운 말로 풀어쓴 예시)</td></tr>
+        <tr><td class="n">2</td><td>(원문 문단 예시)</td><td>(쉬운 말로 풀어쓴 예시)</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="panel" id="words" hidden>
+    <ul class="words">
+      <li><b>토큰</b> 글을 잘게 나눈 조각</li>
+      <li><b>벡터</b> 숫자를 한 줄로 늘어놓은 것</li>
+      <li><b>텐서</b> 숫자를 격자나 여러 겹으로 쌓은 것</li>
+    </ul>
+  </section>
+</main>
+<script>
+  var tabs = document.querySelectorAll('.tabs button');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabs.forEach(function (x) {
+        var on = x === b;
+        x.setAttribute('aria-selected', on);
+        document.getElementById(x.dataset.tab).hidden = !on;
+      });
+    });
+  });
+</script>
+</body>
+</html>

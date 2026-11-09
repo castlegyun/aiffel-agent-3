@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>색 시안 4개 (다크 모드)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&family=Noto+Sans+KR:wght@400;600;700&display=swap">
+<style>
+  body { margin:0; padding:24px 16px 48px; background:#0e0e0e; font-family:"Inter","Noto Sans KR",sans-serif; color:#ddd; }
+  h1 { font-size:18px; margin:0 0 4px; } .lead { margin:0 0 20px; color:#aaa; font-size:14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:20px; max-width:1400px; }
+  .label { font-size:13px; margin:0 0 8px; color:#ccc; }
+
+  .p { background:var(--bg); color:var(--text); padding:20px 16px 24px; border-radius:8px; word-break:keep-all; font-size:14px; line-height:1.5; }
+  .p1 { --bg:#1a1b1a; --surface:#232524; --border:#37393a; --text:#e8e6e1; --muted:#a9a69d; --primary:#5fc4bf; --on-primary:#0c1f1f; --badge:#6fbfb3; --badge-text:#0c1f1f; }
+  .p2 { --bg:#1b1c18; --surface:#242620; --border:#383b31; --text:#e9e8df; --muted:#aaaa9c; --primary:#9ccf8f; --on-primary:#10200c; --badge:#a8c98e; --badge-text:#10200c; }
+  .p3 { --bg:#1b1b1a; --surface:#242423; --border:#3a3a38; --text:#ececea; --muted:#a8a6a0; --primary:#ececea; --on-primary:#1b1b1a; --badge:#3a3a38; --badge-text:#ececea; }
+  .p4 { --bg:#1b1b1a; --surface:#242423; --border:#3a3a38; --text:#ececea; --muted:#a8a6a0; --primary:#59a3ff; --on-primary:#111111; --badge:#6fbfb3; --badge-text:#0c1f1f; }
+
+  .p h2 { font-size:22px; line-height:1.25; margin:0 0 4px; font-weight:700; }
+  .p .lead2 { color:var(--muted); font-size:12.5px; margin:0 0 14px; }
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); background:var(--surface); border:1px solid var(--border); border-radius:16px; margin-bottom:12px; }
+  .stat { padding:10px 12px; border-left:1px solid var(--border); } .stat:first-child { border-left:0; }
+  .stat b { display:block; font-size:17px; } .stat span { font-size:11.5px; color:var(--muted); }
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+  .tabs { display:flex; gap:4px; padding:10px 12px; border-bottom:1px solid var(--border); }
+  .tab { font:600 12px/1 inherit; padding:7px 11px; border-radius:8px; border:1px solid var(--border); color:var(--text); }
+  .tab.on { background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+  .row { display:grid; grid-template-columns:48px 1fr; gap:10px; align-items:center; padding:10px 12px; border-top:1px solid var(--border); }
+  .badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:4px; background:var(--badge); color:var(--badge-text); justify-self:start; }
+  .t { font-weight:600; font-size:13.5px; color:var(--primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .s { font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .body { margin-top:12px; font-size:14px; line-height:1.7; } .body a { color:var(--primary); text-decoration:underline; }
+</style>
+</head>
+<body>
+<h1>다크 모드 색 시안 4개 — 같은 첫 화면, 색만 다름</h1>
+<p class="lead">다크 모드 기준입니다. 배경은 순검정 대신 짙은 회색, 글자는 순백 대신 밝은 회색입니다.</p>
+<div class="grid">
+
+<div><p class="label">1. 청록 + 오프화이트</p>
+<div class="p p1"><h2>코드 해설 노트 보관함</h2><p class="lead2">코드를 쉬운 주석, 단어장, 그림으로 바꿔 모아 둔 노트입니다.</p>
+<div class="stats"><div class="stat"><b>7</b><span>전체</span></div><div class="stat"><b>2</b><span>코드</span></div><div class="stat"><b>5</b><span>텍스트</span></div><div class="stat"><b>11-05</b><span>최근</span></div></div>
+<div class="panel"><div class="tabs"><span class="tab on">전체</span><span class="tab">코드</span><span class="tab">텍스트</span></div>
+<div class="row"><span class="badge">텍스트</span><div><div class="t">AI는 어떻게 배우나: 규칙 대신 데이터로</div><div class="s">예시를 주고 예측·오차·조정을 되풀이한다</div></div></div>
+<div class="row"><span class="badge">코드</span><div><div class="t">for문으로 목록 하나씩 꺼내기</div><div class="s">값을 하나씩 꺼내 한 줄씩 출력한다</div></div></div></div>
+<div class="body">본문 예시: 기계는 숫자만 다루므로 글은 <a href="#">토큰</a>으로 바꿔 넣는다.</div></div></div>
+
+<div><p class="label">2. 세이지 그린 + 크림</p>
+<div class="p p2"><h2>코드 해설 노트 보관함</h2><p class="lead2">코드를 쉬운 주석, 단어장, 그림으로 바꿔 모아 둔 노트입니다.</p>
+<div class="stats"><div class="stat"><b>7</b><span>전체</span></div><div class="stat"><b>2</b><span>코드</span></div><div class="stat"><b>5</b><span>텍스트</span></div><div class="stat"><b>11-05</b><span>최근</span></div></div>
+<div class="panel"><div class="tabs"><span class="tab on">전체</span><span class="tab">코드</span><span class="tab">텍스트</span></div>
+<div class="row"><span class="badge">텍스트</span><div><div class="t">AI는 어떻게 배우나: 규칙 대신 데이터로</div><div class="s">예시를 주고 예측·오차·조정을 되풀이한다</div></div></div>
+<div class="row"><span class="badge">코드</span><div><div class="t">for문으로 목록 하나씩 꺼내기</div><div class="s">값을 하나씩 꺼내 한 줄씩 출력한다</div></div></div></div>
+<div class="body">본문 예시: 기계는 숫자만 다루므로 글은 <a href="#">토큰</a>으로 바꿔 넣는다.</div></div></div>
+
+<div><p class="label">3. 먹색 (무채색) + 따뜻한 회색</p>
+<div class="p p3"><h2>코드 해설 노트 보관함</h2><p class="lead2">코드를 쉬운 주석, 단어장, 그림으로 바꿔 모아 둔 노트입니다.</p>
+<div class="stats"><div class="stat"><b>7</b><span>전체</span></div><div class="stat"><b>2</b><span>코드</span></div><div class="stat"><b>5</b><span>텍스트</span></div><div class="stat"><b>11-05</b><span>최근</span></div></div>
+<div class="panel"><div class="tabs"><span class="tab on">전체</span><span class="tab">코드</span><span class="tab">텍스트</span></div>
+<div class="row"><span class="badge">텍스트</span><div><div class="t">AI는 어떻게 배우나: 규칙 대신 데이터로</div><div class="s">예시를 주고 예측·오차·조정을 되풀이한다</div></div></div>
+<div class="row"><span class="badge">코드</span><div><div class="t">for문으로 목록 하나씩 꺼내기</div><div class="s">값을 하나씩 꺼내 한 줄씩 출력한다</div></div></div></div>
+<div class="body">본문 예시: 기계는 숫자만 다루므로 글은 <a href="#">토큰</a>으로 바꿔 넣는다.</div></div></div>
+
+<div><p class="label">4. 지금의 파랑 유지 + 오프화이트, 배지만 청록</p>
+<div class="p p4"><h2>코드 해설 노트 보관함</h2><p class="lead2">코드를 쉬운 주석, 단어장, 그림으로 바꿔 모아 둔 노트입니다.</p>
+<div class="stats"><div class="stat"><b>7</b><span>전체</span></div><div class="stat"><b>2</b><span>코드</span></div><div class="stat"><b>5</b><span>텍스트</span></div><div class="stat"><b>11-05</b><span>최근</span></div></div>
+<div class="panel"><div class="tabs"><span class="tab on">전체</span><span class="tab">코드</span><span class="tab">텍스트</span></div>
+<div class="row"><span class="badge">텍스트</span><div><div class="t">AI는 어떻게 배우나: 규칙 대신 데이터로</div><div class="s">예시를 주고 예측·오차·조정을 되풀이한다</div></div></div>
+<div class="row"><span class="badge">코드</span><div><div class="t">for문으로 목록 하나씩 꺼내기</div><div class="s">값을 하나씩 꺼내 한 줄씩 출력한다</div></div></div></div>
+<div class="body">본문 예시: 기계는 숫자만 다루므로 글은 <a href="#">토큰</a>으로 바꿔 넣는다.</div></div></div>
+
+</div>
+</body>
+</html>

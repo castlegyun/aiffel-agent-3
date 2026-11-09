@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보관함 디자인 시안 2</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Jua&family=Noto+Sans+KR:wght@300;400;700;900&family=Noto+Serif+KR:wght@500;700&family=Nanum+Gothic+Coding&display=swap">
+<style>
+  body { margin:0; padding:24px 16px 48px; background:#e9e9e6; font-family:'Noto Sans KR',sans-serif; color:#222; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .lead { margin:0 0 20px; color:#666; font-size:14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:22px; max-width:1300px; }
+  .label { font-size:13px; margin:0 0 8px; color:#444; }
+  .f { border-radius:6px; overflow:hidden; box-shadow:0 1px 0 rgba(0,0,0,.15); padding:22px 18px 24px; min-height:300px; box-sizing:border-box; }
+  .f h2 { margin:0 0 4px; }
+  .f p { margin:0; }
+
+  /* D 지하철 노선도 */
+  .d { background:#fff; }
+  .d h2 { font-size:24px; font-weight:900; }
+  .d .sub { font-size:13px; color:#666; margin-bottom:18px; }
+  .d .line { position:relative; margin-left:14px; padding-left:30px; border-left:8px solid #00a84d; }
+  .d .st { position:relative; padding:4px 0 18px; }
+  .d .st::before { content:""; position:absolute; left:-43px; top:6px; width:14px; height:14px; border-radius:50%; background:#fff; border:4px solid #222; }
+  .d .st b { font-size:17px; display:block; } .d .st small { font-size:13px; color:#666; }
+
+  /* E 택배 라벨 */
+  .e { background:#c9a46c; background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.04) 0 2px,transparent 2px 6px); font-family:'Nanum Gothic Coding',monospace; color:#2b1d0e; }
+  .e h2 { font-size:22px; border:3px solid #2b1d0e; display:inline-block; padding:2px 10px; transform:rotate(-2deg); }
+  .e .sub { font-size:13px; margin:10px 0 14px; }
+  .e .lab { background:#fffdf5; border:2px dashed #2b1d0e; padding:8px 10px; margin-bottom:10px; font-size:14px; }
+  .e .lab b { display:block; font-size:16px; } .e .lab em { font-style:normal; color:#b3261e; border:2px solid #b3261e; padding:0 4px; font-size:12px; float:right; transform:rotate(4deg); }
+
+  /* F 칠판 */
+  .ff { background:#264a3c; border:8px solid #b78a54; color:#f4f1e8; font-family:'Gaegu',sans-serif; box-sizing:border-box; }
+  .ff h2 { font-size:34px; } .ff .sub { font-size:19px; color:#cfe3d8; margin-bottom:14px; }
+  .ff .it { font-size:23px; padding:6px 0; border-bottom:2px dashed rgba(244,241,232,.35); }
+  .ff .it:nth-child(3) { color:#ffe27a; } .ff .it:nth-child(4) { color:#ffb3c1; }
+  .ff .it small { display:block; font-size:17px; opacity:.8; }
+
+  /* G 대출카드 */
+  .g { background:#f6ecd2; font-family:'Gowun Batang',serif; color:#3a2d1c; background-image:repeating-linear-gradient(transparent 0 31px,#9bb3c9 31px 32px); background-position:0 52px; }
+  .g h2 { font-size:25px; border-bottom:3px double #b3261e; padding-bottom:6px; margin-bottom:16px; }
+  .g .it { height:64px; font-size:17px; } .g .it b { display:block; } .g .it small { font-size:14px; color:#6b5a43; }
+  .g .it span { float:right; color:#1d4f91; font-size:12px; border:1.5px solid #1d4f91; padding:0 5px; transform:rotate(-5deg); }
+
+  /* H 포스터 타이포 */
+  .h { background:#1740e0; color:#fff; font-family:'Black Han Sans',sans-serif; }
+  .h h2 { font-size:44px; line-height:1; font-weight:400; margin-bottom:6px; }
+  .h .sub { font-family:'Noto Sans KR'; font-size:13px; opacity:.85; margin-bottom:20px; }
+  .h .it { font-size:30px; line-height:1.15; padding:4px 0; } .h .it small { display:block; font-family:'Noto Sans KR'; font-size:13px; font-weight:300; opacity:.85; }
+
+  /* I 포스트잇 */
+  .i { background:#d8c3a0; font-family:'Gaegu',sans-serif; color:#3a2a14; }
+  .i h2 { font-size:32px; } .i .sub { font-size:18px; margin-bottom:12px; }
+  .i .n { display:inline-block; width:46%; min-height:92px; vertical-align:top; margin:0 2% 12px; padding:10px; box-sizing:border-box; font-size:19px; box-shadow:2px 4px 6px rgba(0,0,0,.2); }
+  .i .n small { display:block; font-size:15px; margin-top:4px; }
+  .i .y { background:#fff08a; transform:rotate(-2deg); } .i .p { background:#ffc2d1; transform:rotate(2deg); } .i .b { background:#b8e6f5; transform:rotate(1.5deg); }
+
+  /* J 청사진 */
+  .j { background:#123a78; background-image:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px); background-size:20px 20px; color:#e7f0ff; font-family:'Nanum Gothic Coding',monospace; }
+  .j h2 { font-size:21px; font-weight:700; border-bottom:2px solid #e7f0ff; padding-bottom:6px; margin-bottom:16px; }
+  .j .it { border:1.5px solid #e7f0ff; padding:8px 10px; margin-bottom:12px; font-size:15px; position:relative; }
+  .j .it::after { content:""; position:absolute; left:50%; bottom:-12px; height:12px; border-left:1.5px dashed #e7f0ff; }
+  .j .it:last-child::after { display:none; } .j small { display:block; font-size:12px; opacity:.8; margin-top:2px; }
+
+  /* K 영수증 */
+  .k { background:#f1efe9; display:grid; place-items:start center; }
+  .k .rc { background:#fff; width:100%; max-width:250px; padding:14px 14px 22px; font-family:'Nanum Gothic Coding',monospace; font-size:14px; color:#222; clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),95% 100%,90% calc(100% - 8px),85% 100%,80% calc(100% - 8px),75% 100%,70% calc(100% - 8px),65% 100%,60% calc(100% - 8px),55% 100%,50% calc(100% - 8px),45% 100%,40% calc(100% - 8px),35% 100%,30% calc(100% - 8px),25% 100%,20% calc(100% - 8px),15% 100%,10% calc(100% - 8px),5% 100%,0 calc(100% - 8px)); }
+  .k h2 { text-align:center; font-size:17px; } .k hr { border:0; border-top:1px dashed #222; margin:8px 0; }
+  .k .r { display:flex; justify-content:space-between; gap:8px; padding:3px 0; } .k .tot { font-weight:700; font-size:15px; }
+
+  /* L 스위스 미니멀 */
+  .l { background:#fff; color:#111; padding:30px 22px; }
+  .l h2 { font-size:28px; font-weight:300; letter-spacing:-.02em; margin-bottom:28px; }
+  .l .it { padding:0 0 18px 14px; margin-bottom:18px; border-left:3px solid #6d28d9; }
+  .l .it b { font-size:18px; font-weight:700; display:block; } .l .it small { font-size:14px; color:#777; font-weight:300; }
+
+  /* M 시간표 */
+  .m { background:#fff; font-family:'Jua',sans-serif; color:#222; }
+  .m h2 { font-size:24px; font-weight:400; margin-bottom:12px; }
+  .m table { width:100%; border-collapse:collapse; font-size:15px; table-layout:fixed; }
+  .m th, .m td { border:2px solid #222; padding:8px 4px; text-align:center; font-weight:400; height:48px; }
+  .m th { background:#ffe14d; font-size:13px; } .m td.a { background:#c9f1c8; } .m td.b { background:#ffd1dc; } .m td.c { background:#cfe5ff; }
+</style>
+</head>
+<body>
+<h1>코드 해설 노트 보관함 — 디자인 시안 10개 더 (D~M)</h1>
+<p class="lead">앞의 A~C와 같은 노트 3개를 새 분위기로 보여 줍니다. 마음에 드는 글자만 알려 주세요.</p>
+
+<div class="grid">
+
+<div><p class="label">D. 지하철 노선도</p>
+<div class="f d"><h2>코드 해설 노트</h2><p class="sub">한 역씩 따라가며 이해하기</p>
+<div class="line">
+<div class="st"><b>AI는 어떻게 배우나</b><small>규칙이 아니라 데이터로</small></div>
+<div class="st"><b>카드 짝 맞추기</b><small>뒤집고 비교하는 순서</small></div>
+<div class="st"><b>투두 앱 + Supabase</b><small>할 일이 저장되는 길</small></div></div></div></div>
+
+<div><p class="label">E. 택배 상자 라벨</p>
+<div class="f e"><h2>코드 해설 노트</h2><p class="sub">받는 사람: 코딩 입문자</p>
+<div class="lab"><em>NEW</em><b>AI는 어떻게 배우나</b>규칙 말고 데이터</div>
+<div class="lab"><b>카드 짝 맞추기</b>game.js 한 줄씩</div>
+<div class="lab"><b>투두 앱 + Supabase</b>저장 흐름 따라가기</div></div></div>
+
+<div><p class="label">F. 칠판 + 분필</p>
+<div class="f ff"><h2>코드 해설 노트</h2><p class="sub">오늘 배울 것</p>
+<div class="it">AI는 어떻게 배우나<small>규칙이 아니라 데이터로</small></div>
+<div class="it">카드 짝 맞추기<small>뒤집고, 비교하고</small></div>
+<div class="it">투두 앱 + Supabase<small>할 일이 저장되는 길</small></div></div></div>
+
+<div><p class="label">G. 도서관 대출카드</p>
+<div class="f g"><h2>코드 해설 노트</h2>
+<div class="it"><span>열람 가능</span><b>AI는 어떻게 배우나</b><small>규칙이 아니라 데이터로</small></div>
+<div class="it"><b>카드 짝 맞추기</b><small>뒤집고 비교하는 순서</small></div>
+<div class="it"><b>투두 앱 + Supabase</b><small>할 일이 저장되는 길</small></div></div></div>
+
+<div><p class="label">H. 큰 글씨 포스터 (코발트 블루)</p>
+<div class="f h"><h2>코드<br>해설 노트</h2><p class="sub">어려운 코드를 쉬운 말로</p>
+<div class="it">AI는 어떻게 배우나<small>규칙이 아니라 데이터로</small></div>
+<div class="it">카드 짝 맞추기<small>뒤집고 비교하는 순서</small></div>
+<div class="it">투두 앱 + Supabase<small>할 일이 저장되는 길</small></div></div></div>
+
+<div><p class="label">I. 코르크판 + 포스트잇</p>
+<div class="f i"><h2>코드 해설 노트</h2><p class="sub">붙여 둔 메모들</p>
+<div class="n y">AI는 어떻게 배우나<small>데이터로 배워요</small></div><div class="n p">카드 짝 맞추기<small>뒤집고 비교!</small></div><div class="n b">투두 앱 + Supabase<small>서버에 저장</small></div></div></div>
+
+<div><p class="label">J. 청사진 (설계도)</p>
+<div class="f j"><h2>코드 해설 노트 / 도면</h2>
+<div class="it">AI는 어떻게 배우나<small>규칙 → 데이터</small></div>
+<div class="it">카드 짝 맞추기<small>뒤집기 → 비교 → 맞춤</small></div>
+<div class="it">투두 앱 + Supabase<small>입력 → 저장 → 표시</small></div></div></div>
+
+<div><p class="label">K. 영수증</p>
+<div class="f k"><div class="rc"><h2>코드 해설 노트</h2><hr>
+<div class="r"><span>AI는 어떻게 배우나</span><span>1</span></div>
+<div class="r"><span>카드 짝 맞추기</span><span>1</span></div>
+<div class="r"><span>투두 앱 + Supabase</span><span>1</span></div><hr>
+<div class="r tot"><span>이해한 노트</span><span>3개</span></div></div></div></div>
+
+<div><p class="label">L. 스위스 미니멀 (보라 한 가지)</p>
+<div class="f l"><h2>코드 해설 노트</h2>
+<div class="it"><b>AI는 어떻게 배우나</b><small>규칙이 아니라 데이터로 배우는 법</small></div>
+<div class="it"><b>카드 짝 맞추기</b><small>뒤집고 비교하는 순서</small></div>
+<div class="it"><b>투두 앱 + Supabase</b><small>할 일이 저장되는 길</small></div></div></div>
+
+<div><p class="label">M. 학교 시간표</p>
+<div class="f m"><h2>코드 해설 노트</h2>
+<table><tr><th>월</th><th>수</th><th>금</th></tr>
+<tr><td class="a">AI는<br>어떻게<br>배우나</td><td class="b">카드<br>짝 맞추기</td><td class="c">투두 앱<br>Supabase</td></tr>
+<tr><td>데이터</td><td>비교</td><td>저장</td></tr></table></div></div>
+
+</div>
+</body>
+</html>

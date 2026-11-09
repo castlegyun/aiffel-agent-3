@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>코드 해설 노트 보관함 (Brightpath 시안 2)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&family=Noto+Sans+KR:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --color-background:#fcfbff; --color-surface:#ffffff; --color-border:#dcd8e7;
+    --color-text:#231f2b; --color-muted:#656070;
+    --color-primary:#005ab0; --color-on-primary:#ffffff;
+    --color-accent:#8d6dc9; --color-on-accent:#000000;
+    --font-body:"Inter","Noto Sans KR",system-ui,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,monospace;
+    --shadow-sm:0 1px 2px rgb(0 0 0 / .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --color-background:#15131b; --color-surface:#23202b; --color-border:#393642;
+      --color-text:#f3f1f6; --color-muted:#b2afbc;
+      --color-primary:#59a3ff; --color-on-primary:#111111;
+      --color-accent:#c0a2ff; --color-on-accent:#000000;
+    }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--color-background); color:var(--color-text); font:400 .875rem/1.5 var(--font-body); }
+  a { color:inherit; text-decoration:none; }
+  :focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
+
+  .bar { background:var(--color-surface); border-bottom:1px solid var(--color-border); }
+  .bar div { max-width:960px; margin:0 auto; padding:0 16px; height:48px; display:flex; align-items:center; gap:10px; }
+  .logo { width:22px; height:22px; border-radius:6px; background:var(--color-primary); }
+  .bar b { font-weight:700; }
+  .bar span { margin-left:auto; color:var(--color-muted); font-size:.8rem; }
+
+  main { max-width:960px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.563rem; line-height:1.25; letter-spacing:-.01em; font-weight:700; margin:0 0 4px; }
+  .lead { color:var(--color-muted); font-size:.8rem; margin:0 0 16px; max-width:68ch; }
+
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); background:var(--color-surface); border:1px solid var(--color-border); border-radius:16px; box-shadow:var(--shadow-sm); margin-bottom:16px; }
+  .stat { padding:12px 16px; border-left:1px solid var(--color-border); }
+  .stat:first-child { border-left:0; }
+  .stat b { display:block; font:700 1.25rem/1.3 var(--font-body); }
+  .stat span { font-size:.8rem; color:var(--color-muted); }
+
+  .panel { background:var(--color-surface); border:1px solid var(--color-border); border-radius:16px; box-shadow:var(--shadow-sm); overflow:hidden; }
+  .tabs { display:flex; gap:4px; padding:12px 16px; border-bottom:1px solid var(--color-border); }
+  .tab { font:600 .8rem/1 var(--font-body); padding:8px 12px; border-radius:8px; border:1px solid var(--color-border); background:transparent; color:var(--color-text); cursor:pointer; }
+  .tab[aria-pressed="true"] { background:var(--color-primary); border-color:var(--color-primary); color:var(--color-on-primary); }
+  .tabs small { margin-left:auto; align-self:center; color:var(--color-muted); font-size:.8rem; }
+
+  .rows { list-style:none; margin:0; padding:0; }
+  .row a { display:grid; grid-template-columns:56px 1fr 90px; gap:12px; align-items:center; padding:12px 16px; border-top:1px solid var(--color-border); transition:background 120ms cubic-bezier(.2,.8,.2,1); }
+  .row:first-child a { border-top:0; }
+  .row a:hover { background:rgba(141,109,201,.08); }
+  .badge { justify-self:start; background:var(--color-accent); color:var(--color-on-accent); font-size:.64rem; font-weight:600; line-height:1.4; padding:2px 8px; border-radius:4px; }
+  .t { font-weight:600; font-size:.9rem; color:var(--color-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .s { color:var(--color-muted); font-size:.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .txt { min-width:0; }
+  .d { font:400 .8rem/1.5 var(--font-mono); color:var(--color-muted); text-align:right; }
+  .row[hidden] { display:none; }
+
+  @media (max-width:640px) {
+    .stats { grid-template-columns:repeat(2,1fr); }
+    .stat:nth-child(3) { border-left:0; } .stat:nth-child(n+3) { border-top:1px solid var(--color-border); }
+    .row a { grid-template-columns:56px 1fr; } .d { grid-column:2; text-align:left; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+<header class="bar"><div><span class="logo" aria-hidden="true"></span><b>코드 해설 노트</b><span>시안 2 · Brightpath 규칙을 이 사이트에 맞게 줄여 적용</span></div></header>
+<main>
+  <h1>코드 해설 노트 보관함</h1>
+  <p class="lead">코드를 쉬운 주석, 단어장, 그림으로 바꿔 모아 둔 노트입니다. 최신 노트가 위에 있습니다.</p>
+
+  <section class="stats" aria-label="요약">
+    <div class="stat"><b>7</b><span>전체 노트</span></div>
+    <div class="stat"><b>2</b><span>코드 노트</span></div>
+    <div class="stat"><b>5</b><span>텍스트 노트</span></div>
+    <div class="stat"><b>11-05</b><span>최근 노트</span></div>
+  </section>
+
+  <section class="panel">
+    <div class="tabs" role="group" aria-label="종류">
+      <button class="tab" data-f="all" aria-pressed="true">전체</button>
+      <button class="tab" data-f="코드" aria-pressed="false">코드</button>
+      <button class="tab" data-f="텍스트" aria-pressed="false">텍스트</button>
+      <small id="n">7개 표시</small>
+    </div>
+    <ul class="rows" id="rows">
+      <li class="row" data-k="텍스트"><a href="#"><span class="badge">텍스트</span><span class="txt"><div class="t">AI는 어떻게 배우나: 규칙 대신 데이터로 배우고, 데이터는 숫자가 된다</div><div class="s">AI의 학습은 규칙을 일일이 적는 대신 예시(데이터)를 주고, 예측 → 오차 → 조정을 되풀이하며 규칙을 찾게 하는 일이다.</div></span><span class="d">2026-11-05</span></a></li>
+      <li class="row" data-k="텍스트"><a href="#"><span class="badge">텍스트</span><span class="txt"><div class="t">LLM의 학습과 추론, 그리고 프롬프트·RAG·파인튜닝 고르기</div><div class="s">LLM은 글을 토큰으로 바꿔 다음 토큰을 맞히도록 가중치를 고치며 학습하고, 추론 때는 고정된 가중치로 문장을 만든다.</div></span><span class="d">2026-11-04</span></a></li>
+      <li class="row" data-k="코드"><a href="#"><span class="badge">코드</span><span class="txt"><div class="t">for문으로 목록 하나씩 꺼내기</div><div class="s">이 코드는 목록 안의 값을 하나씩 꺼내 화면에 한 줄씩 출력한다.</div></span><span class="d">2026-11-03</span></a></li>
+      <li class="row" data-k="텍스트"><a href="#"><span class="badge">텍스트</span><span class="txt"><div class="t">굴러가는 첫 조각: 다섯 단계로 만들기</div><div class="s">한 번에 다 만들지 말고, 범위를 좁혀 다섯 단계(기획서, 작업대, 화면, 저장, 배포)로 첫 조각까지만 간다.</div></span><span class="d">2026-11-03</span></a></li>
+      <li class="row" data-k="텍스트"><a href="#"><span class="badge">텍스트</span><span class="txt"><div class="t">스펙 주도 개발: 코드보다 문서를 먼저</div><div class="s">코드를 만들기 전에 규칙을 문서(스펙)로 먼저 정하고, 그 문서를 구현과 검증의 기준으로 삼는 방식이다.</div></span><span class="d">2026-11-03</span></a></li>
+      <li class="row" data-k="텍스트"><a href="#"><span class="badge">텍스트</span><span class="txt"><div class="t">함수(function)</div><div class="s">함수는 반복해서 쓰는 코드에 이름을 붙여 묶어 둔 것이고, 그 이름으로 불러서 실행한다.</div></span><span class="d">2026-11-03</span></a></li>
+      <li class="row" data-k="코드"><a href="#"><span class="badge">코드</span><span class="txt"><div class="t">for문: 1부터 5까지 더하기</div><div class="s">이 코드는 1+2+3+4+5를 계산해서 15를 출력한다.</div></span><span class="d">2026-11-03</span></a></li>
+    </ul>
+  </section>
+</main>
+<script>
+  var tabs = document.querySelectorAll('.tab'), rows = document.querySelectorAll('.row'), n = document.getElementById('n');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var f = b.dataset.f, c = 0;
+      tabs.forEach(function (t) { t.setAttribute('aria-pressed', t === b ? 'true' : 'false'); });
+      rows.forEach(function (r) { var show = f === 'all' || r.dataset.k === f; r.hidden = !show; if (show) c++; });
+      n.textContent = c + '개 표시';
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>깃허브 색 시안</title>
+<style>
+  body { margin:0; padding:24px 16px 48px; background:#888; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif; color:#222; }
+  h1 { font-size:18px; margin:0 0 4px; color:#fff; } .lead { margin:0 0 20px; color:#eee; font-size:14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); gap:20px; max-width:1300px; }
+  .label { font-size:13px; margin:0 0 8px; color:#fff; }
+
+  .g { padding:24px 20px 28px; border-radius:8px; background:var(--canvas); color:var(--fg); font-size:14px; line-height:1.5; word-break:keep-all; }
+  .light { --canvas:#ffffff; --subtle:#f6f8fa; --border:#d0d7de; --fg:#1f2328; --muted:#656d76; --link:#0969da;
+           --blue-bg:#ddf4ff; --blue-fg:#0969da; --green-bg:#dafbe1; --green-fg:#1a7f37; --tab-line:#fd8c73; }
+  .dark  { --canvas:#0d1117; --subtle:#161b22; --border:#30363d; --fg:#e6edf3; --muted:#848d97; --link:#4493f8;
+           --blue-bg:rgba(56,139,253,.15); --blue-fg:#4493f8; --green-bg:rgba(46,160,67,.15); --green-fg:#3fb950; --tab-line:#f78166; }
+
+  .g h2 { font-size:24px; font-weight:600; margin:0 0 4px; line-height:1.25; }
+  .g .sub { color:var(--muted); margin:0 0 16px; }
+  .box { border:1px solid var(--border); border-radius:6px; overflow:hidden; background:var(--canvas); }
+  .head { display:flex; gap:16px; align-items:center; background:var(--subtle); border-bottom:1px solid var(--border); padding:0 16px; height:48px; }
+  .tab { font-weight:400; color:var(--muted); height:48px; display:flex; align-items:center; gap:6px; border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .tab.on { color:var(--fg); font-weight:600; border-bottom-color:var(--tab-line); }
+  .count { background:rgba(128,136,144,.2); border-radius:2em; padding:0 6px; font-size:12px; font-weight:500; line-height:18px; color:var(--fg); }
+  .row { display:grid; grid-template-columns:1fr auto; gap:12px; padding:8px 16px; border-top:1px solid var(--border); }
+  .head + .row { border-top:0; }
+  .t { font-weight:600; color:var(--fg); font-size:14px; }
+  .row:hover .t { color:var(--link); }
+  .lab { display:inline-block; font-size:12px; font-weight:500; line-height:18px; padding:0 7px; border-radius:2em; margin-left:6px; vertical-align:1px; border:1px solid transparent; }
+  .lab.b { background:var(--blue-bg); color:var(--blue-fg); } .lab.gr { background:var(--green-bg); color:var(--green-fg); }
+  .s { font-size:12px; color:var(--muted); margin-top:2px; }
+  .d { font-size:12px; color:var(--muted); align-self:center; white-space:nowrap; }
+  .body { margin-top:16px; line-height:1.6; } .body a { color:var(--link); text-decoration:none; } .body a:hover { text-decoration:underline; }
+  .btn { display:inline-block; margin-top:12px; padding:5px 16px; border-radius:6px; font-weight:500; font-size:14px; background:#1f883d; color:#fff; border:1px solid rgba(31,35,40,.15); }
+</style>
+</head>
+<body>
+<h1>깃허브 스타일 시안 — 같은 첫 화면, 밝은 모드와 다크 모드</h1>
+<p class="lead">깃허브의 이슈 목록처럼 촘촘한 목록에 얇은 테두리, 6px 모서리, 푸른 링크, 주황 밑줄 탭을 적용했습니다. 색 값은 제 기억에 있는 깃허브 팔레트이고 공식 문서로 확인하지는 않았습니다.</p>
+<div class="grid">
+
+<div><p class="label">밝은 모드</p>
+<div class="g light">
+  <h2>코드 해설 노트 보관함</h2>
+  <p class="sub">코드를 쉬운 주석, 단어장, 그림으로 바꿔 모아 둔 노트입니다.</p>
+  <div class="box">
+    <div class="head"><span class="tab on">전체 <span class="count">7</span></span><span class="tab">코드 <span class="count">2</span></span><span class="tab">텍스트 <span class="count">5</span></span></div>
+    <div class="row"><div><span class="t">AI는 어떻게 배우나: 규칙 대신 데이터로</span><span class="lab b">텍스트</span><div class="s">예시를 주고 예측·오차·조정을 되풀이한다</div></div><span class="d">11-05</span></div>
+    <div class="row"><div><span class="t">LLM의 학습과 추론, 프롬프트·RAG·파인튜닝</span><span class="lab b">텍스트</span><div class="s">다음 토큰을 맞히도록 가중치를 고치며 학습한다</div></div><span class="d">11-04</span></div>
+    <div class="row"><div><span class="t">for문으로 목록 하나씩 꺼내기</span><span class="lab gr">코드</span><div class="s">값을 하나씩 꺼내 한 줄씩 출력한다</div></div><span class="d">11-03</span></div>
+  </div>
+  <div class="body">본문 예시: 기계는 숫자만 다루므로 글은 <a href="#">토큰</a>으로 바꿔 넣는다.</div>
+  <span class="btn">첫 노트 읽기</span>
+</div></div>
+
+<div><p class="label">다크 모드</p>
+<div class="g dark">
+  <h2>코드 해설 노트 보관함</h2>
+  <p class="sub">코드를 쉬운 주석, 단어장, 그림으로 바꿔 모아 둔 노트입니다.</p>
+  <div class="box">
+    <div class="head"><span class="tab on">전체 <span class="count">7</span></span><span class="tab">코드 <span class="count">2</span></span><span class="tab">텍스트 <span class="count">5</span></span></div>
+    <div class="row"><div><span class="t">AI는 어떻게 배우나: 규칙 대신 데이터로</span><span class="lab b">텍스트</span><div class="s">예시를 주고 예측·오차·조정을 되풀이한다</div></div><span class="d">11-05</span></div>
+    <div class="row"><div><span class="t">LLM의 학습과 추론, 프롬프트·RAG·파인튜닝</span><span class="lab b">텍스트</span><div class="s">다음 토큰을 맞히도록 가중치를 고치며 학습한다</div></div><span class="d">11-04</span></div>
+    <div class="row"><div><span class="t">for문으로 목록 하나씩 꺼내기</span><span class="lab gr">코드</span><div class="s">값을 하나씩 꺼내 한 줄씩 출력한다</div></div><span class="d">11-03</span></div>
+  </div>
+  <div class="body">본문 예시: 기계는 숫자만 다루므로 글은 <a href="#">토큰</a>으로 바꿔 넣는다.</div>
+  <span class="btn">첫 노트 읽기</span>
+</div></div>
+
+</div>
+</body>
+</html>

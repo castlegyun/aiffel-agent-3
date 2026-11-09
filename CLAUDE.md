@@ -62,6 +62,36 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+<!--
+  아래 5~7번은 kanginXD의 AGENTS.md(0BSD)에서 필요한 부분만 골라 원문 그대로 가져온 것.
+  출처: https://gist.github.com/kanginXD/c6dfa2a0cda3d25fb9131fd6a0a4f342
+  일부러 뺀 것: "문서·커밋은 영어로만" 규칙(이 레포는 한국어로 씀), 패키지 추가 때마다 승인받는 절차(과제에 너무 무거움).
+-->
+
+## 5. Evidence
+
+<!-- 근거 확인: AI가 그럴듯하게 지어내는 걸 막는 규칙. 바깥 정보는 공식 문서로 확인하고, 확인 못 한 건 "미확인"이라고 밝히게 한다. -->
+
+- External facts (APIs, versions, licenses, security) need a checked primary source; repo facts need the code itself. Mark the rest unverified or inferred.
+- If a source is unreachable, say so and mark claims that depend on it unverified.
+- Never invent URLs, domains, package names, or schemas, even as placeholders; omit them without a source.
+- Check APIs, signatures, CLI flags, and config keys against the docs for the version in use.
+
+## 6. Verification
+
+<!-- 검증: 테스트를 느슨하게 고쳐서 통과시키거나, 실행 안 한 걸 "됐다"고 말하는 걸 막는다. 끝나면 바꾼 것 / 확인한 것 / 확인 못 한 것을 나눠서 보고하게 한다. -->
+
+- Never weaken tests or remove assertions to make them pass.
+- Never claim something ran or passed unless it did.
+- Report what changed, what was verified, and what remains untested or failing, separate from suggestions.
+
+## 7. Security
+
+<!-- 보안: 비밀번호·API 키를 코드에 직접 쓰지 않게 하고, 이름만 비슷한 가짜 패키지를 설치하지 않도록 공식 저장소에서 이름을 확인하게 한다. -->
+
+- No secrets or hardcoded sensitive values anywhere, tests and examples included; use env vars, secret stores, untracked config, or fakes.
+- Confirm the exact name and publisher on the official registry to rule out typosquatting.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
