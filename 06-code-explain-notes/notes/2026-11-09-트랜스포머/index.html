@@ -53,6 +53,11 @@
   .visual-buttons button:disabled { opacity:.5; cursor:default; }
   #visual-frame { width:100%; height:75vh; border:1px solid var(--border); border-radius:6px; background:#fff; }
   @media (prefers-reduced-motion: reduce) { * { transition-duration:.01ms !important; } }
+
+  /* 요약 글머리: 글자색과 상관없이 보이도록 고정 색 점을 쓴다 */
+  .points { list-style:none; padding-left:0; }
+  .points li { position:relative; padding-left:1.5em; }
+  .points li::before { content:""; position:absolute; left:.25em; top:.72em; width:.55em; height:.55em; border-radius:50%; background:var(--tab-line); }
 </style>
 </head>
 <body>
@@ -95,7 +100,7 @@
     <iframe class="flow-frame" src="diagram.html" title="어텐션 한 번에 일어나는 일" style="height:400px"></iframe>
     <ul class="points">
       <li>트랜스포머는 어텐션 계산만 쓴다. 순환 구조는 앞 계산이 끝나야 다음을 할 수 있었다. 어텐션은 서로의 결과를 기다리지 않아서 한 문장의 토큰을 동시에 계산할 수 있다(답을 이어 쓸 때는 한 토큰씩).</li>
-      <li>어텐션은 토큰마다 다른 토큰들을 비율대로 섞어 새 숫자 묶음을 만든다. 예: 새 A = 0.7×A + 0.2×B + 0.1×C (설명용 숫자). 이 계산을 여러 벌 나란히 하는 것이 멀티헤드 어텐션이다.</li>
+      <li>어텐션은 토큰마다 다른 토큰들을 비율대로 섞어 새 숫자 묶음을 만든다. 예: 새 A = 0.7×A + 0.2×B + 0.1×C (설명용 숫자). 새로 만드는 이유는 주변 문맥을 숫자 묶음에 넣기 위해서다. 이 계산을 여러 벌 나란히 하는 것이 멀티헤드 어텐션이다.</li>
       <li>비율은 이 순서로 정한다. Q·K·V를 만들고 → Q와 K를 맞대 점수를 얻고 → 점수를 비율로 바꾸고 → 비율대로 V를 더한다. Q와 K는 비율을 정하는 데만 쓰이고, 섞이는 내용은 V다.</li>
       <li>정답을 미리 보지 못하게, 글을 이어 쓰는 쪽(디코더)은 뒤쪽 토큰을 가린다(인과 마스크). 어텐션의 결과는 새 숫자 묶음이고, 다음 토큰의 확률은 맨 끝 출력층이 계산한다.</li>
       <li>어텐션 계산에는 순서가 없어서 자리 정보를 따로 넣는다(위치 인코딩). 글은 마지막에 이 구조가 이미지에도 쓸 만했다고 말하지만, 증거는 뒤에 나온다고 한다.</li>
