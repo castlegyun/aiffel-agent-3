@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>두 길이 트랜스포머에서 합류하다 · 코드 해설 노트</title>
+<style>
+  /* 디자인 규칙: DESIGN.md (GitHub 스타일) */
+  :root {
+    --canvas:#ffffff; --subtle:#f6f8fa; --border:#d0d7de; --fg:#1f2328; --muted:#656d76; --link:#0969da;
+    --tab-line:#fd8c73; --code-bg:rgba(175,184,193,.2);
+    --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif;
+    --font-mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --canvas:#0d1117; --subtle:#161b22; --border:#30363d; --fg:#e6edf3; --muted:#a0a9b4; --link:#4493f8;
+      --tab-line:#f78166; --code-bg:rgba(110,118,129,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--canvas); color:var(--fg); font:400 1.0625rem/1.65 var(--font-body); word-break:keep-all; overflow-wrap:break-word; }
+  main { max-width:920px; margin:0 auto; padding:24px 16px 48px; }
+  a { color:var(--link); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  :focus-visible { outline:2px solid var(--link); outline-offset:2px; }
+  h1 { font-size:1.875rem; line-height:1.25; font-weight:600; margin:8px 0 8px; }
+  .summary { color:var(--muted); font-size:1rem; margin:0 0 16px; max-width:68ch; }
+  .nav { margin-bottom:8px; font-size:.9375rem; }
+  .terms { background:var(--subtle); border:1px solid var(--border); border-radius:6px; padding:10px 16px; margin-bottom:16px; font-size:1rem; }
+  .terms h2 { font-size:1rem; margin:0 0 6px; }
+  .terms summary { cursor:pointer; }
+  .terms ul { margin:8px 0 0; padding-left:20px; color:var(--fg); }
+  .flow-frame { width:100%; height:600px; border:1px solid var(--border); border-radius:6px; margin:0 0 16px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px; flex-wrap:wrap; }
+  .tabs button { font:inherit; font-size:1rem; background:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; padding:10px 18px; color:var(--muted); cursor:pointer; border-radius:6px 6px 0 0; }
+  .tabs button:hover { color:var(--fg); background:var(--subtle); }
+  .tabs button[aria-selected="true"] { color:var(--fg); font-weight:600; border-bottom-color:var(--tab-line); }
+  .panel[hidden] { display:none; }
+  table { width:100%; border-collapse:collapse; font-size:1rem; }
+  th, td { text-align:left; vertical-align:top; padding:8px 14px; border:1px solid var(--border); }
+  th { background:var(--subtle); font-weight:600; }
+  td.n { width:2.5em; font-family:var(--font-mono); color:var(--muted); }
+  td:nth-child(2) { min-width:14em; }
+  code, pre { background:var(--code-bg); border-radius:6px; font:.85em/1.5 var(--font-mono); }
+  code { padding:.2em .4em; white-space:pre-wrap; }
+  pre { padding:12px 16px; overflow:auto; }
+  .words li, .points li { margin:4px 0; }
+  .visual-kind, .visual-reason { margin:4px 0; }
+  .visual-buttons { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:12px 0; }
+  .visual-buttons button { font:inherit; font-size:1rem; font-weight:500; padding:6px 18px; border:1px solid var(--border); border-radius:6px; background:var(--subtle); color:var(--fg); cursor:pointer; }
+  .visual-buttons button[aria-pressed="true"] { border-color:var(--link); color:var(--link); }
+  .visual-buttons button:disabled { opacity:.5; cursor:default; }
+  #visual-frame { width:100%; height:75vh; border:1px solid var(--border); border-radius:6px; background:#fff; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="nav"><a href="../../index.html">← 노트 보관함</a></div>
+  <h1>두 길이 트랜스포머에서 합류하다</h1>
+  <p class="summary">트랜스포머는 어텐션 계산만으로 글을 처리하는 구조다. 어텐션은 토큰마다 다른 토큰들을 비율대로 섞어 새 숫자 묶음을 만든다. 서로의 결과를 기다리지 않아서 동시에 계산할 수 있다(학습·입력 읽기 때). 글은 이 구조가 이미지에도 쓸 만했다고 말하는데, 그 증거는 이 글 안에 없다.</p>
+
+  <details class="terms">
+    <summary><strong>새 용어 17개</strong> (눌러서 펼치기)</summary>
+    <ul>
+      <li><strong>트랜스포머</strong> = 어텐션 계산만으로 글을 처리하는 모델 구조</li>
+      <li><strong>토큰</strong> = 모델이 글을 읽는 가장 작은 조각</li>
+      <li><strong>벡터</strong> = 숫자를 줄지어 늘어놓은 묶음. 숫자 하나가 한 칸이고, 칸의 개수가 벡터 길이다</li>
+      <li><strong>표현</strong> = 토큰 하나를 나타내는 숫자 묶음(벡터)</li>
+      <li><strong>어텐션</strong> = 토큰마다 다른 토큰들을 비율대로 섞어 새 숫자 묶음을 만드는 계산</li>
+      <li><strong>비율</strong> = 합이 1인 숫자들. 어느 토큰을 얼마나 섞을지 정한다</li>
+      <li><strong>점수</strong> = 비율을 정하기 전에 매기는 숫자. 클수록 비율이 커진다</li>
+      <li><strong>순환 구조</strong> = 토큰을 앞에서 뒤로 하나씩 계산하는 방식. 앞 계산이 끝나야 다음을 한다</li>
+      <li><strong>합성곱</strong> = 이웃한 몇 칸만 보고 모양을 찾는 계산</li>
+      <li><strong>병렬 계산</strong> = 여러 계산을 동시에 하는 것</li>
+      <li><strong>선형변환</strong> = 숫자 묶음에 숫자 표(행렬)를 곱해 다른 숫자 묶음을 얻는 계산</li>
+      <li><strong>가중치 ① (학습된 숫자)</strong> = 학습으로 정해져 모델에 저장된 숫자. 선형변환의 숫자 표가 이것이다. 문장이 바뀌어도 그대로다</li>
+      <li><strong>가중치 ② (섞는 비율)</strong> = 어텐션에서 다른 토큰을 얼마나 섞을지 정하는 비율. 원문의 “관계 가중치”. 문장이 바뀔 때마다 새로 계산한다. ①과 이름만 같고 다른 것이다</li>
+      <li><strong>인과 마스크</strong> = 정답을 미리 보지 못하게 뒤쪽 토큰을 가리는 규칙. 가린 토큰의 비율은 0이 되어, 앞 토큰과 자기 자신만 섞인다</li>
+      <li><strong>출력층</strong> = 새 숫자 묶음에서 다음 토큰 후보의 확률을 계산하는 맨 끝 부분</li>
+      <li><strong>캐시</strong> = 한 번 계산한 값을 저장해 두고 다시 꺼내 쓰는 것</li>
+      <li><strong>위치 인코딩</strong> = 토큰이 몇 번째 자리인지 정보를 계산에 넣는 방법</li>
+    </ul>
+  </details>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="flow">요약</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
+    <button role="tab" aria-selected="false" data-tab="detail">풀어쓰기</button>
+    <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+  </div>
+
+  <section class="panel" id="flow">
+    <iframe class="flow-frame" src="diagram.html" title="어텐션 한 번에 일어나는 일" style="height:400px"></iframe>
+    <ul class="points">
+      <li>트랜스포머는 어텐션 계산만 쓴다. 순환 구조는 앞 계산이 끝나야 다음을 할 수 있었다. 어텐션은 서로의 결과를 기다리지 않아서 한 문장의 토큰을 동시에 계산할 수 있다(답을 이어 쓸 때는 한 토큰씩).</li>
+      <li>어텐션은 토큰마다 다른 토큰들을 비율대로 섞어 새 숫자 묶음을 만든다. 예: 새 A = 0.7×A + 0.2×B + 0.1×C (설명용 숫자). 이 계산을 여러 벌 나란히 하는 것이 멀티헤드 어텐션이다.</li>
+      <li>비율은 이 순서로 정한다. Q·K·V를 만들고 → Q와 K를 맞대 점수를 얻고 → 점수를 비율로 바꾸고 → 비율대로 V를 더한다. Q와 K는 비율을 정하는 데만 쓰이고, 섞이는 내용은 V다.</li>
+      <li>정답을 미리 보지 못하게, 글을 이어 쓰는 쪽(디코더)은 뒤쪽 토큰을 가린다(인과 마스크). 어텐션의 결과는 새 숫자 묶음이고, 다음 토큰의 확률은 맨 끝 출력층이 계산한다.</li>
+      <li>어텐션 계산에는 순서가 없어서 자리 정보를 따로 넣는다(위치 인코딩). 글은 마지막에 이 구조가 이미지에도 쓸 만했다고 말하지만, 증거는 뒤에 나온다고 한다.</li>
+    </ul>
+  </section>
+
+  <section class="panel" id="detail" hidden>
+    <table>
+      <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>2017년, 여덟 명의 연구자가 그 질문에 답을 내놓았습니다. 논문 제목부터 선언에 가까웠습니다. Attention Is All You Need.</td><td>논문 제목은 “필요한 것은 어텐션뿐”이라는 뜻이다. “그 질문”이 무엇인지는 붙여 넣은 글 앞부분에 있어서 알 수 없다. 추측: 앞 섹션의 질문(기존 구조의 한계를 어떻게 넘을까)이다. 저자가 여덟 명인 것은 arXiv 초록으로 확인했다.</td></tr>
+        <tr><td class="n">2</td><td>이들이 제안한 트랜스포머(Transformer)는 앞에서 뒤로 한 토큰씩 처리하는 recurrence(순환 구조)도, 국소 패턴을 훑는 convolution(합성곱)도 전부 버리고 오직 어텐션만으로 문장을 다뤘습니다. 논문의 표현 그대로 “based solely on attention mechanisms, dispensing with recurrence and convolutions entirely”였습니다.</td><td>예전 구조는 두 가지였다. 순환 구조는 토큰을 앞에서 뒤로 하나씩 계산한다. 합성곱은 이웃한 몇 칸만 본다. 트랜스포머는 둘 다 버리고 어텐션만 쓴다. 인용문은 arXiv 초록과 같은 것을 확인했다. 보충: 층 안에 어텐션 말고 다른 계산도 있는 것으로 알려져 있다. 이 글은 다루지 않고, 이 노트에서 확인하지 않았다.</td></tr>
+        <tr><td class="n">3</td><td>이 선택이 결정적이었던 이유는 성능보다 먼저 계산 방식에 있습니다. RNN은 세 번째 단어를 처리하려면 두 번째 단어의 계산이 끝나기를 기다려야 했습니다. 순서가 곧 족쇄였습니다.</td><td>순환 구조에서는 두 번째 토큰의 계산 결과가 있어야 세 번째 토큰을 계산할 수 있다. 그래서 동시에 못 하고 차례로 해야 한다.</td></tr>
+        <tr><td class="n">4</td><td>트랜스포머는 모든 토큰이 서로를 동시에 바라보는 구조라, 한 문장의 토큰들을 한꺼번에 GPU에 올려 병렬로 계산할 수 있습니다. 순차의 벽이 사라지자 더 큰 데이터와 더 큰 모델을 감당할 길이 열렸습니다.</td><td>어텐션은 새 A를 만들 때 B의 계산 결과가 필요 없다. 원래 숫자 묶음만 있으면 된다. 그래서 문장의 토큰을 동시에 계산할 수 있다. 보충: 이 이점은 학습할 때와 입력을 읽을 때 크다. 답을 이어 쓸 때는 원문 뒤의 KV cache 문단처럼 한 토큰씩 쓴다.</td></tr>
+        <tr><td class="n">5</td><td>실제로 원 논문은 GPU 여덟 장으로 3.5일을 학습해 기계번역 품질 점수(BLEU)에서 당시 최고 기록에 도달했는데, 이는 기존 방식의 학습 비용에 비하면 작은 조각이었습니다. 지금 우리가 부르는 LLM이라는 이름의 첫 단추가 여기서 끼워집니다.</td><td>arXiv 초록과 맞춰 봤다. “GPU 8장, 3.5일”은 영어→프랑스어 번역 때의 수치다. 그때 점수(BLEU)는 41.8이고, 초록은 “단일 모델 최고 기록”이라고 한다. 영어→독일어는 28.4로 기존 최고보다 2점 넘게 높다. 이 설정의 학습 시간은 초록에 없다. 원문은 두 경우를 하나로 합쳐 썼다. “작은 조각”은 초록의 “기존 최고 모델 학습 비용의 작은 일부”와 같은 말이다. “LLM의 첫 단추”는 이 글의 평가다.</td></tr>
+        <tr><td class="n">6</td><td>출처: Attention Is All You Need, arXiv:1706.03762 (Vaswani et al., 2017, 확인일: 2026-07-26).</td><td>출처 표기다. 확인일은 원문 필자가 적은 것이다. 이 노트에서 다시 확인한 것은 논문 초록뿐이다. 본문 3.2.1절은 열어 보지 않았다.</td></tr>
+        <tr><td class="n">7</td><td>어텐션은 한 토큰이 다른 토큰들을 둘러보며 “지금 나를 이해하려면 누구를 참고해야 하는가”를 스스로 정하는 방식입니다. 이름 때문에 사람의 집중력처럼 들리지만, 실제로 벌어지는 일은 토큰들 사이의 관계 가중치를 계산하는 것에 가깝습니다.</td><td>어텐션은 토큰마다 “다른 토큰들을 얼마씩 섞을지”를 비율로 정한다. 사람의 집중이 아니라 숫자 계산이다. 이 비율이 가중치 ②다. 모델에 저장된 학습된 숫자(가중치 ①)와는 다른 것이다.</td></tr>
+        <tr><td class="n">8</td><td>한 문장으로 감을 잡아보겠습니다. 이의신청 기간이 지나면 처분은 확정됩니다에서 확정이라는 토큰을 만들 때, 모델은 주변의 어떤 조각을 얼마나 참고할지 저울질합니다. 이의신청 기간은 강하게, 지나면은 조건으로, 처분은 대상 개념으로 끌어옵니다. 모델이 사람처럼 법률을 이해한다는 뜻은 아닙니다. 다만 수많은 문장에서 어떤 조각들이 함께 등장하고 어떤 관계를 맺는지 학습했기에, 현재 토큰의 표현을 만들 때 관련 있는 토큰들을 끌어와 섞는 것입니다.</td><td>‘확정’의 새 숫자 묶음을 만들 때, 앞의 ‘이의신청 기간’, ‘지나면’, ‘처분’을 각각 얼마씩 섞는다는 설명이다. 주의: 감을 잡기 위한 예시이고, 실제 모델이 낸 비율이 아니다. ‘이의신청 기간’은 실제로는 토큰 여러 개일 수 있고, ‘확정’ 자기 자신도 섞인다. “강하게/조건으로/대상 개념으로”는 사람이 붙인 해석이다.</td></tr>
+        <tr><td class="n">9</td><td>이 저울질을 세 종류의 벡터가 나눠 맡습니다. Query, Key, Value입니다. (표) Query, Q: 내가 들고 온 질문 카드 — 지금 토큰이 묻는 것 / Key, K: 책마다 붙은 색인표 — 다른 토큰들이 내미는 단서 / Value, V: 실제 책의 내용 — 참고하기로 정한 토큰에서 실제로 가져오는 정보</td><td>토큰마다 숫자 묶음에서 세 묶음 Q, K, V를 만든다. Q와 K는 비율을 정할 때 쓰고, V는 실제로 섞이는 내용이다. 세 묶음 모두 같은 토큰의 숫자 묶음에서 만든다(아래 Q/K/V 문단). 보충: 한 문장 안의 토큰끼리 볼 때 그렇다. 디코더에는 인코더 결과에서 K와 V를 가져오는 어텐션도 있다(이 글은 다루지 않음).</td></tr>
+        <tr><td class="n">10</td><td>내 질문 카드(Q)를 서가의 모든 색인표(K)와 맞춰 보고, 잘 맞는 책일수록 그 내용(V)을 많이 가져와 섞습니다. 은행에 예금했다의 은행과 강가의 은행나무의 은행은 표면은 같지만, 첫 문장에서는 예금이, 둘째에서는 강가와 나무가 강한 단서가 되어 같은 글자를 다른 문맥으로 갈라냅니다.</td><td>A의 Q를 모든 토큰의 K와 맞대 본다. 점수가 높은 토큰일수록 그 V가 더 많이 섞인다. ‘은행’ 예시는 같은 글자라도 이웃 토큰에 따라 다른 숫자 묶음이 된다는 뜻이다. 주의: 설명용 예시다. 또 ‘은행에 예금했다’에서 ‘예금’은 ‘은행’ 뒤에 있다. 뒤 토큰을 가리는 디코더에서는 이 설명이 그대로 맞지 않고, 앞뒤를 다 보는 쪽(인코더)에서 맞다. 추측: 원문은 이 구분을 하지 않은 것으로 보인다.</td></tr>
+        <tr><td class="n">11</td><td>같은 문장이라도 볼 각도는 하나가 아닙니다. 어떤 시선은 주어와 동사의 짝을 좇고, … 이것이 멀티헤드 어텐션(Multi-Head Attention)이며, 각각의 어텐션을 헤드(head)라고 부릅니다. 실제 헤드가 사람이 이름 붙이듯 깔끔하게 역할을 나눠 갖는다고 단정할 수는 없지만, 한 문장을 여러 관점으로 동시에 비춰 본다는 직관은 잘 들어맞습니다.</td><td>어텐션을 한 벌만 하지 않고 여러 벌 나란히 한다. 한 벌이 헤드다. 헤드마다 결과가 다를 수 있다는 것이 요점이다. 원문도 헤드가 사람이 붙인 이름처럼 역할을 나눈다고는 말하지 않는다. 보충: 논문에서는 헤드마다 자기 숫자 표를 따로 가진다(이 노트에서 확인하지 않은 기억).</td></tr>
+        <tr><td class="n">12</td><td>이제 트랜스포머 전체를 한 장으로 봅니다. 오늘 모든 블록을 외울 필요는 없습니다. 가운데에서 반복되는 Multi-Head Attention 블록이 방금 설명한 “문맥 보기”를 담당한다는 점만 붙잡으면 됩니다. (그림 및 출처: Wikimedia Commons, 왼쪽 기둥이 인코더, 오른쪽 기둥이 디코더)</td><td>원문에 붙은 구조 그림의 설명이다. 이 노트에는 그림 파일이 없다. 두 가지만 알면 된다. 왼쪽(인코더)은 입력을 읽어 숫자 묶음을 만든다. 오른쪽(디코더)은 출력을 한 토큰씩 만든다. 둘 다 어텐션 블록이 여러 층 쌓여 있다.</td></tr>
+        <tr><td class="n">13</td><td>토큰의 현재 표현을 그대로 Q, K, V라고 부르지는 않습니다. 앞서 다룬 벡터가 여기서 재료가 됩니다. 모델은 학습한 세 개의 선형변환으로 그 표현에서 역할이 다른 세 벡터를 뽑아냅니다. 선형변환이란 벡터에 학습된 숫자 표(행렬)를 곱해 다른 벡터로 바꾸는 계산으로, 같은 재료에서 서로 다른 성격의 정보를 끄집어내는 렌즈라고 보면 됩니다.</td><td>토큰의 숫자 묶음에 서로 다른 숫자 표를 세 번 곱해 Q, K, V를 얻는다. 이 숫자 표의 값은 학습으로 정해진 것이고, 가중치 ①이다. 섞는 비율(가중치 ②)은 Q와 K를 맞대서 나오는 값이다.</td></tr>
+        <tr><td class="n">14</td><td>어텐션이 하는 일은 한 줄로 요약됩니다. 모든 Q를 모든 K와 맞대 점수표를 만들고, 그 점수를 각 토큰을 얼마나 참고할지의 비율로 바꾼 뒤, 그 비율대로 V를 섞어 문맥이 반영된 새 표현을 내놓습니다. 점수를 비율로 바꾸는 자리에 softmax가 들어가고, 벡터가 길어질수록 점수가 과하게 벌어지는 것을 막으려고 벡터 길이의 제곱근으로 한 번 눌러 줍니다. 왜 하필 제곱근인지까지 따라가고 싶다면 아래를 펼쳐 보세요.</td><td>그림에 나온 순서가 이 문단이다. 점수를 비율로 바꾸기 전에, 먼저 벡터 길이(칸 수)의 제곱근으로 점수를 나눠 줄인다. 그다음 softmax(점수를 합이 1인 비율로 바꾸는 계산)로 비율을 만든다. 칸 수가 클수록 점수가 커지기 쉬워서 줄인다는 것이 원문의 설명이다. 주의: “아래를 펼쳐 보세요”의 접힌 내용은 붙여 넣은 글에 없다. 그래서 왜 제곱근인지는 이 노트에 없다.</td></tr>
+        <tr><td class="n">15</td><td>디코더가 다음 토큰을 생성할 때는 여기에 causal mask(인과 마스크)를 더합니다. 아직 만들지 않은 미래 위치의 점수를 음의 무한대로 눌러 softmax에서 사실상 0으로 만드는 장치입니다. 덕분에 현재 위치는 앞의 토큰과 자기 자신까지만 참고할 수 있고, 정답의 미래를 미리 훔쳐보지 못합니다.</td><td>‘나는 오늘 밥을 먹었다’로 다음 글자 맞히기를 연습한다고 하자. ‘오늘’ 다음을 맞히면서 바로 뒤의 ‘밥을’을 볼 수 있으면 정답을 보는 것이라 연습이 안 된다. 그래서 ‘오늘’을 계산할 때 뒤의 ‘밥을’, ‘먹었다’는 비율을 0으로 만들어 쓰지 않는다(가린다). 계산으로는 뒤쪽 점수를 음의 무한대로 바꾸면 softmax를 거친 비율이 0이 된다. 보충: 마스크가 필요한 때는 정답 문장 전체가 한꺼번에 들어가는 학습이다. 한 토큰씩 생성할 때는 뒤쪽 토큰이 아직 없다.</td></tr>
+        <tr><td class="n">16</td><td>이 점을 정확히 짚어 두겠습니다. 어텐션이 내놓는 것은 문맥을 반영한 표현의 갱신이지, 다음 토큰의 확률이 아닙니다. 다음에 올 토큰의 확률은 이렇게 갱신된 표현을 받아 맨 끝의 출력층이 계산합니다.</td><td>어텐션의 결과는 새 숫자 묶음이다. 확률이 아니다. 여러 층을 거친 숫자 묶음이 마지막에 출력층으로 들어가고, 거기서 다음 토큰 후보들의 확률이 나온다.</td></tr>
+        <tr><td class="n">17</td><td>출처: Attention Is All You Need, arXiv:1706.03762 Section 3.2.1, Scaled Dot-Product Attention (확인일: 2026-07-26). 같은 계산을 한국어로 수식 하나하나 따라가며 풀어 놓은 글로 Self Attention, ratsgo's NLPBOOK이 있습니다.</td><td>계산을 수식으로 따라가고 싶을 때 볼 자료 두 곳이다. 이 노트에서는 열어 보지 않았다. 주소는 원문에 없어서 적지 않는다.</td></tr>
+        <tr><td class="n">18</td><td>멀티헤드에는 나중에 실전 비용으로 되돌아오는 갈래가 하나 있어 짚어 둡니다. 생성형 모델은 답을 한 토큰씩 이어 쓰는데, 그때마다 앞 토큰들의 Key와 Value를 처음부터 다시 계산하면 너무 낭비입니다. 그래서 한 번 계산한 값을 메모리에 쌓아 두고 다시 꺼내 씁니다. 이 임시 보관함을 KV cache라고 부릅니다. 문장이 길어질수록 이 보관함이 차지하는 메모리와 대역폭이 부담이 되고, 그래서 헤드들에게 Key와 Value를 얼마나 나눠 쓰게 할 것인지를 두고 설계가 갈립니다.</td><td>새 토큰을 만들 때 앞 토큰들의 K와 V가 필요하다. 이미 계산한 값이라 저장해 두고 다시 쓴다. 이 저장 공간이 KV cache다. 문장이 길수록 저장할 값이 늘어 메모리를 많이 쓴다. 추측: “나눠 쓰게 한다”는 헤드마다 K와 V를 따로 저장할지, 헤드끼리 같이 쓸지 정한다는 뜻으로 읽힌다. 원문은 이름을 들지 않았다.</td></tr>
+        <tr><td class="n">19</td><td>어텐션에는 아직 빈 구멍이 하나 있습니다. Q와 K를 맞대는 계산은 어느 토큰이 앞이고 뒤인지를 전혀 모릅니다. 학생이 교사를 칭찬했다와 교사가 학생을 칭찬했다는 똑같은 토큰으로 이루어져 있지만 순서 때문에 뜻이 뒤집힙니다. 순서를 못 읽으면 이 둘을 구별할 수 없습니다. 그래서 트랜스포머는 토큰에 위치 정보를 따로 주입합니다. 이것이 위치 인코딩(positional encoding)입니다.</td><td>어텐션 점수는 두 토큰의 내용만 보고, 자리는 보지 않는다. 그러면 같은 토큰이 순서만 바뀐 두 문장을 구별하지 못한다. 그래서 자리 정보를 따로 넣는다. 방법은 여러 가지다. 주의: 한국어 예시는 조사(이/가, 을/를)가 달라서 토큰이 같지 않다. 같은 토큰이 순서만 바뀌는 예로는 영어 ‘dog bites man’과 ‘man bites dog’이 맞다(이 노트의 보충).</td></tr>
+        <tr><td class="n">20</td><td>원래 트랜스포머는 위치마다 다른 파형을 토큰에 더했고, 요즘 모델들은 벡터를 위치만큼 회전시키거나 멀리 떨어진 토큰일수록 점수를 깎는 방식을 씁니다. 어느 쪽을 고르느냐가 나중에 그 모델이 감당할 수 있는 문장 길이를 가릅니다.</td><td>방법이 세 가지 나온다. ① 자리마다 다른 파형을 토큰에 더한다(원래 트랜스포머). ② 벡터를 자리만큼 돌린다. ③ 멀리 있는 토큰일수록 점수를 깎는다. 같은 레포의 ‘토큰은 비용을, 컨텍스트는 한계를 만든다’ 노트는 ②를 RoPE, ③을 ALiBi라고 부른다(이 글은 이름을 쓰지 않는다). 추측: 문장 길이는 이 선택 말고 학습한 길이 등에도 달려 있어서 ‘가른다’는 말은 강한 표현으로 보인다.</td></tr>
+        <tr><td class="n">21</td><td>이제 이 강의를 관통해 온 두 갈래를 겹쳐 보겠습니다. 한쪽에는 이미지가 있었습니다. CNN이 픽셀의 국소 패턴을 층층이 쌓아 올리며 시각을 정복해 갔습니다. 다른 한쪽에는 언어가 있었습니다. RNN과 seq2seq가 문장을 순서대로 읽다가 고정 벡터 병목에 막혔고, 어텐션으로 그 벽을 뚫었습니다. 서로 다른 재료, 서로 다른 벽이었습니다.</td><td>강의가 지금까지 따라온 두 갈래의 정리다. 이미지 쪽은 CNN(합성곱을 쌓은 모델), 언어 쪽은 RNN과 seq2seq였다. 언어 쪽의 벽은 문장 전체를 정해진 크기의 숫자 묶음 하나에 담다 보니, 긴 문장에서 정보가 뭉개지는 문제(고정 벡터 병목)였다. 원문은 어텐션이 이 벽을 넘게 했다고 한다. 보충: 어텐션 자체는 트랜스포머 이전에도 RNN 구조에 붙여 쓰였던 것으로 알려져 있다(이 노트에서 확인하지 않음).</td></tr>
+        <tr><td class="n">22</td><td>트랜스포머의 진짜 사건은, 언어가 벽을 넘으려고 집어 든 어텐션이라는 열쇠가 이미지 자물쇠에도 들어맞았다는 점입니다. 그 증거는 조금 뒤에 직접 보게 됩니다.</td><td>이 글의 주장은 “언어에서 나온 어텐션이 이미지 처리에도 쓸 만했다”는 것이다. 그 증거는 이 글에 나오지 않는다. 지금 확인된 것은 주장뿐이다.</td></tr>
+        <tr><td class="n">23</td><td>두 길의 합류 — recurrence를 버리고 병렬의 문을 연 이 구조는, 그 자체로 끝이 아니라 출발점이었습니다. 같은 트랜스포머를 어떻게 쌓고 어떻게 학습시키느냐에 따라 문장을 이해하는 데 특화된 모델과 다음 토큰을 이어 쓰는 데 특화된 모델이 갈라져 나옵니다. 다음 섹션에서 그 두 갈래, BERT와 GPT를 따라가며 오늘날의 LLM이 어떻게 세워졌는지 보겠습니다.</td><td>같은 트랜스포머로 두 종류의 모델이 나온다. 문장을 이해하는 데 맞춘 모델과 다음 토큰을 이어 쓰는 데 맞춘 모델이다. 글은 이 두 갈래를 BERT와 GPT로 소개하고 다음 섹션으로 넘어간다. 추측: 두 갈래를 든 순서로 보아 앞이 BERT, 뒤가 GPT다.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="words" hidden>
+    <ul class="words">
+      <li><strong>Transformer</strong>(트랜스포머): 트랜스포머의 영어 이름. 2017년 논문 Attention Is All You Need에서 나왔다</li>
+      <li><strong>Attention Is All You Need</strong>(어텐션 이즈 올 유 니드): 2017년 트랜스포머 논문의 제목. “필요한 것은 어텐션뿐”이라는 뜻</li>
+      <li><strong>arXiv</strong>(아카이브): 논문을 심사 전에 올려 공개하는 사이트. 1706.03762는 이 논문의 번호</li>
+      <li><strong>attention</strong>(어텐션): 어텐션의 영어 이름</li>
+      <li><strong>token</strong>(토큰): 토큰의 영어 이름</li>
+      <li><strong>vector</strong>(벡터): 벡터의 영어 이름</li>
+      <li><strong>linear transformation</strong>(리니어 트랜스포메이션): 선형변환의 영어 이름</li>
+      <li><strong>recurrence</strong>(리커런스): 순환 구조의 영어 이름</li>
+      <li><strong>convolution</strong>(컨볼루션): 합성곱의 영어 이름</li>
+      <li><strong>RNN</strong>(알엔엔): recurrent neural network. 순환 구조로 토큰을 앞에서 뒤로 읽는 신경망</li>
+      <li><strong>CNN</strong>(씨엔엔): convolutional neural network. 합성곱을 쌓은 신경망. 이미지의 국소 패턴을 읽는 데 쓰였다고 원문이 말한다</li>
+      <li><strong>seq2seq</strong>(시퀀스 투 시퀀스): sequence-to-sequence. 입력 문장을 읽어 출력 문장을 만드는 구조의 이름. 원문은 RNN과 함께 고정 벡터 병목에 막혔다고 한다</li>
+      <li><strong>GPU</strong>(지피유): 많은 계산을 동시에 하는 데 맞는 계산 장치</li>
+      <li><strong>BLEU</strong>(블루): 기계번역 결과가 사람이 한 번역과 얼마나 비슷한지 매기는 점수</li>
+      <li><strong>LLM</strong>(엘엘엠): large language model. 거대 언어 모델</li>
+      <li><strong>Query</strong>(쿼리): 비율을 정할 때, 지금 토큰 쪽에서 내미는 숫자 묶음. Q로 줄여 쓴다</li>
+      <li><strong>Key</strong>(키): 비율을 정할 때, 비교 대상 토큰 쪽에서 내미는 숫자 묶음. K로 줄여 쓴다</li>
+      <li><strong>Value</strong>(밸류): 비율대로 실제로 섞이는 내용을 담은 숫자 묶음. V로 줄여 쓴다</li>
+      <li><strong>softmax</strong>(소프트맥스): 점수들을 0 이상이고 합이 1인 비율로 바꾸는 계산</li>
+      <li><strong>Multi-Head Attention</strong>(멀티헤드 어텐션): 어텐션을 여러 벌 나란히 계산하는 것. 한 벌이 헤드(head)다</li>
+      <li><strong>head</strong>(헤드): 멀티헤드 어텐션에서 어텐션 한 벌</li>
+      <li><strong>encoder</strong>(인코더): 트랜스포머에서 입력을 읽어 표현을 만드는 쪽</li>
+      <li><strong>decoder</strong>(디코더): 트랜스포머에서 출력을 한 토큰씩 만드는 쪽</li>
+      <li><strong>causal mask</strong>(코절 마스크): 인과 마스크의 영어 이름. 정답을 미리 보지 못하게 뒤쪽 토큰을 가리는 규칙</li>
+      <li><strong>cache</strong>(캐시): 캐시의 영어 이름</li>
+      <li><strong>KV cache</strong>(케이브이 캐시): 답을 한 토큰씩 만들 때 앞 토큰들의 K와 V를 저장해 두고 다시 쓰는 캐시</li>
+      <li><strong>positional encoding</strong>(포지셔널 인코딩): 위치 인코딩의 영어 이름</li>
+      <li><strong>RoPE</strong>(로프): Rotary Position Embedding. 벡터를 위치만큼 회전시켜 두 토큰의 떨어진 거리가 계산에 반영되게 하는 위치 인코딩(같은 레포 노트 기준)</li>
+      <li><strong>ALiBi</strong>(알리바이): Attention with Linear Biases. 멀리 떨어진 토큰일수록 점수를 거리에 비례해 깎는 방식(같은 레포 노트 기준)</li>
+      <li><strong>BERT</strong>(버트): 문장을 이해하는 쪽으로 트랜스포머를 쌓은 모델 계열. 원문은 다음 섹션에서 다룬다고만 한다</li>
+      <li><strong>GPT</strong>(지피티): 다음 토큰을 이어 쓰는 쪽으로 트랜스포머를 쌓은 모델 계열. 원문은 다음 섹션에서 다룬다고만 한다</li>
+    </ul>
+  </section>
+  <section class="panel" id="visual" hidden>
+    <p class="visual-kind"><strong>그림 종류:</strong> 플로우차트</p>
+    <p class="visual-reason"><strong>고른 이유:</strong> 어텐션 한 번이 5단계를 차례로 거치는 과정이라, 순서를 화살표로 보는 편이 글보다 빠르다. 두 길의 합류나 위치 인코딩은 한 그림에 넣지 않았다.</p>
+    <div class="visual-buttons">
+      <button type="button" data-src="summary.html">종합 정리</button>
+      <button type="button" data-src="diagram.html">그림 하나</button>
+      <button type="button" data-src="eli5.html">아주 쉽게</button>
+      <button type="button" data-src="interactive.html">눌러 보기</button>
+      <a id="visual-open" href="#" target="_blank" rel="noopener" hidden>새 탭으로 열기</a>
+    </div>
+    <iframe id="visual-frame" title="그림 보기" hidden></iframe>
+  </section>
+</main>
+<script>
+  const tabs = document.querySelectorAll('.tabs button');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabs.forEach(function (x) {
+        const on = x === b;
+        x.setAttribute('aria-selected', on);
+        document.getElementById(x.dataset.tab).hidden = !on;
+      });
+    });
+  });
+  const frame = document.getElementById('visual-frame');
+  const openLink = document.getElementById('visual-open');
+  const vbtns = document.querySelectorAll('.visual-buttons button[data-src]');
+  vbtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      vbtns.forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      frame.src = b.dataset.src;
+      frame.hidden = false;
+      openLink.href = b.dataset.src;
+      openLink.hidden = false;
+    });
+  });
+  // 그림(diagram.html)은 프레임 높이를 그림 크기에 맞춘다. 그림 파일은 고치지 않고 불러올 때 스타일을 얹는다.
+  function fitDiagram(f) {
+    try {
+      const d = f.contentDocument;
+      if (!d || !/diagram\.html$/.test(f.contentWindow.location.pathname)) { f.style.height = ''; return; }
+      if (d.getElementById('fit-fix')) return;
+      const st = d.createElement('style');
+      st.id = 'fit-fix';
+      st.textContent = 'body{min-height:0;display:flex;align-items:center;justify-content:center}';
+      d.head.appendChild(st);
+      const fit = function () { f.style.height = (d.body.offsetHeight + 2) + 'px'; };
+      fit();
+      if (d.fonts && d.fonts.ready) d.fonts.ready.then(fit);
+      if (f.contentWindow.ResizeObserver) new f.contentWindow.ResizeObserver(fit).observe(d.body);
+    } catch (e) { /* file:// 에서는 기본 높이를 유지한다 */ }
+  }
+  [document.querySelector('.flow-frame'), document.getElementById('visual-frame')].forEach(function (f) {
+    if (f) f.addEventListener('load', function () { fitDiagram(f); });
+  });
+</script>
+</body>
+</html>

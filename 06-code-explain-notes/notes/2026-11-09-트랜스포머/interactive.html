@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>어텐션 눌러 보기</title>
+<style>
+  :root { --bg:#ffffff; --subtle:#f6f8fa; --line:#d0d7de; --fg:#1f2328; --muted:#656d76; --accent:#0969da; --hot:#cf222e; --hot-bg:#ffebe9; --new-bg:#ddf4ff; --off:#8c959f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0d1117; --subtle:#161b22; --line:#30363d; --fg:#e6edf3; --muted:#a0a9b4; --accent:#4493f8; --hot:#ff7b72; --hot-bg:#3d1d20; --new-bg:#0c2d4a; --off:#6e7681; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:400 1.0625rem/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif; word-break:keep-all; overflow-wrap:break-word; }
+  main { max-width:860px; margin:0 auto; padding:20px 16px 40px; }
+  h1 { font-size:1.5rem; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 16px; font-size:.95rem; }
+  .ctrl { display:flex; flex-wrap:wrap; gap:16px; align-items:center; background:var(--subtle); border:1px solid var(--line); border-radius:6px; padding:10px 14px; margin-bottom:14px; }
+  .ctrl .grp { display:flex; align-items:center; gap:6px; }
+  button { font:inherit; font-size:1rem; padding:6px 16px; border:1px solid var(--line); border-radius:6px; background:var(--subtle); color:var(--fg); cursor:pointer; }
+  button:hover:not(:disabled) { border-color:var(--accent); }
+  button:disabled { opacity:.45; cursor:default; }
+  button[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); font-weight:600; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  label { cursor:pointer; display:flex; align-items:center; gap:6px; }
+  input[type=checkbox] { width:1.1em; height:1.1em; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .steps { display:flex; gap:6px; margin:0 0 10px; flex-wrap:wrap; }
+  .steps span { font-size:.85rem; padding:2px 10px; border:1px solid var(--line); border-radius:999px; color:var(--muted); }
+  .steps span.on { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  .steps span.done { color:var(--fg); }
+  h2 { font-size:1.2rem; margin:0 0 4px; }
+  .say { margin:0 0 12px; min-height:3.3em; }
+  .wrap { overflow-x:auto; }
+  table { border-collapse:collapse; font-size:1rem; width:100%; }
+  th, td { border:1px solid var(--line); padding:6px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--subtle); font-weight:600; white-space:nowrap; }
+  td.num { font-family:ui-monospace,Consolas,monospace; white-space:nowrap; }
+  td.new, th.new { background:var(--new-bg); }
+  tr.focus td:first-child { font-weight:700; color:var(--accent); }
+  tr.masked td:not(:first-child) { color:var(--off); }
+  td.off { color:var(--hot); background:var(--hot-bg); font-weight:600; }
+  .mats { font-family:ui-monospace,Consolas,monospace; font-size:.9rem; color:var(--muted); margin:8px 0 0; }
+  .result { margin-top:12px; padding:10px 14px; border:1px solid var(--line); border-radius:6px; background:var(--subtle); font-family:ui-monospace,Consolas,monospace; font-weight:600; }
+  .result b { color:var(--accent); }
+  .note { color:var(--muted); font-size:.85rem; margin-top:10px; }
+  .nav { display:flex; gap:8px; margin-top:14px; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>어텐션 눌러 보기</h1>
+  <p class="lead">토큰 3개(A, B, C)로 어텐션 한 번을 한 단계씩 따라간다. 숫자는 설명용 예시이고, 실제 모델의 값이 아니다.</p>
+
+  <div class="ctrl">
+    <div class="grp"><span>새로 만들 토큰:</span>
+      <button type="button" data-focus="0" aria-pressed="true">A</button>
+      <button type="button" data-focus="1" aria-pressed="false">B</button>
+      <button type="button" data-focus="2" aria-pressed="false">C</button>
+    </div>
+    <label><input type="checkbox" id="mask"> 뒤 토큰 가리기 (인과 마스크)</label>
+  </div>
+
+  <div class="steps" id="steps"></div>
+  <h2 id="title"></h2>
+  <p class="say" id="say"></p>
+  <div class="wrap"><table id="tbl"></table></div>
+  <p class="mats" id="mats"></p>
+  <div class="result" id="result" hidden></div>
+  <div class="nav">
+    <button type="button" id="prev">← 이전</button>
+    <button type="button" id="next" class="primary">다음 →</button>
+    <button type="button" id="reset">처음부터</button>
+  </div>
+  <p class="note" id="note"></p>
+</main>
+<script>
+  var NAMES = ['A', 'B', 'C'];
+  var X  = [[1, 0], [0, 1], [1, 1]];
+  var WQ = [[1, 1], [0, 1]];
+  var WK = [[1, 0], [1, 1]];
+  var WV = [[1, 0], [0, 2]];
+  var DK = 2;
+  var LAST = 5;
+  var step = 0, focus = 0, mask = false;
+
+  function mul(x, w) { return [x[0] * w[0][0] + x[1] * w[1][0], x[0] * w[0][1] + x[1] * w[1][1]]; }
+  var Q = X.map(function (x) { return mul(x, WQ); });
+  var K = X.map(function (x) { return mul(x, WK); });
+  var V = X.map(function (x) { return mul(x, WV); });
+
+  function f(n) { var s = (Math.round(n * 100) / 100).toFixed(2); return s.replace(/\.?0+$/, '') || '0'; }
+  function vec(v) { return '[' + v.map(f).join(', ') + ']'; }
+
+  function compute() {
+    var q = Q[focus];
+    var r = { raw: [], scaled: [], masked: [], ratio: [], out: [0, 0] };
+    for (var j = 0; j < 3; j++) {
+      r.raw.push(q[0] * K[j][0] + q[1] * K[j][1]);
+      r.scaled.push(r.raw[j] / Math.sqrt(DK));
+      r.masked.push(mask && j > focus);
+    }
+    var sum = 0, e = [];
+    for (j = 0; j < 3; j++) { e.push(r.masked[j] ? 0 : Math.exp(r.scaled[j])); sum += e[j]; }
+    for (j = 0; j < 3; j++) {
+      r.ratio.push(e[j] / sum);
+      r.out[0] += r.ratio[j] * V[j][0];
+      r.out[1] += r.ratio[j] * V[j][1];
+    }
+    return r;
+  }
+
+  var TITLES = ['0. 시작: 토큰마다 숫자 묶음', '1. Q, K, V 만들기', '2. 점수 내기', '3. 점수 줄이기', '4. 비율로 바꾸기', '5. 비율대로 V 더하기'];
+
+  function says(r) {
+    var n = NAMES[focus];
+    return [
+      '토큰마다 숫자 묶음이 하나 있다. 여기서는 숫자가 2개(칸 2개)인 묶음이다.',
+      '각 숫자 묶음에 숫자 표 3개를 곱해 Q, K, V 세 묶음을 만든다. 숫자 표의 값은 학습으로 정해진 것(가중치 ①)이고, 여기서는 예시 값이다.',
+      n + '의 Q와 각 토큰의 K를 “곱해서 더한다”. 값이 클수록 비슷하다는 뜻이고, 이것이 점수다.',
+      '점수를 칸 수(2)의 제곱근(약 1.41)으로 나눠 줄인다.' + (mask ? ' 마스크가 켜져 있어서 ' + n + ' 뒤의 토큰은 점수를 −∞로 바꿔 가린다.' : ' 마스크가 꺼져 있어서 모든 토큰이 남아 있다.'),
+      '줄인 점수를 합이 1인 비율로 바꾼다. 가린 토큰의 비율은 0이 된다.',
+      '비율 × V를 모두 더하면 새 ' + n + '가 된다. 이것이 어텐션의 결과다.'
+    ];
+  }
+
+  function render() {
+    var r = compute(), n = NAMES[focus];
+    document.getElementById('title').textContent = TITLES[step];
+    document.getElementById('say').textContent = says(r)[step];
+
+    var st = '';
+    for (var i = 0; i <= LAST; i++) st += '<span class="' + (i === step ? 'on' : (i < step ? 'done' : '')) + '">' + i + '</span>';
+    document.getElementById('steps').innerHTML = st;
+
+    var head = ['토큰'], rows = [];
+    for (var j = 0; j < 3; j++) rows.push([{ t: NAMES[j] }]);
+    function col(h, isNew, fn) {
+      head.push({ t: h, n: isNew });
+      for (var j = 0; j < 3; j++) { var c = fn(j); c.n = isNew; rows[j].push(c); }
+    }
+    if (step === 0) col('숫자 묶음', true, function (j) { return { t: vec(X[j]), num: 1 }; });
+    if (step === 1) {
+      col('원래 묶음', false, function (j) { return { t: vec(X[j]), num: 1 }; });
+      col('Q', true, function (j) { return { t: vec(Q[j]), num: 1 }; });
+      col('K', true, function (j) { return { t: vec(K[j]), num: 1 }; });
+      col('V', true, function (j) { return { t: vec(V[j]), num: 1 }; });
+    }
+    if (step >= 2) {
+      col('K', false, function (j) { return { t: vec(K[j]), num: 1 }; });
+      col(n + '의 Q·K = 점수', step === 2, function (j) {
+        return { t: Q[focus][0] + '×' + K[j][0] + ' + ' + Q[focus][1] + '×' + K[j][1] + ' = ' + f(r.raw[j]), num: 1 };
+      });
+    }
+    if (step >= 3) col('줄인 점수 (÷1.41)', step === 3, function (j) {
+      return r.masked[j] ? { t: '−∞ (가림)', off: 1 } : { t: f(r.scaled[j]), num: 1 };
+    });
+    if (step >= 4) col('비율', step === 4, function (j) {
+      return r.masked[j] ? { t: '0 (가림)', off: 1 } : { t: f(r.ratio[j]), num: 1 };
+    });
+    if (step >= 5) {
+      col('V', false, function (j) { return { t: vec(V[j]), num: 1 }; });
+      col('비율 × V', true, function (j) { return { t: vec([r.ratio[j] * V[j][0], r.ratio[j] * V[j][1]]), num: 1 }; });
+    }
+
+    var h = '<thead><tr>' + head.map(function (c) { return typeof c === 'string' ? '<th>' + c + '</th>' : '<th class="' + (c.n ? 'new' : '') + '">' + c.t + '</th>'; }).join('') + '</tr></thead><tbody>';
+    for (j = 0; j < 3; j++) {
+      var cls = (j === focus ? 'focus ' : '') + (step >= 3 && r.masked[j] ? 'masked' : '');
+      h += '<tr class="' + cls + '">' + rows[j].map(function (c) {
+        return '<td class="' + (c.num ? 'num ' : '') + (c.n ? 'new ' : '') + (c.off ? 'off' : '') + '">' + c.t + '</td>';
+      }).join('') + '</tr>';
+    }
+    document.getElementById('tbl').innerHTML = h + '</tbody>';
+
+    document.getElementById('mats').textContent = step === 1
+      ? '숫자 표(예시)  Q용 ' + JSON.stringify(WQ) + '   K용 ' + JSON.stringify(WK) + '   V용 ' + JSON.stringify(WV)
+      : '';
+
+    var res = document.getElementById('result');
+    if (step === LAST) {
+      var parts = [];
+      for (j = 0; j < 3; j++) if (!r.masked[j]) parts.push(f(r.ratio[j]) + '×' + NAMES[j] + '의 V');
+      res.innerHTML = '새 ' + n + ' = ' + parts.join(' + ') + '<br>새 ' + n + ' = <b>' + vec(r.out) + '</b>';
+      res.hidden = false;
+    } else { res.hidden = true; }
+
+    var note = '';
+    if (mask && step >= 3 && focus < 2) note = n + ' 뒤에 있는 토큰이 가려져서, 새 ' + n + '에는 ' + (focus === 0 ? 'A 자기 자신만' : 'A와 B만') + ' 섞인다.';
+    else if (mask && step >= 3) note = 'C는 맨 뒤라서 가릴 토큰이 없다. 마스크를 켜고 꺼도 결과가 같다.';
+    document.getElementById('note').textContent = note;
+
+    document.getElementById('prev').disabled = step === 0;
+    document.getElementById('next').disabled = step === LAST;
+    document.querySelectorAll('[data-focus]').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.focus === focus)); });
+  }
+
+  document.getElementById('next').addEventListener('click', function () { if (step < LAST) { step++; render(); } });
+  document.getElementById('prev').addEventListener('click', function () { if (step > 0) { step--; render(); } });
+  document.getElementById('reset').addEventListener('click', function () { step = 0; render(); });
+  document.getElementById('mask').addEventListener('change', function (e) { mask = e.target.checked; render(); });
+  document.querySelectorAll('[data-focus]').forEach(function (b) {
+    b.addEventListener('click', function () { focus = +b.dataset.focus; render(); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') document.getElementById('next').click();
+    if (e.key === 'ArrowLeft') document.getElementById('prev').click();
+  });
+  render();
+</script>
+</body>
+</html>
