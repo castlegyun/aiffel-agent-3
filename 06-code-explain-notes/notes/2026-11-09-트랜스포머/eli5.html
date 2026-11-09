@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>트랜스포머와 어텐션 아주 쉽게</title>
 <style>
@@ -15,7 +16,7 @@
   h1 { font-size:1.8rem; margin:0 0 4px; }
   .lead { color:var(--muted); margin:0 0 24px; }
   h2 { font-size:1.2rem; margin:32px 0 10px; }
-  h2 .no { display:inline-block; width:1.6em; height:1.6em; line-height:1.6em; text-align:center; border-radius:50%; background:var(--accent); color:#fff; font-size:.85rem; margin-right:6px; vertical-align:2px; }
+  h2 .no { display:inline-block; width:1.6em; height:1.6em; line-height:1.6em; text-align:center; border-radius:50%; background:var(--accent); color:var(--bg); font-size:.85rem; margin-right:6px; vertical-align:2px; }
   .note { color:var(--muted); font-size:.85rem; margin:6px 0 0; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; }
   .big { font-size:1.2rem; font-weight:700; margin:10px 0 0; }
@@ -30,8 +31,11 @@
   .wait { color:var(--muted); font-size:.85rem; }
   .eq { font-family:Consolas, monospace; font-size:1.05rem; font-weight:700; margin:8px 0; }
   .eq .r { color:var(--hot); }
-  .list { margin:6px 0 0; padding-left:1.3em; }
-  .list li { margin:4px 0; }
+  .list { margin:6px 0 0; padding-left:0; list-style:none; counter-reset:n; }
+  .list li { position:relative; padding-left:1.8em; margin:6px 0; }
+  ul.list li::before { content:""; position:absolute; left:.3em; top:.7em; width:.55em; height:.55em; border-radius:50%; background:var(--accent); }
+  ol.list li { counter-increment:n; }
+  ol.list li::before { content:counter(n); position:absolute; left:0; top:.2em; width:1.4em; height:1.4em; line-height:1.4em; text-align:center; border-radius:50%; background:var(--accent); color:var(--bg); font-size:.8rem; font-weight:700; }
   .three { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
   @media (max-width:560px) { .three { grid-template-columns:1fr; } }
   .three .card { text-align:center; }
@@ -58,6 +62,7 @@
     <p class="big" style="margin-top:18px">왜 새로 만들까? <span class="hotword">주변 문맥</span>을 넣으려고</p>
     <ul class="list">
       <li>처음 숫자 묶음은 그 토큰만 보고 정해진다. ‘은행’은 어느 문장에서든 처음 값이 같다.</li>
+      <li>그러면 이 ‘은행’이 은행나무의 은행인지, 예금 거래를 하는 은행인지 값만 봐서는 알 수 없다.</li>
       <li>이웃 토큰을 섞으면 문장마다 ‘은행’의 값이 달라진다. 문맥이 들어간 것이다.</li>
       <li>이 값은 다음 층으로 넘어가고, 마지막에는 다음 토큰의 확률을 계산하는 데 쓰인다.</li>
     </ul>

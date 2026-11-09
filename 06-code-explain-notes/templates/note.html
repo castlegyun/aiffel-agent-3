@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{TITLE}} · 코드 해설 노트</title>
 <style>
@@ -53,6 +54,10 @@
   .visual-buttons button:disabled { opacity:.5; cursor:default; }
   #visual-frame { width:100%; height:75vh; border:1px solid var(--border); border-radius:6px; background:#fff; }
   @media (prefers-reduced-motion: reduce) { * { transition-duration:.01ms !important; } }
+  /* 목록 점: 기본 점은 글자색을 따라가 어두운 화면에서 안 보일 수 있어 고정 색 점을 쓴다 */
+  .points, .terms ul, .words { list-style:none; padding-left:0; }
+  .points li, .terms li, .words li { position:relative; padding-left:1.5em; }
+  .points li::before, .terms li::before, .words li::before { content:""; position:absolute; left:.25em; top:.72em; width:.55em; height:.55em; border-radius:50%; background:var(--tab-line); }
 </style>
 </head>
 <body>
