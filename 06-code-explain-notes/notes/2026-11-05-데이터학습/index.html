@@ -48,6 +48,15 @@
     th, td { padding:8px; }
     .panel { overflow-x:auto; }
     td { overflow-wrap:anywhere; }
+    /* 원문 ↔ 풀어쓰기 표: 두 칸이 좁아져 읽기 힘들어서, 좁은 화면에서는 위아래로 쌓는다 */
+    .para thead { display:none; }
+    .para, .para tbody, .para tr, .para td { display:block; width:100%; }
+    .para tr { border:1px solid var(--border); border-radius:6px; margin:0 0 12px; overflow:hidden; }
+    .para td { border:0; border-top:1px solid var(--border); min-width:0; }
+    .para td.n { width:auto; border-top:0; background:var(--subtle); }
+    .para td:nth-child(2)::before, .para td:nth-child(3)::before { display:block; font-size:.85rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
+    .para td:nth-child(2)::before { content:"원문"; }
+    .para td:nth-child(3)::before { content:"쉽게 풀어쓰기"; }
   }
   code, pre { background:var(--code-bg); border-radius:6px; font:.85em/1.5 var(--font-mono); }
   code { padding:.2em .4em; white-space:pre-wrap; }
@@ -111,7 +120,7 @@
   </section>
 
   <section class="panel" id="detail" hidden>
-    <table>
+    <table class="para">
       <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
       <tbody>
         <tr><td class="n">1</td><td>인공지능은 생각보다 넓은 말입니다. 규칙을 하나하나 손으로 짜 넣은 방식도, 데이터를 보고 스스로 배우는 방식도 인공지능입니다. 오늘날의 사진 인식·글쓰기·번역은 거의 다 데이터로 배우는 쪽에서 나왔습니다.</td><td>인공지능이라는 말은 두 방식을 모두 가리킨다. 지금 흔히 보는 AI 기능은 대부분 데이터로 배우는 쪽이다.</td></tr>

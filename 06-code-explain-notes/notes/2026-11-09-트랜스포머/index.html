@@ -49,6 +49,15 @@
     th, td { padding:8px; }
     .panel { overflow-x:auto; }
     td { overflow-wrap:anywhere; }
+    /* 원문 ↔ 풀어쓰기 표: 두 칸이 좁아져 읽기 힘들어서, 좁은 화면에서는 위아래로 쌓는다 */
+    .para thead { display:none; }
+    .para, .para tbody, .para tr, .para td { display:block; width:100%; }
+    .para tr { border:1px solid var(--border); border-radius:6px; margin:0 0 12px; overflow:hidden; }
+    .para td { border:0; border-top:1px solid var(--border); min-width:0; }
+    .para td.n { width:auto; border-top:0; background:var(--subtle); }
+    .para td:nth-child(2)::before, .para td:nth-child(3)::before { display:block; font-size:.85rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
+    .para td:nth-child(2)::before { content:"원문"; }
+    .para td:nth-child(3)::before { content:"쉽게 풀어쓰기"; }
   }
   code, pre { background:var(--code-bg); border-radius:6px; font:.85em/1.5 var(--font-mono); }
   code { padding:.2em .4em; white-space:pre-wrap; }
@@ -116,7 +125,7 @@
   </section>
 
   <section class="panel" id="detail" hidden>
-    <table>
+    <table class="para">
       <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
       <tbody>
         <tr><td class="n">1</td><td>2017년, 여덟 명의 연구자가 그 질문에 답을 내놓았습니다. 논문 제목부터 선언에 가까웠습니다. Attention Is All You Need.</td><td>논문 제목은 “필요한 것은 어텐션뿐”이라는 뜻이다. “그 질문”이 무엇인지는 붙여 넣은 글 앞부분에 있어서 알 수 없다. 추측: 앞 섹션의 질문(기존 구조의 한계를 어떻게 넘을까)이다. 저자가 여덟 명인 것은 arXiv 초록으로 확인했다.</td></tr>

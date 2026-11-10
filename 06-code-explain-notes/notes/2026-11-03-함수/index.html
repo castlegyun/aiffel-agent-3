@@ -48,6 +48,15 @@
     th, td { padding:8px; }
     .panel { overflow-x:auto; }
     td { overflow-wrap:anywhere; }
+    /* 원문 ↔ 풀어쓰기 표: 두 칸이 좁아져 읽기 힘들어서, 좁은 화면에서는 위아래로 쌓는다 */
+    .para thead { display:none; }
+    .para, .para tbody, .para tr, .para td { display:block; width:100%; }
+    .para tr { border:1px solid var(--border); border-radius:6px; margin:0 0 12px; overflow:hidden; }
+    .para td { border:0; border-top:1px solid var(--border); min-width:0; }
+    .para td.n { width:auto; border-top:0; background:var(--subtle); }
+    .para td:nth-child(2)::before, .para td:nth-child(3)::before { display:block; font-size:.85rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
+    .para td:nth-child(2)::before { content:"원문"; }
+    .para td:nth-child(3)::before { content:"쉽게 풀어쓰기"; }
   }
   code, pre { background:var(--code-bg); border-radius:6px; font:.85em/1.5 var(--font-mono); }
   code { padding:.2em .4em; white-space:pre-wrap; }
@@ -95,7 +104,7 @@
   </section>
 
   <section class="panel" id="detail" hidden>
-    <table>
+    <table class="para">
       <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
       <tbody>
         <tr><td class="n">1</td><td>함수는 반복해서 쓰는 코드를 하나의 이름으로 묶은 것이다.</td><td>같은 코드를 여러 번 써야 할 때, 그 코드에 이름 하나를 붙여 한 덩어리로 저장해 둔 것이 함수다. 같은 코드를 다시 쓰지 않고 이름만 쓰면 된다.</td></tr>

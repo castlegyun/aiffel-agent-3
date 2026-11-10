@@ -48,6 +48,15 @@
     th, td { padding:8px; }
     .panel { overflow-x:auto; }
     td { overflow-wrap:anywhere; }
+    /* 원문 ↔ 풀어쓰기 표: 두 칸이 좁아져 읽기 힘들어서, 좁은 화면에서는 위아래로 쌓는다 */
+    .para thead { display:none; }
+    .para, .para tbody, .para tr, .para td { display:block; width:100%; }
+    .para tr { border:1px solid var(--border); border-radius:6px; margin:0 0 12px; overflow:hidden; }
+    .para td { border:0; border-top:1px solid var(--border); min-width:0; }
+    .para td.n { width:auto; border-top:0; background:var(--subtle); }
+    .para td:nth-child(2)::before, .para td:nth-child(3)::before { display:block; font-size:.85rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
+    .para td:nth-child(2)::before { content:"원문"; }
+    .para td:nth-child(3)::before { content:"쉽게 풀어쓰기"; }
   }
   code, pre { background:var(--code-bg); border-radius:6px; font:.85em/1.5 var(--font-mono); }
   code { padding:.2em .4em; white-space:pre-wrap; }
@@ -99,7 +108,7 @@
   </section>
 
   <section class="panel" id="detail" hidden>
-    <table>
+    <table class="para">
       <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
       <tbody>
         <tr><td class="n">1</td><td>① 무엇을 만들지 정하는 한 장(PRD) ▸ ② 어디서 만들지 정하는 작업대(하네스) ▸ ③ 화면을 그리는 세 겹(HTML·CSS·JavaScript)과 목업 데이터 ▸ ④ 저장을 붙이는 곳(서버+DB, 또는 Supabase 같은 백엔드 서비스)과 비밀값 관리 ▸ ⑤ 만든 걸 한 바퀴 돌려 확인하고, 세상에 내보내는 배포</td><td>만드는 일을 다섯 단계로 나눈다. 1) 무엇을 만들지 한 장에 적는다(기획서). 2) 어디서 만들지 작업 환경을 정한다(작업대). 3) 화면을 만든다. 화면은 HTML, CSS, JavaScript 세 겹이고, 서버가 없어도 확인할 수 있게 가짜 데이터(목업 데이터)를 쓴다. 4) 저장 기능을 붙인다. 서버와 DB를 직접 쓰거나 Supabase 같은 백엔드 서비스를 쓰고, 비밀값은 코드 밖에 보관한다. 5) 만든 것을 한 바퀴 돌려 확인하고 배포한다.</td></tr>

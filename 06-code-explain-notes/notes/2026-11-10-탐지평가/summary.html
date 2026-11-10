@@ -2,12 +2,13 @@
 <html lang="ko" data-theme="shadcn" data-mode="auto" data-style="80">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-cwXs65975+hxPNioix2j1qkQRYkbhKdmpIHq5wdMDKs=' 'sha256-lPqFPx9oza8AmRj6iqQLqEVdDcwxhxzQ3yQnVhy8ZDM='; style-src 'unsafe-inline'; img-src data:; font-src data:; media-src data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-COhqkbaPOF+O1MeXzrrqyxS5JHiLZTzpFZpBTV1Hy4A=' 'sha256-lPqFPx9oza8AmRj6iqQLqEVdDcwxhxzQ3yQnVhy8ZDM='; style-src 'unsafe-inline'; img-src data:; font-src data:; media-src data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="Answer me with HTML 0.5.10">
-<title>탐지 모델을 재는 눈금</title>
+<meta name="generator" content="Answer me with HTML 0.5.11">
+<title>박스 수가 아니라 맞힌 것과 놓친 것을 세고, mAP로 모델을 비교한다</title>
 <style>
 html[data-theme="blueprint"], html[data-theme="blueprint"][data-mode="light"] {
+  color-scheme: light;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --radius: 0px;
@@ -34,6 +35,7 @@ html[data-theme="blueprint"], html[data-theme="blueprint"][data-mode="light"] {
   --head-fg: #ffffff;
 }
 html[data-theme="blueprint"][data-mode="dark"] {
+  color-scheme: dark;
   --bg: #081322;
   --paper: #0d1c31;
   --ink: #e6edf7;
@@ -52,6 +54,9 @@ html[data-theme="blueprint"][data-mode="dark"] {
   --warn-bg: #3a2a10;
   --head-bg: #e6edf7;
   --head-fg: #081322;
+}
+html[data-theme="blueprint"][data-mode="auto"] {
+  color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
 html[data-theme="blueprint"][data-mode="auto"] {
@@ -77,6 +82,7 @@ html[data-theme="blueprint"][data-mode="auto"] {
 }
 
 html[data-theme="shadcn"], html[data-theme="shadcn"][data-mode="light"] {
+  color-scheme: light;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --radius: 8px;
@@ -103,6 +109,7 @@ html[data-theme="shadcn"], html[data-theme="shadcn"][data-mode="light"] {
   --head-fg: #fafafa;
 }
 html[data-theme="shadcn"][data-mode="dark"] {
+  color-scheme: dark;
   --bg: #09090b;
   --paper: #121215;
   --ink: #fafafa;
@@ -121,6 +128,9 @@ html[data-theme="shadcn"][data-mode="dark"] {
   --warn-bg: #451a03;
   --head-bg: #fafafa;
   --head-fg: #18181b;
+}
+html[data-theme="shadcn"][data-mode="auto"] {
+  color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
 html[data-theme="shadcn"][data-mode="auto"] {
@@ -146,6 +156,7 @@ html[data-theme="shadcn"][data-mode="auto"] {
 }
 
 html[data-theme="paper"], html[data-theme="paper"][data-mode="light"] {
+  color-scheme: light;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", serif;
@@ -173,6 +184,7 @@ html[data-theme="paper"], html[data-theme="paper"][data-mode="light"] {
   --head-fg: #fdfbf6;
 }
 html[data-theme="paper"][data-mode="dark"] {
+  color-scheme: dark;
   --bg: #15130f;
   --paper: #1c1a15;
   --ink: #ebe5d8;
@@ -191,6 +203,9 @@ html[data-theme="paper"][data-mode="dark"] {
   --warn-bg: #352a13;
   --head-bg: #ebe5d8;
   --head-fg: #15130f;
+}
+html[data-theme="paper"][data-mode="auto"] {
+  color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
 html[data-theme="paper"][data-mode="auto"] {
@@ -632,12 +647,19 @@ body.am-has-reply-bar { padding-block-end: 72px; }
 .am-node-shape ~ .am-node-shape { filter: none; }
 /* The corner radius is an SVG attribute (the fallback for Safari before 17.4, which ignores a CSS rx); the default here equals the attribute. A pill and a diamond keep their shape. */
 .am-node--rect .am-node-shape, .am-node--er .am-node-shape { rx: var(--node-radius, 3px); }
+/* A state is a rounded rectangle; the default matches the rx attribute state.js writes, for Safari before 17.4. */
+.am-node--state .am-node-shape { rx: var(--node-radius, 8px); }
+/* The initial pseudo-state is a filled dot, the final one a ringed dot; both take the node tokens, so every theme draws them. */
+.am-diagram .am-state-dot { fill: var(--node-stroke, var(--line, #1d2026)); }
+.am-diagram .am-state-ring { fill: var(--node-fill, var(--paper, #ffffff)); stroke: var(--node-stroke, var(--line, #1d2026)); stroke-width: var(--node-width, var(--bw, 1.5px)); }
+.am-diagram .am-state-core { fill: var(--node-stroke, var(--line, #1d2026)); }
 .am-node--hi .am-node-shape { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); }
 .am-diagram .am-node-text { fill: var(--node-text, var(--ink, #16181d)); }
 .am-node--hi text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
 .am-diagram .am-node--hi .am-node-text { fill: var(--hi-text, var(--accent, #1d5fbf)); }
 .am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.3); }
 .am-edge--dashed { stroke-dasharray: 5 4; }
+.am-class-hollow { fill: var(--paper, #ffffff); stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.3); }
 .am-arrow { fill: var(--edge-color, var(--ink-2, #4b5260)); }
 .am-edge-label rect { fill: var(--paper, #ffffff); }
 .am-diagram .am-edge-label text { fill: var(--edge-label, var(--accent, #1d5fbf)); font-size: var(--am-fs-d-edge); }
@@ -646,6 +668,17 @@ body.am-has-reply-bar { padding-block-end: 72px; }
 /* The PK / FK / UK marks of an entity follow the node text, and the highlighted text in a highlighted entity, so they stay readable on the theme's fills. */
 .am-diagram .am-er-key { fill: var(--node-text, var(--ink-2, #4b5260)); }
 .am-diagram .am-node--hi .am-er-key { fill: var(--hi-text, var(--ink-2, #4b5260)); }
+/* API contracts use the existing prose and table styles; the endpoint keeps its protocol punctuation left to right. */
+.am-api-endpoint { display: flex; gap: 10px; align-items: baseline; overflow-wrap: anywhere; }
+.am-api-endpoint strong { color: var(--accent); }
+.am-api .am-api-section h4 { margin: 16px 0 6px; font-size: var(--am-fs-text); }
+.am-api .am-api-section h4 code { font-weight: 400; }
+.am-api .am-api-section table { margin: 0; table-layout: fixed; }
+.am-api th:first-child { width: 28%; }
+.am-api th, .am-api td { overflow-wrap: anywhere; }
+.am-api tbody th { font: inherit; vertical-align: top; padding-block: 7px; }
+/* Keep field code chips visible on every contract row; Markdown's stripe uses the same fill as inline code. */
+.am-api tbody tr:nth-child(even) td { background: transparent; }
 .am-lifeline { stroke: var(--lifeline-color, var(--ink-3, #8b929e)); stroke-width: 1; stroke-dasharray: 4 4; }
 /* An actor (and the box of a divider) looks like a node unless the theme sets the actor tokens. */
 .am-actor { fill: var(--actor-fill, var(--node-fill, var(--paper, #ffffff))); stroke: var(--actor-stroke, var(--node-stroke, var(--line, #1d2026))); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); rx: var(--node-radius, 2px); }
@@ -883,36 +916,6 @@ table.am-mark { background: none; }
 @media print { .am-remark-pop { display: none !important; } }
 
 
-/* New-version button and popover (src/render.js adds this file only to a page that has the button). The popover sits under the
-   toolbar and stays hidden unless open, so a browser without native popovers never shows it. */
-.am-btn--update { color: var(--ok); border-color: var(--ok); white-space: nowrap; }
-.am-update { display: none; }
-.am-update:popover-open {
-  display: block; position: fixed; inset-block: 52px auto; inset-inline: auto 12px; margin: 0; width: min(380px, calc(100vw - 24px));
-  padding: 14px 16px; font-size: var(--am-fs-text); color: var(--ink); background: var(--paper);
-  border: 1px solid var(--line-2); border-radius: var(--radius); box-shadow: 0 12px 40px rgba(0,0,0,.25);
-}
-.am-update p { margin: 0 0 8px; }
-.am-update-title { font-weight: 600; color: var(--ok); }
-.am-update-label { color: var(--ink-2); font-size: var(--am-fs-small); }
-.am-update-notes { margin: 0 0 12px; padding-inline-start: 18px; }
-.am-update-notes li { margin: 2px 0; }
-.am-update-notes code { font-size: var(--am-fs-small); }
-.am-update-row { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; }
-.am-update-row > :first-child {
-  flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; font-size: var(--am-fs-small); padding: 6px 8px;
-  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
-}
-.am-update a { color: var(--accent); font-size: var(--am-fs-small); }
-/* A phone has no room for the words: the button keeps only its dot, and its aria-label still names the version. */
-@media (max-width: 760px) {
-  .am-btn--update .am-update-text { display: none; }
-}
-@media print {
-  .am-update { display: none !important; }
-}
-
-
 html[data-theme="blueprint"] .am-frame { border: 1px solid var(--line); padding: 30px; }
 html[data-theme="blueprint"] .am-frame::before {
   content: ""; position: absolute; inset: 18px; border: 1px solid var(--line); pointer-events: none;
@@ -938,11 +941,9 @@ html[data-theme="paper"] .am-md p, html[data-theme="paper"] .am-md li, html[data
 html[data-theme="paper"] .am-md p { margin-bottom: 12px; }
 html[data-theme="paper"] .am-md table { font-family: var(--font-sans); }
 </style>
-<style id="embed-hide-toolbar">.am-toolbar .am-btn{display:none !important}</style>
-</head>
+<style id="embed-hide-toolbar">.am-toolbar .am-btn{display:none !important}</style></head>
 <body>
 <div class="am-toolbar" data-am-root-lang="ko" data-am-root-theme="shadcn" data-am-root-mode="auto" data-am-root-style="80">
-<button class="am-btn am-btn--update" type="button" data-am="update" popovertarget="am-update" aria-label="New version 0.5.11" hidden>● <span class="am-update-text">New version <bdi>0.5.11</bdi></span></button>
 <label class="am-pick">Theme<select data-am="theme"><option value="blueprint">Blueprint</option><option value="shadcn" selected>Cards</option><option value="paper">Paper</option></select></label>
 <label class="am-pick">Mode<select data-am="mode"><option value="auto" selected>Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
 <button class="am-btn" type="button" data-am="scale-down" data-min="0.8" data-max="1.5" data-step="0.05" aria-label="Smaller text" title="Smaller text" hidden>A−</button><button class="am-btn" type="button" data-am="scale-up" data-min="0.8" data-max="1.5" data-step="0.05" aria-label="Larger text" title="Larger text" hidden>A+</button>
@@ -950,30 +951,60 @@ html[data-theme="paper"] .am-md table { font-family: var(--font-sans); }
 <button class="am-btn am-btn--remark" type="button" data-am="remark" data-ui="{&quot;button&quot;:&quot;Remark&quot;,&quot;need&quot;:&quot;Pick a tag to save&quot;,&quot;hint&quot;:&quot;Optional note&quot;,&quot;save&quot;:&quot;Save&quot;,&quot;remove&quot;:&quot;Remove&quot;,&quot;clear&quot;:&quot;Clear all remarks&quot;,&quot;clearConfirm&quot;:&quot;Click again to clear {n}&quot;,&quot;section&quot;:&quot;Remarks&quot;,&quot;kinds&quot;:{&quot;suggestion&quot;:&quot;suggestion&quot;,&quot;keep&quot;:&quot;keep&quot;,&quot;question&quot;:&quot;question&quot;,&quot;concern&quot;:&quot;concern&quot;}}">Remark</button>
 <button class="am-btn" type="button" data-am="copy" data-done="Copied ✓">Copy source</button>
 </div>
-<div class="am-update" id="am-update" popover>
-<p class="am-update-title">New version <bdi>0.5.11</bdi></p>
-<p>You have <bdi>0.5.10</bdi>. Found when this page was made.</p>
-<p class="am-update-label">What&#39;s new:</p>
-<ul class="am-update-notes"><li>am export turns a page into an A4 PDF or PNG slices for chat apps</li><li>Write {table sort filter} after a table to sort and filter it</li><li>am video --audio-map narrates a video with your own audio files</li></ul>
-<p class="am-update-label">Run in a terminal:</p>
-<div class="am-update-row"><code dir="ltr">claude plugin update answer-me-with-html@answer-me-with-html</code><button class="am-btn" type="button" data-am="copy-text" data-text="claude plugin update answer-me-with-html@answer-me-with-html" data-done="Copied ✓">Copy</button></div>
-<p class="am-update-label">Or tell your agent:</p>
-<div class="am-update-row"><span>Update answer-me-with-html</span><button class="am-btn" type="button" data-am="copy-text" data-text="Update answer-me-with-html" data-done="Copied ✓">Copy</button></div>
-<a href="https://github.com/QingYunA/answer-me-with-html/releases" target="_blank" rel="noopener">See what&#39;s new</a>
-</div>
 <main class="am-sheet">
-<header class="am-head"><p class="am-colophon">Generated by <a href="https://github.com/QingYunA/answer-me-with-html" target="_blank" rel="noopener">Answer me with HTML</a> 0.5.10 · 2026-11-10 11:45 · <a href="https://github.com/QingYunA/answer-me-with-html" target="_blank" rel="noopener">★ Star on GitHub</a></p><h1>탐지 모델을 재는 눈금</h1><p class="am-sub">박스 수가 아니라 맞힌 것과 놓친 것을 센다</p><div class="am-head-meta"><span><b>source</b>LMS 노트 「AI가 이미지를 읽기까지」 중 &#39;모델을 재는 눈금&#39;</span></div></header>
+<header class="am-head"><p class="am-colophon">Generated by <a href="https://github.com/QingYunA/answer-me-with-html" target="_blank" rel="noopener">Answer me with HTML</a> 0.5.11 · 2026-11-10 14:16 · <a href="https://github.com/QingYunA/answer-me-with-html" target="_blank" rel="noopener">★ Star on GitHub</a></p><h1>박스 수가 아니라 맞힌 것과 놓친 것을 세고, mAP로 모델을 비교한다</h1><p class="am-sub">맞힘·오탐·미탐 → 정밀도·재현율 → 겹침 정도 → AP → mAP</p><div class="am-head-meta"><span><b>source</b>LMS 노트 「AI가 이미지를 읽기까지」 중 &#39;모델을 재는 눈금&#39;</span></div></header>
 <div class="am-frame">
 <div class="am-ruler am-ruler--top" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div><div class="am-ruler am-ruler--bottom" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div><div class="am-ruler am-ruler--left" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span></div><div class="am-ruler am-ruler--right" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span></div>
 <div class="am-grid" style="--cols: 3">
 <section class="am-panel am-span-wide" id="panel-A" style="grid-column: span 3" data-span="3">
 <header class="am-panel-head"><span class="am-panel-id">A</span><h2>핵심</h2></header>
-<div class="am-panel-body"><div class="am-callout am-callout--info" role="note"><div class="am-callout-title">결론</div><div class="am-callout-body am-md"><p>탐지 모델은 정답 자료와 대조해 맞힌 것(TP)·잘못 낸 박스(FP)·놓친 대상(FN)을 센다. 정밀도는 모델이 낸 박스 중 맞힌 비율이다. 재현율은 실제 대상 중 맞힌 비율이다. 임계값 하나의 두 숫자로는 모델을 비교하기 어렵다. 그래서 임계값별 결과를 곡선 아래 면적(AP)으로 모으고, 클래스별로 평균한 mAP를 쓴다.</p>
+<div class="am-panel-body"><div class="am-callout am-callout--info" role="note"><div class="am-callout-title">결론</div><div class="am-callout-body am-md"><p>모델은 박스 개수가 아니라 정답과 맞춰 센 <strong>맞힘·오탐·미탐</strong>으로 잰다. 그 개수로 정밀도와 재현율을 계산하고, 임계값에 따라 달라지므로 곡선 면적 <strong>AP</strong>를 클래스별로 평균한 <strong>mAP</strong>로 모델을 비교한다.</p>
 </div></div></div>
 </section>
-<section class="am-panel" id="panel-B">
-<header class="am-panel-head"><span class="am-panel-id">B</span><h2>혼동행렬 (원문 예시: 실제 안전모 10개, 박스 10개)</h2></header>
+<section class="am-panel am-span-wide" id="panel-B" style="grid-column: span 3" data-span="3">
+<header class="am-panel-head"><span class="am-panel-id">B</span><h2>순서</h2></header>
+<div class="am-panel-body"><figure class="am-diagram am-flow"><svg viewBox="0 0 1162 63" width="1162" height="63" role="img" aria-label="Flowchart: 박스 거르기, 맞힘 정하기, 맞힘·오탐·미탐 세기, 정밀도·재현율, AP, mAP" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M110.9,31.5 L134,31.5 Q157.2,31.5 180.3,31.5 L203.4,31.5" marker-end="url(#am1-arrow)"/><g class="am-edge-label"><rect x="134.9" y="22.5" width="44.5" height="18" rx="3"/><text x="157.2" y="31.5" text-anchor="middle" dominant-baseline="central">임계값</text></g></g><g data-step="1"><path class="am-edge" d="M300.3,31.5 L327.2,31.5 Q354,31.5 380.9,31.5 L407.8,31.5" marker-end="url(#am1-arrow)"/><g class="am-edge-label"><rect x="324.3" y="22.5" width="59.5" height="18" rx="3"/><text x="354" y="31.5" text-anchor="middle" dominant-baseline="central">겹침 기준</text></g></g><g data-step="2"><path class="am-edge" d="M558.2,31.5 L569.7,31.5 Q581.2,31.5 592.7,31.5 L604.2,31.5" marker-end="url(#am1-arrow)"/></g><g data-step="3"><path class="am-edge" d="M717.5,31.5 L760.5,31.5 Q803.4,31.5 846.4,31.5 L889.3,31.5" marker-end="url(#am1-arrow)"/><g class="am-edge-label"><rect x="741.5" y="22.5" width="123.9" height="18" rx="3"/><text x="803.4" y="31.5" text-anchor="middle" dominant-baseline="central">임계값을 바꿔 점 찍기</text></g></g><g data-step="4"><path class="am-edge" d="M953.3,31.5 L986,31.5 Q1018.6,31.5 1051.2,31.5 L1083.8,31.5" marker-end="url(#am1-arrow)"/><g class="am-edge-label"><rect x="977.3" y="22.5" width="82.5" height="18" rx="3"/><text x="1018.6" y="31.5" text-anchor="middle" dominant-baseline="central">클래스별 평균</text></g></g></g><g><g class="am-node am-node--rect" data-key="박스 거르기" data-step="0"><rect class="am-node-shape" x="14" y="14" width="96.9" height="35" rx="3"/><text x="62.5" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">박스 거르기</text></g><g class="am-node am-node--rect" data-key="맞힘 정하기" data-step="0"><rect class="am-node-shape" x="203.4" y="14" width="96.9" height="35" rx="3"/><text x="251.9" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">맞힘 정하기</text></g><g class="am-node am-node--rect" data-key="맞힘·오탐·미탐 세기" data-step="1"><rect class="am-node-shape" x="407.8" y="14" width="150.5" height="35" rx="3"/><text x="483" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">맞힘·오탐·미탐 세기</text></g><g class="am-node am-node--rect" data-key="정밀도·재현율" data-step="2"><rect class="am-node-shape" x="604.2" y="14" width="113.3" height="35" rx="3"/><text x="660.9" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">정밀도·재현율</text></g><g class="am-node am-node--rect" data-key="AP" data-step="3"><rect class="am-node-shape" x="889.3" y="14" width="64" height="35" rx="3"/><text x="921.3" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">AP</text></g><g class="am-node am-node--rect am-node--hi" data-key="mAP" data-step="4"><rect class="am-node-shape" x="1083.8" y="14" width="64" height="35" rx="3"/><text x="1115.8" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">mAP</text></g></g></svg></figure></div>
+</section>
+<section class="am-panel" id="panel-C">
+<header class="am-panel-head"><span class="am-panel-id">C</span><h2>말 뜻</h2></header>
 <div class="am-panel-body"><div class="am-md"><div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>말</th>
+<th>뜻</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>임계값</td>
+<td>점수가 이 숫자보다 낮은 박스를 버리는 기준</td>
+</tr>
+<tr>
+<td>맞힘</td>
+<td>진짜 대상 위에 있는 박스</td>
+</tr>
+<tr>
+<td>오탐</td>
+<td>대상이 없는 자리의 박스 (잘못 낸 박스)</td>
+</tr>
+<tr>
+<td>미탐</td>
+<td>박스가 없는 실제 대상 (놓친 대상)</td>
+</tr>
+<tr>
+<td>정밀도</td>
+<td>낸 박스 중 맞힌 비율</td>
+</tr>
+<tr>
+<td>재현율</td>
+<td>실제 대상 중 맞힌 비율</td>
+</tr>
+</tbody></table></div>
+</div></div>
+</section>
+<section class="am-panel" id="panel-D">
+<header class="am-panel-head"><span class="am-panel-id">D</span><h2>사진 한 장으로 세어 보기 (원문 예시)</h2></header>
+<div class="am-panel-body"><div class="am-md"><p>안전모 10개, 모델의 박스 10개.</p>
+<div class="am-table-wrap"><table>
 <thead>
 <tr>
 <th></th>
@@ -982,21 +1013,21 @@ html[data-theme="paper"] .am-md table { font-family: var(--font-sans); }
 </tr>
 </thead>
 <tbody><tr>
-<td>모델이 박스를 냄</td>
-<td>TP 8 (진짜 안전모 위 박스)</td>
-<td>FP 2 (조명 위 박스, 오탐)</td>
+<td>박스를 냄</td>
+<td>맞힘 8</td>
+<td>오탐 2 (조명 위)</td>
 </tr>
 <tr>
 <td>박스 없음</td>
-<td>FN 2 (박스 없는 안전모, 미탐)</td>
-<td>TN 세기 어려움</td>
+<td>미탐 2</td>
+<td>세지 않음</td>
 </tr>
 </tbody></table></div>
-<p>TN은 배경을 몇 개 영역으로 나눌지 정하기 어려워서 객체 탐지에서는 세기 어렵다.</p>
+<p>네 번째 칸은 배경을 몇 조각으로 셀지 정하기 어려워서 세지 않는다.</p>
 </div></div>
 </section>
-<section class="am-panel" id="panel-C">
-<header class="am-panel-head"><span class="am-panel-id">C</span><h2>정밀도와 재현율</h2></header>
+<section class="am-panel" id="panel-E">
+<header class="am-panel-head"><span class="am-panel-id">E</span><h2>두 비율은 나누는 수가 다르다</h2></header>
 <div class="am-panel-body"><div class="am-md"><div class="am-table-wrap"><table>
 <thead>
 <tr>
@@ -1006,114 +1037,175 @@ html[data-theme="paper"] .am-md table { font-family: var(--font-sans); }
 </tr>
 </thead>
 <tbody><tr>
-<td>출발점(분모)</td>
-<td>모델이 낸 박스</td>
-<td>실제 대상</td>
+<td>물음</td>
+<td>낸 박스 중 몇 개 맞혔나</td>
+<td>실제 대상 중 몇 개 맞혔나</td>
 </tr>
 <tr>
-<td>공식</td>
-<td>TP ÷ (TP + FP)</td>
-<td>TP ÷ (TP + FN)</td>
+<td>나누는 수</td>
+<td>맞힘 + 오탐</td>
+<td>맞힘 + 미탐</td>
 </tr>
 <tr>
-<td>원문 예시 값</td>
-<td>8 ÷ 10 = 0.8</td>
-<td>8 ÷ 10 = 0.8</td>
+<td>계산</td>
+<td>8 ÷ (8 + 2) = 0.8</td>
+<td>8 ÷ (8 + 2) = 0.8</td>
 </tr>
 <tr>
-<td>떨어지는 원인</td>
+<td>내려가는 때</td>
 <td>오탐이 늘 때</td>
 <td>미탐이 늘 때</td>
 </tr>
-<tr>
-<td>높으면</td>
-<td>낸 박스를 믿고 볼 수 있다</td>
-<td>놓친 대상이 적다</td>
-</tr>
 </tbody></table></div>
-<p>두 값이 같은 것은 오탐과 미탐이 2개씩이라서다.</p>
+<p>둘이 같은 0.8인 것은 오탐과 미탐이 우연히 2개씩이라서다.</p>
 </div></div>
 </section>
-<section class="am-panel" id="panel-D">
-<header class="am-panel-head"><span class="am-panel-id">D</span><h2>박스 점수 임계값을 올리면 (원문 예시)</h2></header>
+<section class="am-panel am-span-wide" id="panel-F" style="grid-column: span 2" data-span="2">
+<header class="am-panel-head"><span class="am-panel-id">F</span><h2>임계값을 올리면 (원문 예시)</h2></header>
 <div class="am-panel-body"><div class="am-md"><div class="am-table-wrap"><table>
 <thead>
 <tr>
 <th></th>
-<th>올리기 전</th>
-<th>올린 뒤</th>
+<th>전</th>
+<th>후</th>
+<th>왜</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>TP</td>
+<td>맞힘</td>
 <td>8</td>
 <td>6</td>
+<td>진짜 안전모 박스 2개가 빠짐</td>
 </tr>
 <tr>
-<td>FP</td>
+<td>오탐</td>
 <td>2</td>
 <td>0</td>
+<td>조명 박스 2개가 빠짐</td>
 </tr>
 <tr>
-<td>FN</td>
+<td>미탐</td>
 <td>2</td>
 <td>4</td>
+<td>박스가 빠진 안전모 2개가 추가됨</td>
 </tr>
 <tr>
 <td>정밀도</td>
 <td>0.8</td>
 <td>1.0</td>
+<td>6 ÷ (6 + 0)</td>
 </tr>
 <tr>
 <td>재현율</td>
 <td>0.8</td>
 <td>0.6</td>
+<td>6 ÷ (6 + 4)</td>
 </tr>
 </tbody></table></div>
-<p>조명 박스 2개와 진짜 안전모 박스 2개가 함께 빠졌다. 틀린 박스는 없어졌지만 놓친 안전모가 4개로 늘었다.</p>
+<p>틀린 박스는 없어졌지만 놓친 안전모가 4개로 늘었다.</p>
 </div></div>
 </section>
-<section class="am-panel am-span-wide" id="panel-E" style="grid-column: span 3" data-span="3">
-<header class="am-panel-head"><span class="am-panel-id">E</span><h2>박스에서 mAP까지</h2></header>
-<div class="am-panel-body"><figure class="am-diagram am-flow"><svg viewBox="0 0 1181 100" width="1181" height="100" role="img" aria-label="Flowchart: 박스 거르기, 정답과 짝짓기, TP·FP·FN 세기, 정밀도·재현율, 곡선 아래 면적 AP, 클래스별 평균 mAP" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M110.9,54.8 L147.3,61.7 Q183.6,68.5 220,68.5 L256.3,68.5" marker-end="url(#am1-arrow)"/><g class="am-edge-label"><rect x="134.9" y="59.5" width="97.4" height="18" rx="3"/><text x="183.6" y="68.5" text-anchor="middle" dominant-baseline="central">박스 점수 임계값</text></g></g><g data-step="1"><path class="am-edge" d="M366.2,68.5 L402.6,68.5 Q438.9,68.5 475.3,68.5 L511.6,68.5" marker-end="url(#am1-arrow)"/><g class="am-edge-label"><rect x="398.5" y="59.5" width="80.8" height="18" rx="3"/><text x="438.9" y="68.5" text-anchor="middle" dominant-baseline="central">겹침 기준 IoU</text></g></g><g data-step="2"><path class="am-edge" d="M637.1,68.5 L648.6,68.5 Q660.1,68.5 671.6,65.2 L683.1,61.9" marker-end="url(#am1-arrow)"/></g><g data-step="3"><path class="am-edge am-edge--dashed" d="M683.1,29.6 L671.6,26.3 Q660.1,23 617.2,23 Q574.4,23 506.6,23 Q438.9,23 375.1,23 Q311.3,23 247.4,23 Q183.6,23 147.3,29.8 L110.9,36.7" marker-end="url(#am1-arrow)"/><g class="am-edge-label"><rect x="390.2" y="14" width="97.4" height="18" rx="3"/><text x="438.9" y="23" text-anchor="middle" dominant-baseline="central">임계값 바꿔 반복</text></g></g><g data-step="4"><path class="am-edge" d="M796.4,45.8 L807.9,45.8 Q819.4,45.8 830.9,45.8 L842.4,45.8" marker-end="url(#am1-arrow)"/></g><g data-step="5"><path class="am-edge" d="M977.8,45.8 L989.3,45.8 Q1000.8,45.8 1012.3,45.8 L1023.8,45.8" marker-end="url(#am1-arrow)"/></g></g><g><g class="am-node am-node--rect" data-key="박스 거르기" data-step="0"><rect class="am-node-shape" x="14" y="28.3" width="96.9" height="35" rx="3"/><text x="62.5" y="45.8" text-anchor="middle" dominant-baseline="central" class="am-node-text">박스 거르기</text></g><g class="am-node am-node--rect" data-key="정답과 짝짓기" data-step="0"><rect class="am-node-shape" x="256.3" y="51" width="109.9" height="35" rx="3"/><text x="311.3" y="68.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">정답과 짝짓기</text></g><g class="am-node am-node--rect" data-key="TP·FP·FN 세기" data-step="1"><rect class="am-node-shape" x="511.6" y="51" width="125.5" height="35" rx="3"/><text x="574.4" y="68.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">TP·FP·FN 세기</text></g><g class="am-node am-node--rect" data-key="정밀도·재현율" data-step="2"><rect class="am-node-shape" x="683.1" y="28.3" width="113.3" height="35" rx="3"/><text x="739.7" y="45.8" text-anchor="middle" dominant-baseline="central" class="am-node-text">정밀도·재현율</text></g><g class="am-node am-node--rect" data-key="곡선 아래 면적 AP" data-step="4"><rect class="am-node-shape" x="842.4" y="28.3" width="135.4" height="35" rx="3"/><text x="910.1" y="45.8" text-anchor="middle" dominant-baseline="central" class="am-node-text">곡선 아래 면적 AP</text></g><g class="am-node am-node--rect am-node--hi" data-key="클래스별 평균 mAP" data-step="5"><rect class="am-node-shape" x="1023.8" y="28.3" width="142.7" height="35" rx="3"/><text x="1095.1" y="45.8" text-anchor="middle" dominant-baseline="central" class="am-node-text">클래스별 평균 mAP</text></g></g></svg></figure></div>
-</section>
-<section class="am-panel" id="panel-F">
-<header class="am-panel-head"><span class="am-panel-id">F</span><h2>두 가지 경계값을 섞지 않기</h2></header>
+<section class="am-panel" id="panel-G">
+<header class="am-panel-head"><span class="am-panel-id">G</span><h2>겹침 정도 구하기 (설명용 숫자)</h2></header>
 <div class="am-panel-body"><div class="am-md"><div class="am-table-wrap"><table>
 <thead>
 <tr>
-<th>경계값</th>
-<th>무엇을 정하나</th>
+<th>단계</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>정답 박스 넓이</td>
+<td>100</td>
+</tr>
+<tr>
+<td>모델 박스 넓이</td>
+<td>100</td>
+</tr>
+<tr>
+<td>겹친 넓이</td>
+<td>60</td>
+</tr>
+<tr>
+<td>합친 넓이</td>
+<td>100 + 100 − 60 = 140</td>
+</tr>
+<tr>
+<td>겹침 정도</td>
+<td>60 ÷ 140 ≈ 0.43</td>
+</tr>
+</tbody></table></div>
+<p>겹친 부분이 두 박스에 다 들어 있어서 더하면 두 번 세게 되므로 60을 뺀다. 겹침 기준이 0.5면 0.43은 맞힘이 아니다.</p>
+</div></div>
+</section>
+<section class="am-panel" id="panel-H">
+<header class="am-panel-head"><span class="am-panel-id">H</span><h2>점에서 AP, mAP까지</h2></header>
+<div class="am-panel-body"><div class="am-md"><div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>단계</th>
+<th>하는 일</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>겹침 기준(예: 0.5)을 고정한다</td>
+</tr>
+<tr>
+<td>2</td>
+<td>임계값을 하나 정하고 정밀도·재현율을 계산한다 (점 1개)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>임계값을 바꿔 2를 반복한다 (점 여러 개)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>점을 이어 곡선을 만든다</td>
+</tr>
+<tr>
+<td>5</td>
+<td>곡선 아래 넓이가 그 클래스의 AP다</td>
+</tr>
+<tr>
+<td>6</td>
+<td>클래스별 AP를 평균하면 mAP다 (안전모 0.8, 조끼 0.6 → 0.7, 원문 예시)</td>
+</tr>
+</tbody></table></div>
+<p>위 표의 (재현율 0.8, 정밀도 0.8)과 (재현율 0.6, 정밀도 1.0)이 이런 점이다.</p>
+</div></div>
+</section>
+<section class="am-panel" id="panel-I">
+<header class="am-panel-head"><span class="am-panel-id">I</span><h2>두 가지 경계값을 섞지 않기</h2></header>
+<div class="am-panel-body"><div class="am-md"><div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>정하는 것</th>
 <th>예</th>
 </tr>
 </thead>
 <tbody><tr>
 <td>박스 점수 임계값</td>
 <td>남길 박스</td>
-<td>원문 과제 A의 0.25, 0.50</td>
+<td>0.25, 0.50</td>
 </tr>
 <tr>
-<td>겹침 기준(IoU)</td>
-<td>정답과 짝지을 박스</td>
-<td><a href="mailto:mAP@0.5">mAP@0.5</a>의 0.5</td>
+<td>겹침 기준</td>
+<td>맞힘으로 인정할 겹침</td>
+<td><code>mAP@0.5</code>의 0.5</td>
 </tr>
 </tbody></table></div>
-<ul>
-<li>IoU = 겹친 넓이 ÷ 합친 넓이. 0~1이다.</li>
-<li><a href="mailto:mAP@0.5">mAP@0.5</a>:0.95 = IoU 기준 0.50, 0.55, …, 0.95 열 개로 구한 mAP의 평균이다.</li>
-<li>정답 하나에 박스가 여럿 겹치면 하나만 TP이고 나머지는 FP다.</li>
-</ul>
 </div></div>
 </section>
-<section class="am-panel am-span-wide" id="panel-G" style="grid-column: span 2">
-<header class="am-panel-head"><span class="am-panel-id">G</span><h2>기억할 점</h2></header>
+<section class="am-panel" id="panel-J">
+<header class="am-panel-head"><span class="am-panel-id">J</span><h2>기억할 점</h2></header>
 <div class="am-panel-body"><div class="am-md"><ul>
-<li>박스 개수가 같아도 맞힌 수는 다를 수 있다.</li>
-<li>원문의 “찾았다”는 두 뜻이다. 모델이 박스를 낸 것 전체와, 맞힌 것(TP)이다.</li>
-<li>원문의 “점수”도 두 뜻이다. 박스 하나에 붙는 박스 점수와, 정밀도·mAP 같은 모델 지표다.</li>
-<li>AP의 “면적”은 그래프의 넓이다. IoU의 박스 넓이(픽셀)가 아니다.</li>
-<li>비교표에서는 평가 자료와 IoU 기준이 같은 열끼리만 비교한다.</li>
-<li>후보를 고른 뒤, 실제 업무 사진에서 쓸 임계값 하나로 오탐·미탐을 다시 센다. 원문 예: 안전 확인에서는 놓친 대상이 위험으로 이어지고, 자동 청구에서는 잘못 찾은 대상 때문에 비용이 청구될 수 있다.</li>
+<li>원문의 “찾았다”는 두 뜻이다: 박스를 낸 것 전체, 그리고 맞힌 것.</li>
+<li><code>mAP@0.5</code> = 겹침 기준 0.5로 구한 mAP. <code>mAP@0.5:0.95</code> = 겹침 기준 0.50~0.95 열 개로 구한 mAP의 평균.</li>
+<li>비교표는 평가 자료와 겹침 기준이 같은 열끼리만 본다. 열에 따라 순위가 달라질 수 있다.</li>
+<li>AP의 “면적”은 그래프의 넓이이고, 겹침 정도의 넓이는 박스의 넓이다.</li>
+<li>어느 오류가 더 문제인지는 일에 따라 다르다. 안전 확인은 미탐이, 자동 청구는 오탐이 문제가 될 수 있다.</li>
 </ul>
 </div></div>
 </section>
@@ -1138,72 +1230,100 @@ html[data-theme="paper"] .am-md table { font-family: var(--font-sans); }
 <textarea id="am-source" hidden readonly aria-hidden="true">---
 theme: shadcn
 lang: ko
-title: 탐지 모델을 재는 눈금
-subtitle: 박스 수가 아니라 맞힌 것과 놓친 것을 센다
+title: 박스 수가 아니라 맞힌 것과 놓친 것을 세고, mAP로 모델을 비교한다
+subtitle: 맞힘·오탐·미탐 → 정밀도·재현율 → 겹침 정도 → AP → mAP
 source: LMS 노트 「AI가 이미지를 읽기까지」 중 &#39;모델을 재는 눈금&#39;
 ---
 ## A 핵심 {span=3}
 ```callout info 결론
-탐지 모델은 정답 자료와 대조해 맞힌 것(TP)·잘못 낸 박스(FP)·놓친 대상(FN)을 센다. 정밀도는 모델이 낸 박스 중 맞힌 비율이다. 재현율은 실제 대상 중 맞힌 비율이다. 임계값 하나의 두 숫자로는 모델을 비교하기 어렵다. 그래서 임계값별 결과를 곡선 아래 면적(AP)으로 모으고, 클래스별로 평균한 mAP를 쓴다.
+모델은 박스 개수가 아니라 정답과 맞춰 센 **맞힘·오탐·미탐**으로 잰다. 그 개수로 정밀도와 재현율을 계산하고, 임계값에 따라 달라지므로 곡선 면적 **AP**를 클래스별로 평균한 **mAP**로 모델을 비교한다.
 ```
 
-## B 혼동행렬 (원문 예시: 실제 안전모 10개, 박스 10개)
+## B 순서 {span=3}
+```flow LR
+박스 거르기 -&gt; 맞힘 정하기: 임계값
+맞힘 정하기 -&gt; 맞힘·오탐·미탐 세기: 겹침 기준
+맞힘·오탐·미탐 세기 -&gt; 정밀도·재현율
+정밀도·재현율 -&gt; AP: 임계값을 바꿔 점 찍기
+AP -&gt; *mAP: 클래스별 평균
+```
+
+## C 말 뜻
+| 말 | 뜻 |
+|---|---|
+| 임계값 | 점수가 이 숫자보다 낮은 박스를 버리는 기준 |
+| 맞힘 | 진짜 대상 위에 있는 박스 |
+| 오탐 | 대상이 없는 자리의 박스 (잘못 낸 박스) |
+| 미탐 | 박스가 없는 실제 대상 (놓친 대상) |
+| 정밀도 | 낸 박스 중 맞힌 비율 |
+| 재현율 | 실제 대상 중 맞힌 비율 |
+
+## D 사진 한 장으로 세어 보기 (원문 예시)
+안전모 10개, 모델의 박스 10개.
+
 | | 실제로 대상 | 실제로 대상 아님 |
 |---|---|---|
-| 모델이 박스를 냄 | TP 8 (진짜 안전모 위 박스) | FP 2 (조명 위 박스, 오탐) |
-| 박스 없음 | FN 2 (박스 없는 안전모, 미탐) | TN 세기 어려움 |
+| 박스를 냄 | 맞힘 8 | 오탐 2 (조명 위) |
+| 박스 없음 | 미탐 2 | 세지 않음 |
 
-TN은 배경을 몇 개 영역으로 나눌지 정하기 어려워서 객체 탐지에서는 세기 어렵다.
+네 번째 칸은 배경을 몇 조각으로 셀지 정하기 어려워서 세지 않는다.
 
-## C 정밀도와 재현율
+## E 두 비율은 나누는 수가 다르다
 | | 정밀도 | 재현율 |
 |---|---|---|
-| 출발점(분모) | 모델이 낸 박스 | 실제 대상 |
-| 공식 | TP ÷ (TP + FP) | TP ÷ (TP + FN) |
-| 원문 예시 값 | 8 ÷ 10 = 0.8 | 8 ÷ 10 = 0.8 |
-| 떨어지는 원인 | 오탐이 늘 때 | 미탐이 늘 때 |
-| 높으면 | 낸 박스를 믿고 볼 수 있다 | 놓친 대상이 적다 |
+| 물음 | 낸 박스 중 몇 개 맞혔나 | 실제 대상 중 몇 개 맞혔나 |
+| 나누는 수 | 맞힘 + 오탐 | 맞힘 + 미탐 |
+| 계산 | 8 ÷ (8 + 2) = 0.8 | 8 ÷ (8 + 2) = 0.8 |
+| 내려가는 때 | 오탐이 늘 때 | 미탐이 늘 때 |
 
-두 값이 같은 것은 오탐과 미탐이 2개씩이라서다.
+둘이 같은 0.8인 것은 오탐과 미탐이 우연히 2개씩이라서다.
 
-## D 박스 점수 임계값을 올리면 (원문 예시)
-| | 올리기 전 | 올린 뒤 |
+## F 임계값을 올리면 (원문 예시) {span=2}
+| | 전 | 후 | 왜 |
+|---|---|---|---|
+| 맞힘 | 8 | 6 | 진짜 안전모 박스 2개가 빠짐 |
+| 오탐 | 2 | 0 | 조명 박스 2개가 빠짐 |
+| 미탐 | 2 | 4 | 박스가 빠진 안전모 2개가 추가됨 |
+| 정밀도 | 0.8 | 1.0 | 6 ÷ (6 + 0) |
+| 재현율 | 0.8 | 0.6 | 6 ÷ (6 + 4) |
+
+틀린 박스는 없어졌지만 놓친 안전모가 4개로 늘었다.
+
+## G 겹침 정도 구하기 (설명용 숫자)
+| 단계 | 값 |
+|---|---|
+| 정답 박스 넓이 | 100 |
+| 모델 박스 넓이 | 100 |
+| 겹친 넓이 | 60 |
+| 합친 넓이 | 100 + 100 − 60 = 140 |
+| 겹침 정도 | 60 ÷ 140 ≈ 0.43 |
+
+겹친 부분이 두 박스에 다 들어 있어서 더하면 두 번 세게 되므로 60을 뺀다. 겹침 기준이 0.5면 0.43은 맞힘이 아니다.
+
+## H 점에서 AP, mAP까지
+| 단계 | 하는 일 |
+|---|---|
+| 1 | 겹침 기준(예: 0.5)을 고정한다 |
+| 2 | 임계값을 하나 정하고 정밀도·재현율을 계산한다 (점 1개) |
+| 3 | 임계값을 바꿔 2를 반복한다 (점 여러 개) |
+| 4 | 점을 이어 곡선을 만든다 |
+| 5 | 곡선 아래 넓이가 그 클래스의 AP다 |
+| 6 | 클래스별 AP를 평균하면 mAP다 (안전모 0.8, 조끼 0.6 → 0.7, 원문 예시) |
+
+위 표의 (재현율 0.8, 정밀도 0.8)과 (재현율 0.6, 정밀도 1.0)이 이런 점이다.
+
+## I 두 가지 경계값을 섞지 않기
+| | 정하는 것 | 예 |
 |---|---|---|
-| TP | 8 | 6 |
-| FP | 2 | 0 |
-| FN | 2 | 4 |
-| 정밀도 | 0.8 | 1.0 |
-| 재현율 | 0.8 | 0.6 |
+| 박스 점수 임계값 | 남길 박스 | 0.25, 0.50 |
+| 겹침 기준 | 맞힘으로 인정할 겹침 | `mAP@0.5`의 0.5 |
 
-조명 박스 2개와 진짜 안전모 박스 2개가 함께 빠졌다. 틀린 박스는 없어졌지만 놓친 안전모가 4개로 늘었다.
-
-## E 박스에서 mAP까지 {span=3}
-```flow LR
-박스 거르기 -&gt; 정답과 짝짓기: 박스 점수 임계값
-정답과 짝짓기 -&gt; TP·FP·FN 세기: 겹침 기준 IoU
-TP·FP·FN 세기 -&gt; 정밀도·재현율
-정밀도·재현율 --&gt; 박스 거르기: 임계값 바꿔 반복
-정밀도·재현율 -&gt; 곡선 아래 면적 AP
-곡선 아래 면적 AP -&gt; *클래스별 평균 mAP
-```
-
-## F 두 가지 경계값을 섞지 않기
-| 경계값 | 무엇을 정하나 | 예 |
-|---|---|---|
-| 박스 점수 임계값 | 남길 박스 | 원문 과제 A의 0.25, 0.50 |
-| 겹침 기준(IoU) | 정답과 짝지을 박스 | mAP@0.5의 0.5 |
-
-- IoU = 겹친 넓이 ÷ 합친 넓이. 0~1이다.
-- mAP@0.5:0.95 = IoU 기준 0.50, 0.55, …, 0.95 열 개로 구한 mAP의 평균이다.
-- 정답 하나에 박스가 여럿 겹치면 하나만 TP이고 나머지는 FP다.
-
-## G 기억할 점
-- 박스 개수가 같아도 맞힌 수는 다를 수 있다.
-- 원문의 “찾았다”는 두 뜻이다. 모델이 박스를 낸 것 전체와, 맞힌 것(TP)이다.
-- 원문의 “점수”도 두 뜻이다. 박스 하나에 붙는 박스 점수와, 정밀도·mAP 같은 모델 지표다.
-- AP의 “면적”은 그래프의 넓이다. IoU의 박스 넓이(픽셀)가 아니다.
-- 비교표에서는 평가 자료와 IoU 기준이 같은 열끼리만 비교한다.
-- 후보를 고른 뒤, 실제 업무 사진에서 쓸 임계값 하나로 오탐·미탐을 다시 센다. 원문 예: 안전 확인에서는 놓친 대상이 위험으로 이어지고, 자동 청구에서는 잘못 찾은 대상 때문에 비용이 청구될 수 있다.
+## J 기억할 점
+- 원문의 “찾았다”는 두 뜻이다: 박스를 낸 것 전체, 그리고 맞힌 것.
+- `mAP@0.5` = 겹침 기준 0.5로 구한 mAP. `mAP@0.5:0.95` = 겹침 기준 0.50~0.95 열 개로 구한 mAP의 평균.
+- 비교표는 평가 자료와 겹침 기준이 같은 열끼리만 본다. 열에 따라 순위가 달라질 수 있다.
+- AP의 “면적”은 그래프의 넓이이고, 겹침 정도의 넓이는 박스의 넓이다.
+- 어느 오류가 더 문제인지는 일에 따라 다르다. 안전 확인은 미탐이, 자동 청구는 오탐이 문제가 될 수 있다.
 </textarea>
 <script>
 (() => {
@@ -2826,32 +2946,6 @@ if (panels.length > 1) {
   document.addEventListener('pointerdown', (e) => { if (box.open && !nav.contains(e.target)) setOpen(false); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && box.open && !nav.contains(e.target)) setOpen(false); });
 })();
-})();
-// Pages with a new-version button only: src/render.js adds this script after the page script.
-// The button shows where the browser has native popovers (they open and close the popover with no script). A page that am serve
-// sends to another device has no button (src/serve.js), so this script does not look at the address.
-(() => {
-  const button = document.querySelector('[data-am="update"]');
-  if (!button || !Object.hasOwn(HTMLElement.prototype, 'popover')) return;
-  button.hidden = false;
-  // Each copy button copies its data-text and reads data-done for a moment, then comes back to the label it started from. That
-  // label is read once, here: a second click inside the moment would otherwise read the copied label off the button and restore
-  // that instead, and the label would never come back. The moment starts again on each click: the timer of the previous one is
-  // left to fire and does nothing.
-  for (const copy of document.querySelectorAll('[data-am="copy-text"]')) {
-    const idle = copy.textContent;
-    let clicks = 0;
-    copy.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(copy.dataset.text);
-      } catch {
-        return;
-      }
-      copy.textContent = copy.dataset.done;
-      const mine = ++clicks;
-      setTimeout(() => { if (mine === clicks) copy.textContent = idle; }, 1400);
-    });
-  }
 })();
 </script>
 </body>

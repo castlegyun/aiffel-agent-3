@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>mAP가 나오기까지</title>
+  <title>박스에서 mAP까지</title>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,62 +53,51 @@
 <body>
   <div class="frame">
     <p class="eyebrow">Flowchart · from boxes to mAP</p>
-    <h1>mAP가 나오기까지</h1>
+    <h1>박스에서 mAP까지</h1>
     <div class="diagram-container">
       <svg viewBox="0 0 768 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="map-title map-desc">
-        <title id="map-title">mAP가 나오기까지</title>
-        <desc id="map-desc">박스 점수 임계값으로 박스를 거르고, 정답과 짝지어 TP·FP·FN을 세어 정밀도와 재현율을 구하며, 임계값마다 이를 반복해 곡선 아래 면적 AP를 얻고, 클래스별 AP를 평균해 mAP를 만든다.</desc>
+        <title id="map-title">박스에서 mAP까지</title>
+        <desc id="map-desc">임계값보다 낮은 박스를 버리고, 겹침 정도로 맞힘을 정하고, 맞힘·오탐·미탐을 세어 정밀도와 재현율을 계산한 뒤, 임계값을 바꿔 그린 곡선의 면적 AP를 클래스별로 평균해 mAP를 만든다.</desc>
         <defs>
           <marker id="map-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
         </defs>
         <rect class="paper" width="100%" height="100%"/>
-        <text class="t-row" x="8" y="22">클래스 하나의 AP를 구하고, 클래스별로 모아 mAP를 만드는 순서 (겹침 기준은 고정)</text>
-
-        <line class="line" x1="144" y1="82" x2="160" y2="82" marker-end="url(#map-arrow)"/>
-        <line class="line" x1="298" y1="82" x2="314" y2="82" marker-end="url(#map-arrow)"/>
-        <line class="line" x1="452" y1="82" x2="468" y2="82" marker-end="url(#map-arrow)"/>
-        <line class="line" x1="606" y1="82" x2="622" y2="82" marker-end="url(#map-arrow)"/>
-
-        <path class="line dash" d="M384 128 V156 Q384 164 376 164 H84 Q76 164 76 156 V130" marker-end="url(#map-arrow)"/>
-        <rect class="paper" x="148" y="174" width="164" height="18"/>
-        <text class="t-lab" x="230" y="187">임계값을 바꿔 1~3 반복</text>
-
-        <rect class="paper" x="8" y="36" width="136" height="92" rx="6"/>
-        <rect class="node" x="8" y="36" width="136" height="92" rx="6"/>
-        <text class="t-name" x="76" y="62">1 박스 거르기</text>
-        <text class="t-sub" x="76" y="84">박스 점수가</text>
-        <text class="t-sub" x="76" y="100">임계값보다 낮은</text>
-        <text class="t-sub" x="76" y="116">박스를 버림</text>
-
-        <rect class="paper" x="162" y="36" width="136" height="92" rx="6"/>
-        <rect class="node" x="162" y="36" width="136" height="92" rx="6"/>
-        <text class="t-name" x="230" y="62">2 정답과 짝짓기</text>
-        <text class="t-sub" x="230" y="84">클래스가 같고</text>
-        <text class="t-sub" x="230" y="100">IoU ≥ 겹침 기준이면</text>
-        <text class="t-sub" x="230" y="116">정답 하나와 짝</text>
-
-        <rect class="paper" x="316" y="36" width="136" height="92" rx="6"/>
-        <rect class="node" x="316" y="36" width="136" height="92" rx="6"/>
-        <text class="t-name" x="384" y="62">3 세고 나누기</text>
-        <text class="t-sub" x="384" y="84">TP · FP · FN 개수</text>
-        <text class="t-sub" x="384" y="100">→ 정밀도</text>
-        <text class="t-sub" x="384" y="116">→ 재현율</text>
-
-        <rect class="paper" x="470" y="36" width="136" height="92" rx="6"/>
-        <rect class="node" x="470" y="36" width="136" height="92" rx="6"/>
-        <text class="t-name" x="538" y="62">4 곡선 → AP</text>
-        <text class="t-sub" x="538" y="84">(재현율, 정밀도)</text>
-        <text class="t-sub" x="538" y="100">점을 이은 곡선의</text>
-        <text class="t-sub" x="538" y="116">아래 면적 = AP</text>
-
-        <rect class="paper" x="624" y="36" width="136" height="92" rx="6"/>
-        <rect class="focal" x="624" y="36" width="136" height="92" rx="6"/>
-        <text class="t-name" x="692" y="62">5 mAP</text>
-        <text class="t-sub" x="692" y="84">클래스마다 구한</text>
-        <text class="t-sub" x="692" y="100">AP를 평균</text>
+        <text class="t-row" x="8" y="22">박스를 정답과 맞춰 세고, 비율을 구하고, 임계값을 바꿔 모아 mAP로 만드는 순서</text>
+        <line class="line" x1="152" y1="82" x2="164" y2="82" marker-end="url(#map-arrow)"/>
+        <line class="line" x1="308" y1="82" x2="320" y2="82" marker-end="url(#map-arrow)"/>
+        <line class="line" x1="464" y1="82" x2="476" y2="82" marker-end="url(#map-arrow)"/>
+        <line class="line" x1="620" y1="82" x2="632" y2="82" marker-end="url(#map-arrow)"/>
+        <path class="line dash" d="M548 128 V156 Q548 164 540 164 H88 Q80 164 80 156 V130" marker-end="url(#map-arrow)"/>
+        <rect class="paper" x="228" y="174" width="160" height="18"/>
+        <text class="t-lab" x="308" y="187">임계값을 바꾸면 다시</text>
+        <rect class="paper" x="8" y="36" width="144" height="92" rx="6"/>
+        <rect class="node" x="8" y="36" width="144" height="92" rx="6"/>
+        <text class="t-name" x="80" y="62">1 박스 거르기</text>
+        <text class="t-sub" x="80" y="84">점수가 임계값보다</text>
+        <text class="t-sub" x="80" y="100">낮은 박스는 버림</text>
+        <rect class="paper" x="164" y="36" width="144" height="92" rx="6"/>
+        <rect class="node" x="164" y="36" width="144" height="92" rx="6"/>
+        <text class="t-name" x="236" y="62">2 맞힘 정하기</text>
+        <text class="t-sub" x="236" y="84">정답 박스와 겹침이</text>
+        <text class="t-sub" x="236" y="100">기준 이상이면 맞힘</text>
+        <rect class="paper" x="320" y="36" width="144" height="92" rx="6"/>
+        <rect class="node" x="320" y="36" width="144" height="92" rx="6"/>
+        <text class="t-name" x="392" y="62">3 개수 세기</text>
+        <text class="t-sub" x="392" y="84">맞힘·오탐·미탐</text>
+        <text class="t-sub" x="392" y="100">각각 몇 개인지</text>
+        <rect class="paper" x="476" y="36" width="144" height="92" rx="6"/>
+        <rect class="node" x="476" y="36" width="144" height="92" rx="6"/>
+        <text class="t-name" x="548" y="62">4 비율 계산</text>
+        <text class="t-sub" x="548" y="84">정밀도, 재현율</text>
+        <text class="t-sub" x="548" y="100">(임계값 하나의 값)</text>
+        <rect class="paper" x="632" y="36" width="144" height="92" rx="6"/>
+        <rect class="focal" x="632" y="36" width="144" height="92" rx="6"/>
+        <text class="t-name" x="704" y="62">5 AP → mAP</text>
+        <text class="t-sub" x="704" y="84">곡선 아래 면적 AP,</text>
+        <text class="t-sub" x="704" y="100">클래스별 평균 mAP</text>
       </svg>
     </div>
-    <p class="caption">경계값이 두 개다. 1단계는 박스 점수 임계값, 2단계는 겹침 기준(IoU)이다. mAP@0.5의 0.5는 2단계의 겹침 기준이다. 4단계의 면적은 그래프의 넓이이고, 2단계 IoU의 넓이는 박스의 넓이(픽셀)다.</p>
+    <p class="caption">숫자가 두 개 나온다. 2단계의 겹침 기준과 1단계의 박스 점수 임계값은 서로 다르다. mAP@0.5의 0.5는 겹침 기준이다.</p>
   </div>
 </body>
 </html>
