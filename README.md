@@ -13,6 +13,7 @@
 | 04 | [todo-supabase](04-todo-supabase) | 로그인한 사용자가 자기 할 일만 관리하는 Todo 앱 | Flask, Supabase(Auth+RLS), Render | [배포](https://todo-app-iw2l.onrender.com) |
 | 05 | [submit-assignment-skill](05-submit-assignment-skill) | 과제를 GitHub에 올리는 반복 작업을 자동화한 Claude Code 스킬 | Claude Code Skill, Markdown | [README](05-submit-assignment-skill/README.md) |
 | 06 | [code-explain-notes](06-code-explain-notes) | 코드를 초보자용 해설 노트(쉬운 주석·단어장)로 만들어 모아 보는 도구 | HTML, Claude Code Skill | [▶ 보관함 열기](https://aiffel-agent-3.onrender.com/) (Render) |
+| 07 | [yolo-service](07-yolo-service) | 사진을 넣으면 YOLO26 탐지·분할 결과를 저장하고 conf 0.25/0.50을 비교하는 노트북 | Python, Ultralytics YOLO26, Jupyter | [README](07-yolo-service/README.md) |
 
 > ▶ 표시는 브라우저에서 바로 열리는 사이트입니다. 02, 03은 GitHub Pages(`https://castlegyun.github.io/aiffel-agent-3/폴더이름/`), 06은 Render입니다.
 

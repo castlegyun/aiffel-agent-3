@@ -1,0 +1,114 @@
+{
+  "image": "inputs/coco_000000000139.jpg",
+  "image_size": {
+    "width": 640,
+    "height": 426
+  },
+  "model": "yolo26n-seg.pt",
+  "settings": {
+    "imgsz": 640,
+    "device": "cpu",
+    "conf": 0.5
+  },
+  "n_detections": 7,
+  "detections": [
+    {
+      "id": 0,
+      "class_id": 62,
+      "class_name": "tv",
+      "score": 0.9069,
+      "box_xyxy": [
+        5.8,
+        166.9,
+        155.4,
+        262.3
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000000139__seg__conf050__0.png",
+      "mask_area_px": 13443
+    },
+    {
+      "id": 1,
+      "class_id": 56,
+      "class_name": "chair",
+      "score": 0.7709,
+      "box_xyxy": [
+        293.2,
+        217.2,
+        352.9,
+        319.9
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000000139__seg__conf050__1.png",
+      "mask_area_px": 3056
+    },
+    {
+      "id": 2,
+      "class_id": 56,
+      "class_name": "chair",
+      "score": 0.7081,
+      "box_xyxy": [
+        364.1,
+        218.0,
+        417.7,
+        312.1
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000000139__seg__conf050__2.png",
+      "mask_area_px": 2381
+    },
+    {
+      "id": 3,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.6562,
+      "box_xyxy": [
+        427.0,
+        156.1,
+        467.2,
+        298.1
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000000139__seg__conf050__3.png",
+      "mask_area_px": 3123
+    },
+    {
+      "id": 4,
+      "class_id": 56,
+      "class_name": "chair",
+      "score": 0.6555,
+      "box_xyxy": [
+        407.5,
+        220.1,
+        444.5,
+        305.7
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000000139__seg__conf050__4.png",
+      "mask_area_px": 1764
+    },
+    {
+      "id": 5,
+      "class_id": 56,
+      "class_name": "chair",
+      "score": 0.623,
+      "box_xyxy": [
+        215.6,
+        232.1,
+        295.7,
+        315.8
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000000139__seg__conf050__5.png",
+      "mask_area_px": 5458
+    },
+    {
+      "id": 6,
+      "class_id": 62,
+      "class_name": "tv",
+      "score": 0.5034,
+      "box_xyxy": [
+        555.1,
+        208.1,
+        639.6,
+        287.4
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000000139__seg__conf050__6.png",
+      "mask_area_px": 6444
+    }
+  ]
+}

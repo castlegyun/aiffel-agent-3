@@ -1,0 +1,240 @@
+{
+  "image": "inputs/coco_000000001000.jpg",
+  "image_size": {
+    "width": 640,
+    "height": 480
+  },
+  "model": "yolo26n-seg.pt",
+  "settings": {
+    "imgsz": 640,
+    "device": "cpu",
+    "conf": 0.25
+  },
+  "n_detections": 16,
+  "detections": [
+    {
+      "id": 0,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.8785,
+      "box_xyxy": [
+        504.5,
+        190.7,
+        639.5,
+        479.0
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__0.png",
+      "mask_area_px": 23332
+    },
+    {
+      "id": 1,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.8625,
+      "box_xyxy": [
+        117.0,
+        149.0,
+        197.8,
+        380.9
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__1.png",
+      "mask_area_px": 10218
+    },
+    {
+      "id": 2,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.8397,
+      "box_xyxy": [
+        326.7,
+        156.2,
+        416.7,
+        470.7
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__2.png",
+      "mask_area_px": 16933
+    },
+    {
+      "id": 3,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.8371,
+      "box_xyxy": [
+        408.0,
+        203.8,
+        522.5,
+        479.8
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__3.png",
+      "mask_area_px": 18738
+    },
+    {
+      "id": 4,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.8232,
+      "box_xyxy": [
+        264.1,
+        97.1,
+        354.6,
+        413.3
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__4.png",
+      "mask_area_px": 16409
+    },
+    {
+      "id": 5,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.6752,
+      "box_xyxy": [
+        393.3,
+        157.7,
+        466.9,
+        457.7
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__5.png",
+      "mask_area_px": 8593
+    },
+    {
+      "id": 6,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.6679,
+      "box_xyxy": [
+        43.3,
+        187.0,
+        108.3,
+        394.8
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__6.png",
+      "mask_area_px": 6569
+    },
+    {
+      "id": 7,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.5854,
+      "box_xyxy": [
+        214.4,
+        174.9,
+        289.9,
+        418.4
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__7.png",
+      "mask_area_px": 9868
+    },
+    {
+      "id": 8,
+      "class_id": 38,
+      "class_name": "tennis racket",
+      "score": 0.509,
+      "box_xyxy": [
+        47.4,
+        292.6,
+        96.7,
+        396.7
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__8.png",
+      "mask_area_px": 2872
+    },
+    {
+      "id": 9,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.4986,
+      "box_xyxy": [
+        437.1,
+        107.9,
+        497.5,
+        223.2
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__9.png",
+      "mask_area_px": 3549
+    },
+    {
+      "id": 10,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.4542,
+      "box_xyxy": [
+        190.0,
+        119.3,
+        276.2,
+        403.2
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__10.png",
+      "mask_area_px": 5825
+    },
+    {
+      "id": 11,
+      "class_id": 38,
+      "class_name": "tennis racket",
+      "score": 0.4166,
+      "box_xyxy": [
+        196.2,
+        175.5,
+        281.9,
+        334.5
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__11.png",
+      "mask_area_px": 3489
+    },
+    {
+      "id": 12,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.3509,
+      "box_xyxy": [
+        406.0,
+        119.0,
+        443.2,
+        168.8
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__12.png",
+      "mask_area_px": 1197
+    },
+    {
+      "id": 13,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.299,
+      "box_xyxy": [
+        350.7,
+        121.5,
+        401.6,
+        209.9
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__13.png",
+      "mask_area_px": 1785
+    },
+    {
+      "id": 14,
+      "class_id": 38,
+      "class_name": "tennis racket",
+      "score": 0.2756,
+      "box_xyxy": [
+        217.6,
+        225.7,
+        271.0,
+        303.5
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__14.png",
+      "mask_area_px": 1160
+    },
+    {
+      "id": 15,
+      "class_id": 32,
+      "class_name": "sports ball",
+      "score": 0.268,
+      "box_xyxy": [
+        210.1,
+        423.7,
+        232.3,
+        442.6
+      ],
+      "mask_file": "outputs/yolo/masks/coco_000000001000__seg__conf025__15.png",
+      "mask_area_px": 359
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+﻿image,model,conf,id,class,score,box_xyxy,원본범위_안,mask_box_iou,확인필요,사유,수정내역,근거파일
+bus.jpg,yolo26n.pt,0.25,0,bus,0.8806,"[0.0, 230.5, 803.2, 750.7]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/bus__det__conf025.json
+bus.jpg,yolo26n.pt,0.25,1,person,0.872,"[48.6, 397.7, 240.3, 902.4]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/bus__det__conf025.json
+bus.jpg,yolo26n.pt,0.25,2,person,0.8608,"[222.9, 404.8, 345.5, 861.0]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/bus__det__conf025.json
+bus.jpg,yolo26n.pt,0.25,3,person,0.8462,"[669.6, 394.5, 809.9, 879.4]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/bus__det__conf025.json
+bus.jpg,yolo26n.pt,0.25,4,person,0.6562,"[0.2, 553.0, 59.7, 871.3]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/bus__det__conf025.json
+bus.jpg,yolo26n.pt,0.5,0,bus,0.8806,"[0.0, 230.5, 803.2, 750.7]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/bus__det__conf050.json
+bus.jpg,yolo26n.pt,0.5,1,person,0.872,"[48.6, 397.7, 240.3, 902.4]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/bus__det__conf050.json
+bus.jpg,yolo26n.pt,0.5,2,person,0.8608,"[222.9, 404.8, 345.5, 861.0]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/bus__det__conf050.json
+bus.jpg,yolo26n.pt,0.5,3,person,0.8462,"[669.6, 394.5, 809.9, 879.4]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/bus__det__conf050.json
+bus.jpg,yolo26n.pt,0.5,4,person,0.6562,"[0.2, 553.0, 59.7, 871.3]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/bus__det__conf050.json
+bus.jpg,yolo26n-seg.pt,0.25,0,person,0.877,"[52.8, 396.7, 243.4, 905.9]",True,0.981,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/bus__seg__conf025.json, masks/bus__seg__conf025__0.png"
+bus.jpg,yolo26n-seg.pt,0.25,1,person,0.8632,"[669.2, 396.2, 809.9, 880.3]",True,0.986,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/bus__seg__conf025.json, masks/bus__seg__conf025__1.png"
+bus.jpg,yolo26n-seg.pt,0.25,2,bus,0.8555,"[4.8, 228.5, 806.6, 740.2]",True,0.982,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/bus__seg__conf025.json, masks/bus__seg__conf025__2.png"
+bus.jpg,yolo26n-seg.pt,0.25,3,person,0.8106,"[221.1, 405.4, 344.5, 859.4]",True,0.976,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/bus__seg__conf025.json, masks/bus__seg__conf025__3.png"
+bus.jpg,yolo26n-seg.pt,0.25,4,person,0.6484,"[0.5, 550.4, 74.1, 872.2]",True,0.973,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/bus__seg__conf025.json, masks/bus__seg__conf025__4.png"
+bus.jpg,yolo26n-seg.pt,0.5,0,person,0.877,"[52.8, 396.7, 243.4, 905.9]",True,0.981,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/bus__seg__conf050.json, masks/bus__seg__conf050__0.png"
+bus.jpg,yolo26n-seg.pt,0.5,1,person,0.8632,"[669.2, 396.2, 809.9, 880.3]",True,0.986,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/bus__seg__conf050.json, masks/bus__seg__conf050__1.png"
+bus.jpg,yolo26n-seg.pt,0.5,2,bus,0.8555,"[4.8, 228.5, 806.6, 740.2]",True,0.982,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/bus__seg__conf050.json, masks/bus__seg__conf050__2.png"
+bus.jpg,yolo26n-seg.pt,0.5,3,person,0.8106,"[221.1, 405.4, 344.5, 859.4]",True,0.976,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/bus__seg__conf050.json, masks/bus__seg__conf050__3.png"
+bus.jpg,yolo26n-seg.pt,0.5,4,person,0.6484,"[0.5, 550.4, 74.1, 872.2]",True,0.973,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/bus__seg__conf050.json, masks/bus__seg__conf050__4.png"
+coco_000000000139.jpg,yolo26n.pt,0.25,0,tv,0.8555,"[6.3, 166.8, 156.0, 261.0]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,1,chair,0.8393,"[292.1, 216.3, 353.4, 316.3]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,2,chair,0.7195,"[361.8, 218.5, 415.0, 308.6]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,3,tv,0.6941,"[558.5, 207.8, 639.8, 291.3]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,4,person,0.6791,"[421.6, 157.1, 464.0, 298.5]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,5,chair,0.6527,"[408.0, 220.9, 444.7, 306.4]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,6,clock,0.577,"[448.2, 120.8, 461.4, 142.0]",True,,True,작은 대상,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,7,refrigerator,0.5589,"[447.7, 168.1, 512.5, 293.5]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,8,vase,0.4387,"[550.0, 300.3, 587.2, 399.1]",True,,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,9,potted plant,0.427,"[333.8, 174.7, 367.5, 219.0]",True,,True,낮은 점수(<0.50); yolo26n-seg.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,10,potted plant,0.3966,"[228.3, 175.9, 267.1, 212.7]",True,,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,11,vase,0.2868,"[240.4, 197.5, 252.2, 212.4]",True,,True,낮은 점수(<0.50); 작은 대상; yolo26n-seg.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.25,12,dining table,0.2609,"[292.4, 213.5, 448.7, 298.7]",True,,True,낮은 점수(<0.50); yolo26n-seg.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf025.json
+coco_000000000139.jpg,yolo26n.pt,0.5,0,tv,0.8555,"[6.3, 166.8, 156.0, 261.0]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf050.json
+coco_000000000139.jpg,yolo26n.pt,0.5,1,chair,0.8393,"[292.1, 216.3, 353.4, 316.3]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf050.json
+coco_000000000139.jpg,yolo26n.pt,0.5,2,chair,0.7195,"[361.8, 218.5, 415.0, 308.6]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf050.json
+coco_000000000139.jpg,yolo26n.pt,0.5,3,tv,0.6941,"[558.5, 207.8, 639.8, 291.3]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf050.json
+coco_000000000139.jpg,yolo26n.pt,0.5,4,person,0.6791,"[421.6, 157.1, 464.0, 298.5]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf050.json
+coco_000000000139.jpg,yolo26n.pt,0.5,5,chair,0.6527,"[408.0, 220.9, 444.7, 306.4]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf050.json
+coco_000000000139.jpg,yolo26n.pt,0.5,6,clock,0.577,"[448.2, 120.8, 461.4, 142.0]",True,,True,작은 대상; yolo26n-seg.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf050.json
+coco_000000000139.jpg,yolo26n.pt,0.5,7,refrigerator,0.5589,"[447.7, 168.1, 512.5, 293.5]",True,,True,yolo26n-seg.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000000139__det__conf050.json
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,0,tv,0.9069,"[5.8, 166.9, 155.4, 262.3]",True,0.988,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__0.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,1,chair,0.7709,"[293.2, 217.2, 352.9, 319.9]",True,0.976,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__1.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,2,chair,0.7081,"[364.1, 218.0, 417.7, 312.1]",True,0.969,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__2.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,3,person,0.6562,"[427.0, 156.1, 467.2, 298.1]",True,0.968,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__3.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,4,chair,0.6555,"[407.5, 220.1, 444.5, 305.7]",True,0.96,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__4.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,5,chair,0.623,"[215.6, 232.1, 295.7, 315.8]",True,0.978,True,yolo26n.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__5.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,6,tv,0.5034,"[555.1, 208.1, 639.6, 287.4]",True,0.966,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__6.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,7,refrigerator,0.4254,"[489.9, 169.2, 513.8, 285.0]",True,0.981,True,낮은 점수(<0.50); yolo26n.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__7.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,8,potted plant,0.4122,"[228.3, 173.5, 266.4, 212.9]",True,0.952,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__8.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,9,refrigerator,0.3878,"[448.5, 169.0, 506.3, 293.5]",True,0.976,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__9.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,10,vase,0.3836,"[549.4, 303.7, 586.6, 399.9]",True,0.969,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__10.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.25,11,clock,0.2846,"[448.3, 120.6, 461.1, 142.1]",True,0.835,True,낮은 점수(<0.50); 작은 대상,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf025.json, masks/coco_000000000139__seg__conf025__11.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.5,0,tv,0.9069,"[5.8, 166.9, 155.4, 262.3]",True,0.988,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf050.json, masks/coco_000000000139__seg__conf050__0.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.5,1,chair,0.7709,"[293.2, 217.2, 352.9, 319.9]",True,0.976,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf050.json, masks/coco_000000000139__seg__conf050__1.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.5,2,chair,0.7081,"[364.1, 218.0, 417.7, 312.1]",True,0.969,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf050.json, masks/coco_000000000139__seg__conf050__2.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.5,3,person,0.6562,"[427.0, 156.1, 467.2, 298.1]",True,0.968,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf050.json, masks/coco_000000000139__seg__conf050__3.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.5,4,chair,0.6555,"[407.5, 220.1, 444.5, 305.7]",True,0.96,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf050.json, masks/coco_000000000139__seg__conf050__4.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.5,5,chair,0.623,"[215.6, 232.1, 295.7, 315.8]",True,0.978,True,yolo26n.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf050.json, masks/coco_000000000139__seg__conf050__5.png"
+coco_000000000139.jpg,yolo26n-seg.pt,0.5,6,tv,0.5034,"[555.1, 208.1, 639.6, 287.4]",True,0.966,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000000139__seg__conf050.json, masks/coco_000000000139__seg__conf050__6.png"
+coco_000000001000.jpg,yolo26n.pt,0.25,0,person,0.9074,"[504.8, 190.9, 640.0, 480.0]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,1,person,0.8729,"[116.3, 150.2, 197.8, 379.9]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,2,person,0.8607,"[407.0, 210.0, 521.3, 479.8]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,3,person,0.8114,"[265.5, 98.0, 354.5, 408.2]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,4,person,0.7985,"[326.2, 152.5, 415.6, 470.2]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,5,person,0.7797,"[45.7, 186.4, 111.7, 394.2]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,6,person,0.7348,"[436.3, 107.5, 497.6, 221.4]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,7,person,0.7179,"[202.1, 176.2, 291.9, 419.9]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,8,person,0.6025,"[387.8, 158.4, 464.4, 471.5]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,9,person,0.4463,"[192.0, 120.7, 270.7, 279.0]",True,,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,10,tennis racket,0.3989,"[46.9, 294.7, 94.5, 396.9]",True,,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,11,tennis racket,0.3751,"[197.2, 219.5, 275.9, 337.4]",True,,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.25,12,person,0.2768,"[405.8, 120.1, 443.0, 168.0]",True,,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf025.json
+coco_000000001000.jpg,yolo26n.pt,0.5,0,person,0.9074,"[504.8, 190.9, 640.0, 480.0]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf050.json
+coco_000000001000.jpg,yolo26n.pt,0.5,1,person,0.8729,"[116.3, 150.2, 197.8, 379.9]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf050.json
+coco_000000001000.jpg,yolo26n.pt,0.5,2,person,0.8607,"[407.0, 210.0, 521.3, 479.8]",True,,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf050.json
+coco_000000001000.jpg,yolo26n.pt,0.5,3,person,0.8114,"[265.5, 98.0, 354.5, 408.2]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf050.json
+coco_000000001000.jpg,yolo26n.pt,0.5,4,person,0.7985,"[326.2, 152.5, 415.6, 470.2]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf050.json
+coco_000000001000.jpg,yolo26n.pt,0.5,5,person,0.7797,"[45.7, 186.4, 111.7, 394.2]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf050.json
+coco_000000001000.jpg,yolo26n.pt,0.5,6,person,0.7348,"[436.3, 107.5, 497.6, 221.4]",True,,True,yolo26n-seg.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf050.json
+coco_000000001000.jpg,yolo26n.pt,0.5,7,person,0.7179,"[202.1, 176.2, 291.9, 419.9]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf050.json
+coco_000000001000.jpg,yolo26n.pt,0.5,8,person,0.6025,"[387.8, 158.4, 464.4, 471.5]",True,,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),json/coco_000000001000__det__conf050.json
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,0,person,0.8785,"[504.5, 190.7, 639.5, 479.0]",True,0.988,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__0.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,1,person,0.8625,"[117.0, 149.0, 197.8, 380.9]",True,0.981,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__1.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,2,person,0.8397,"[326.7, 156.2, 416.7, 470.7]",True,0.99,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__2.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,3,person,0.8371,"[408.0, 203.8, 522.5, 479.8]",True,0.994,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__3.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,4,person,0.8232,"[264.1, 97.1, 354.6, 413.3]",True,0.981,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__4.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,5,person,0.6752,"[393.3, 157.7, 466.9, 457.7]",True,0.936,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__5.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,6,person,0.6679,"[43.3, 187.0, 108.3, 394.8]",True,0.947,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__6.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,7,person,0.5854,"[214.4, 174.9, 289.9, 418.4]",True,0.964,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__7.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,8,tennis racket,0.509,"[47.4, 292.6, 96.7, 396.7]",True,0.919,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__8.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,9,person,0.4986,"[437.1, 107.9, 497.5, 223.2]",True,0.966,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__9.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,10,person,0.4542,"[190.0, 119.3, 276.2, 403.2]",True,0.96,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__10.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,11,tennis racket,0.4166,"[196.2, 175.5, 281.9, 334.5]",True,0.983,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__11.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,12,person,0.3509,"[406.0, 119.0, 443.2, 168.8]",True,0.956,True,낮은 점수(<0.50),없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__12.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,13,person,0.299,"[350.7, 121.5, 401.6, 209.9]",True,0.98,True,낮은 점수(<0.50); yolo26n.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__13.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,14,tennis racket,0.2756,"[217.6, 225.7, 271.0, 303.5]",True,0.982,True,낮은 점수(<0.50); yolo26n.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__14.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.25,15,sports ball,0.268,"[210.1, 423.7, 232.3, 442.6]",True,0.898,True,낮은 점수(<0.50); 작은 대상; yolo26n.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf025.json, masks/coco_000000001000__seg__conf025__15.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.5,0,person,0.8785,"[504.5, 190.7, 639.5, 479.0]",True,0.988,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf050.json, masks/coco_000000001000__seg__conf050__0.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.5,1,person,0.8625,"[117.0, 149.0, 197.8, 380.9]",True,0.981,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf050.json, masks/coco_000000001000__seg__conf050__1.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.5,2,person,0.8397,"[326.7, 156.2, 416.7, 470.7]",True,0.99,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf050.json, masks/coco_000000001000__seg__conf050__2.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.5,3,person,0.8371,"[408.0, 203.8, 522.5, 479.8]",True,0.994,True,사진 가장자리에 닿음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf050.json, masks/coco_000000001000__seg__conf050__3.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.5,4,person,0.8232,"[264.1, 97.1, 354.6, 413.3]",True,0.981,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf050.json, masks/coco_000000001000__seg__conf050__4.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.5,5,person,0.6752,"[393.3, 157.7, 466.9, 457.7]",True,0.936,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf050.json, masks/coco_000000001000__seg__conf050__5.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.5,6,person,0.6679,"[43.3, 187.0, 108.3, 394.8]",True,0.947,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf050.json, masks/coco_000000001000__seg__conf050__6.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.5,7,person,0.5854,"[214.4, 174.9, 289.9, 418.4]",True,0.964,False,,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf050.json, masks/coco_000000001000__seg__conf050__7.png"
+coco_000000001000.jpg,yolo26n-seg.pt,0.5,8,tennis racket,0.509,"[47.4, 292.6, 96.7, 396.7]",True,0.919,True,yolo26n.pt 에서 못 찾음,없음 (좌표는 소수 첫째 자리 반올림만 적용),"json/coco_000000001000__seg__conf050.json, masks/coco_000000001000__seg__conf050__8.png"

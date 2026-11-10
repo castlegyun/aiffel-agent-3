@@ -1,0 +1,172 @@
+{
+  "image": "inputs/coco_000000000139.jpg",
+  "image_size": {
+    "width": 640,
+    "height": 426
+  },
+  "model": "yolo26n.pt",
+  "settings": {
+    "imgsz": 640,
+    "device": "cpu",
+    "conf": 0.25
+  },
+  "n_detections": 13,
+  "detections": [
+    {
+      "id": 0,
+      "class_id": 62,
+      "class_name": "tv",
+      "score": 0.8555,
+      "box_xyxy": [
+        6.3,
+        166.8,
+        156.0,
+        261.0
+      ]
+    },
+    {
+      "id": 1,
+      "class_id": 56,
+      "class_name": "chair",
+      "score": 0.8393,
+      "box_xyxy": [
+        292.1,
+        216.3,
+        353.4,
+        316.3
+      ]
+    },
+    {
+      "id": 2,
+      "class_id": 56,
+      "class_name": "chair",
+      "score": 0.7195,
+      "box_xyxy": [
+        361.8,
+        218.5,
+        415.0,
+        308.6
+      ]
+    },
+    {
+      "id": 3,
+      "class_id": 62,
+      "class_name": "tv",
+      "score": 0.6941,
+      "box_xyxy": [
+        558.5,
+        207.8,
+        639.8,
+        291.3
+      ]
+    },
+    {
+      "id": 4,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.6791,
+      "box_xyxy": [
+        421.6,
+        157.1,
+        464.0,
+        298.5
+      ]
+    },
+    {
+      "id": 5,
+      "class_id": 56,
+      "class_name": "chair",
+      "score": 0.6527,
+      "box_xyxy": [
+        408.0,
+        220.9,
+        444.7,
+        306.4
+      ]
+    },
+    {
+      "id": 6,
+      "class_id": 74,
+      "class_name": "clock",
+      "score": 0.577,
+      "box_xyxy": [
+        448.2,
+        120.8,
+        461.4,
+        142.0
+      ]
+    },
+    {
+      "id": 7,
+      "class_id": 72,
+      "class_name": "refrigerator",
+      "score": 0.5589,
+      "box_xyxy": [
+        447.7,
+        168.1,
+        512.5,
+        293.5
+      ]
+    },
+    {
+      "id": 8,
+      "class_id": 75,
+      "class_name": "vase",
+      "score": 0.4387,
+      "box_xyxy": [
+        550.0,
+        300.3,
+        587.2,
+        399.1
+      ]
+    },
+    {
+      "id": 9,
+      "class_id": 58,
+      "class_name": "potted plant",
+      "score": 0.427,
+      "box_xyxy": [
+        333.8,
+        174.7,
+        367.5,
+        219.0
+      ]
+    },
+    {
+      "id": 10,
+      "class_id": 58,
+      "class_name": "potted plant",
+      "score": 0.3966,
+      "box_xyxy": [
+        228.3,
+        175.9,
+        267.1,
+        212.7
+      ]
+    },
+    {
+      "id": 11,
+      "class_id": 75,
+      "class_name": "vase",
+      "score": 0.2868,
+      "box_xyxy": [
+        240.4,
+        197.5,
+        252.2,
+        212.4
+      ]
+    },
+    {
+      "id": 12,
+      "class_id": 60,
+      "class_name": "dining table",
+      "score": 0.2609,
+      "box_xyxy": [
+        292.4,
+        213.5,
+        448.7,
+        298.7
+      ]
+    }
+  ]
+}

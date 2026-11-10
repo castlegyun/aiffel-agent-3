@@ -1,0 +1,124 @@
+{
+  "image": "inputs/coco_000000001000.jpg",
+  "image_size": {
+    "width": 640,
+    "height": 480
+  },
+  "model": "yolo26n.pt",
+  "settings": {
+    "imgsz": 640,
+    "device": "cpu",
+    "conf": 0.5
+  },
+  "n_detections": 9,
+  "detections": [
+    {
+      "id": 0,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.9074,
+      "box_xyxy": [
+        504.8,
+        190.9,
+        640.0,
+        480.0
+      ]
+    },
+    {
+      "id": 1,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.8729,
+      "box_xyxy": [
+        116.3,
+        150.2,
+        197.8,
+        379.9
+      ]
+    },
+    {
+      "id": 2,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.8607,
+      "box_xyxy": [
+        407.0,
+        210.0,
+        521.3,
+        479.8
+      ]
+    },
+    {
+      "id": 3,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.8114,
+      "box_xyxy": [
+        265.5,
+        98.0,
+        354.5,
+        408.2
+      ]
+    },
+    {
+      "id": 4,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.7985,
+      "box_xyxy": [
+        326.2,
+        152.5,
+        415.6,
+        470.2
+      ]
+    },
+    {
+      "id": 5,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.7797,
+      "box_xyxy": [
+        45.7,
+        186.4,
+        111.7,
+        394.2
+      ]
+    },
+    {
+      "id": 6,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.7348,
+      "box_xyxy": [
+        436.3,
+        107.5,
+        497.6,
+        221.4
+      ]
+    },
+    {
+      "id": 7,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.7179,
+      "box_xyxy": [
+        202.1,
+        176.2,
+        291.9,
+        419.9
+      ]
+    },
+    {
+      "id": 8,
+      "class_id": 0,
+      "class_name": "person",
+      "score": 0.6025,
+      "box_xyxy": [
+        387.8,
+        158.4,
+        464.4,
+        471.5
+      ]
+    }
+  ]
+}

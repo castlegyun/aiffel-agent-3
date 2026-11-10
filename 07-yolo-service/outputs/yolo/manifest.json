@@ -1,0 +1,473 @@
+{
+  "created_at": "2026-11-10T16:04:26+09:00",
+  "finished_at": "2026-11-10T16:04:34+09:00",
+  "run_location": "로컬 PC (클라우드 아님)",
+  "environment": {
+    "run_location": "로컬 PC (클라우드 아님)",
+    "os": "Windows-10-10.0.19045-SP0",
+    "cpu": "Intel64 Family 6 Model 165 Stepping 5, GenuineIntel",
+    "python": "3.14.0",
+    "device_used": "cpu",
+    "torch_cuda_available": false,
+    "torch_build": "2.10.0+cpu",
+    "packages": {
+      "ultralytics": "8.4.208",
+      "torch": "2.10.0",
+      "torchvision": "0.25.0",
+      "numpy": "2.4.2",
+      "opencv-python": "4.13.0.92",
+      "pillow": "12.0.0",
+      "pandas": "3.1.1",
+      "matplotlib": "3.11.2"
+    }
+  },
+  "settings": {
+    "imgsz": 640,
+    "device": "cpu",
+    "conf": [
+      0.25,
+      0.5
+    ]
+  },
+  "models": {
+    "det": {
+      "file": "models/yolo26n.pt",
+      "bytes": 5544453,
+      "sha256": "9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef",
+      "task": "detect",
+      "n_classes": 80
+    },
+    "seg": {
+      "file": "models/yolo26n-seg.pt",
+      "bytes": 6719965,
+      "sha256": "361fbfabab285c3237700b6bb91d7ecfa602cd945fffda8dbe1242829b71e73f",
+      "task": "segment",
+      "n_classes": 80
+    }
+  },
+  "inputs": [
+    {
+      "file": "inputs/bus.jpg",
+      "bytes": 137419,
+      "sha256": "c02019c4979c191eb739ddd944445ef408dad5679acab6fd520ef9d434bfbc63",
+      "width": 810,
+      "height": 1080,
+      "source_url": null
+    },
+    {
+      "file": "inputs/coco_000000000139.jpg",
+      "bytes": 161811,
+      "sha256": "ffe0f0cec3b2e27aab1967229cdf0a0d7751dcdd5800322f0b8ac0dffb3b8a8d",
+      "width": 640,
+      "height": 426,
+      "source_url": null
+    },
+    {
+      "file": "inputs/coco_000000001000.jpg",
+      "bytes": 321136,
+      "sha256": "24bb77a31928404e45a0454b06f6a0bd54a8db103590c9d7917288a1e0269f05",
+      "width": 640,
+      "height": 480,
+      "source_url": null
+    }
+  ],
+  "code": {
+    "notebook": "yolo_service.ipynb",
+    "code_copy": "outputs/yolo/code/yolo_service_code.py",
+    "code_copy_sha256": "98eff98a239bb03ada2b46476b0a4f07396b76f7104bff56e4e1177333ad30a7"
+  },
+  "results_summary": {
+    "images_processed": 3,
+    "detections": {
+      "yolo26n.pt@0.25": 31,
+      "yolo26n.pt@0.5": 22,
+      "yolo26n-seg.pt@0.25": 33,
+      "yolo26n-seg.pt@0.5": 21
+    },
+    "review_rows": 107,
+    "review_needs_check": 50
+  },
+  "outputs": [
+    {
+      "file": "outputs/yolo/code/yolo_service_code.py",
+      "bytes": 14967
+    },
+    {
+      "file": "outputs/yolo/comparison__bus.png",
+      "bytes": 3127070
+    },
+    {
+      "file": "outputs/yolo/comparison__coco_000000000139.png",
+      "bytes": 1518954
+    },
+    {
+      "file": "outputs/yolo/comparison__coco_000000001000.png",
+      "bytes": 2385313
+    },
+    {
+      "file": "outputs/yolo/images/bus__det__conf025.jpg",
+      "bytes": 362924
+    },
+    {
+      "file": "outputs/yolo/images/bus__det__conf050.jpg",
+      "bytes": 362924
+    },
+    {
+      "file": "outputs/yolo/images/bus__seg__conf025.jpg",
+      "bytes": 352372
+    },
+    {
+      "file": "outputs/yolo/images/bus__seg__conf050.jpg",
+      "bytes": 352372
+    },
+    {
+      "file": "outputs/yolo/images/coco_000000000139__det__conf025.jpg",
+      "bytes": 123667
+    },
+    {
+      "file": "outputs/yolo/images/coco_000000000139__det__conf050.jpg",
+      "bytes": 118426
+    },
+    {
+      "file": "outputs/yolo/images/coco_000000000139__seg__conf025.jpg",
+      "bytes": 118671
+    },
+    {
+      "file": "outputs/yolo/images/coco_000000000139__seg__conf050.jpg",
+      "bytes": 111243
+    },
+    {
+      "file": "outputs/yolo/images/coco_000000001000__det__conf025.jpg",
+      "bytes": 220055
+    },
+    {
+      "file": "outputs/yolo/images/coco_000000001000__det__conf050.jpg",
+      "bytes": 215805
+    },
+    {
+      "file": "outputs/yolo/images/coco_000000001000__seg__conf025.jpg",
+      "bytes": 208470
+    },
+    {
+      "file": "outputs/yolo/images/coco_000000001000__seg__conf050.jpg",
+      "bytes": 200028
+    },
+    {
+      "file": "outputs/yolo/json/bus__det__conf025.json",
+      "bytes": 1246
+    },
+    {
+      "file": "outputs/yolo/json/bus__det__conf050.json",
+      "bytes": 1245
+    },
+    {
+      "file": "outputs/yolo/json/bus__seg__conf025.json",
+      "bytes": 1736
+    },
+    {
+      "file": "outputs/yolo/json/bus__seg__conf050.json",
+      "bytes": 1735
+    },
+    {
+      "file": "outputs/yolo/json/coco_000000000139__det__conf025.json",
+      "bytes": 2897
+    },
+    {
+      "file": "outputs/yolo/json/coco_000000000139__det__conf050.json",
+      "bytes": 1869
+    },
+    {
+      "file": "outputs/yolo/json/coco_000000000139__seg__conf025.json",
+      "bytes": 4015
+    },
+    {
+      "file": "outputs/yolo/json/coco_000000000139__seg__conf050.json",
+      "bytes": 2436
+    },
+    {
+      "file": "outputs/yolo/json/coco_000000001000__det__conf025.json",
+      "bytes": 2893
+    },
+    {
+      "file": "outputs/yolo/json/coco_000000001000__det__conf050.json",
+      "bytes": 2070
+    },
+    {
+      "file": "outputs/yolo/json/coco_000000001000__seg__conf025.json",
+      "bytes": 5284
+    },
+    {
+      "file": "outputs/yolo/json/coco_000000001000__seg__conf050.json",
+      "bytes": 3074
+    },
+    {
+      "file": "outputs/yolo/masks/bus__seg__conf025__0.png",
+      "bytes": 5711
+    },
+    {
+      "file": "outputs/yolo/masks/bus__seg__conf025__1.png",
+      "bytes": 4377
+    },
+    {
+      "file": "outputs/yolo/masks/bus__seg__conf025__2.png",
+      "bytes": 7115
+    },
+    {
+      "file": "outputs/yolo/masks/bus__seg__conf025__3.png",
+      "bytes": 4592
+    },
+    {
+      "file": "outputs/yolo/masks/bus__seg__conf025__4.png",
+      "bytes": 3984
+    },
+    {
+      "file": "outputs/yolo/masks/bus__seg__conf050__0.png",
+      "bytes": 5711
+    },
+    {
+      "file": "outputs/yolo/masks/bus__seg__conf050__1.png",
+      "bytes": 4377
+    },
+    {
+      "file": "outputs/yolo/masks/bus__seg__conf050__2.png",
+      "bytes": 7115
+    },
+    {
+      "file": "outputs/yolo/masks/bus__seg__conf050__3.png",
+      "bytes": 4592
+    },
+    {
+      "file": "outputs/yolo/masks/bus__seg__conf050__4.png",
+      "bytes": 3984
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__0.png",
+      "bytes": 1421
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__1.png",
+      "bytes": 1676
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__10.png",
+      "bytes": 1443
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__11.png",
+      "bytes": 1123
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__2.png",
+      "bytes": 1603
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__3.png",
+      "bytes": 1593
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__4.png",
+      "bytes": 1487
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__5.png",
+      "bytes": 1423
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__6.png",
+      "bytes": 1252
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__7.png",
+      "bytes": 1443
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__8.png",
+      "bytes": 1212
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf025__9.png",
+      "bytes": 1650
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf050__0.png",
+      "bytes": 1421
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf050__1.png",
+      "bytes": 1676
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf050__2.png",
+      "bytes": 1603
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf050__3.png",
+      "bytes": 1593
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf050__4.png",
+      "bytes": 1487
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf050__5.png",
+      "bytes": 1423
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000000139__seg__conf050__6.png",
+      "bytes": 1252
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__0.png",
+      "bytes": 2450
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__1.png",
+      "bytes": 2414
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__10.png",
+      "bytes": 2390
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__11.png",
+      "bytes": 2120
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__12.png",
+      "bytes": 1371
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__13.png",
+      "bytes": 1657
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__14.png",
+      "bytes": 1545
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__15.png",
+      "bytes": 1240
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__2.png",
+      "bytes": 2746
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__3.png",
+      "bytes": 2478
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__4.png",
+      "bytes": 2805
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__5.png",
+      "bytes": 2358
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__6.png",
+      "bytes": 2100
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__7.png",
+      "bytes": 2691
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__8.png",
+      "bytes": 1585
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf025__9.png",
+      "bytes": 1650
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf050__0.png",
+      "bytes": 2450
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf050__1.png",
+      "bytes": 2414
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf050__2.png",
+      "bytes": 2746
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf050__3.png",
+      "bytes": 2478
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf050__4.png",
+      "bytes": 2805
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf050__5.png",
+      "bytes": 2358
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf050__6.png",
+      "bytes": 2100
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf050__7.png",
+      "bytes": 2691
+    },
+    {
+      "file": "outputs/yolo/masks/coco_000000001000__seg__conf050__8.png",
+      "bytes": 1585
+    },
+    {
+      "file": "outputs/yolo/review.csv",
+      "bytes": 25431
+    },
+    {
+      "file": "outputs/yolo/verify/bus__det__conf025__from_json.jpg",
+      "bytes": 348387
+    },
+    {
+      "file": "outputs/yolo/verify/bus__det__conf050__from_json.jpg",
+      "bytes": 352739
+    },
+    {
+      "file": "outputs/yolo/verify/bus__seg__conf025__from_json.jpg",
+      "bytes": 335061
+    },
+    {
+      "file": "outputs/yolo/verify/bus__seg__conf050__from_json.jpg",
+      "bytes": 339110
+    },
+    {
+      "file": "outputs/yolo/verify/coco_000000000139__det__conf025__from_json.jpg",
+      "bytes": 118504
+    },
+    {
+      "file": "outputs/yolo/verify/coco_000000000139__det__conf050__from_json.jpg",
+      "bytes": 116708
+    },
+    {
+      "file": "outputs/yolo/verify/coco_000000000139__seg__conf025__from_json.jpg",
+      "bytes": 113088
+    },
+    {
+      "file": "outputs/yolo/verify/coco_000000000139__seg__conf050__from_json.jpg",
+      "bytes": 109024
+    },
+    {
+      "file": "outputs/yolo/verify/coco_000000001000__det__conf025__from_json.jpg",
+      "bytes": 220852
+    },
+    {
+      "file": "outputs/yolo/verify/coco_000000001000__det__conf050__from_json.jpg",
+      "bytes": 216326
+    },
+    {
+      "file": "outputs/yolo/verify/coco_000000001000__seg__conf025__from_json.jpg",
+      "bytes": 199400
+    },
+    {
+      "file": "outputs/yolo/verify/coco_000000001000__seg__conf050__from_json.jpg",
+      "bytes": 194088
+    }
+  ],
+  "limitations": "정답 라벨 없음: 정확도 미평가. COCO 80 클래스 범위. 자세한 내용은 노트북 8번 칸."
+}
