@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>탐지 모델 재기 아주 쉽게</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#222; --muted:#666; --line:#ddd; --accent:#2f6fed; --card:#fff; --hot:#e8590c; --dim:#eee; --lamp:#f2c94c; --hat:#9aa5b1; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --fg:#eee; --muted:#aaa; --line:#3a3a38; --accent:#7aa2ff; --card:#262624; --hot:#ffa94d; --dim:#2e2e2c; --lamp:#d9b23a; --hat:#6b7682; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 system-ui, "Malgun Gothic", sans-serif; word-break:keep-all; overflow-wrap:break-word; }
+  main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.8rem; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 24px; }
+  h2 { font-size:1.2rem; margin:32px 0 10px; }
+  h2 .no { display:inline-block; width:1.6em; height:1.6em; line-height:1.6em; text-align:center; border-radius:50%; background:var(--accent); color:var(--bg); font-size:.85rem; margin-right:6px; vertical-align:2px; }
+  .note { color:var(--muted); font-size:.85rem; margin:6px 0 0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; }
+  .big { font-size:1.2rem; font-weight:700; margin:10px 0 0; }
+  .small { color:var(--muted); font-size:.95rem; margin:0 0 8px; }
+  .ok { color:var(--accent); font-weight:700; }
+  .hotword { color:var(--hot); font-weight:700; }
+  .eq { font-family:Consolas, monospace; font-size:1.05rem; font-weight:700; margin:8px 0; }
+  .eq .r { color:var(--hot); }
+  svg { width:100%; height:auto; display:block; }
+  .s-ok { fill:none; stroke:var(--accent); stroke-width:3; }
+  .s-bad { fill:none; stroke:var(--hot); stroke-width:3; }
+  .s-miss { fill:none; stroke:var(--muted); stroke-width:2; stroke-dasharray:6,5; }
+  .s-gt { fill:none; stroke:var(--muted); stroke-width:3; }
+  .s-pred { fill:none; stroke:var(--fg); stroke-width:2; }
+  .hat { fill:var(--hat); }
+  .lamp { fill:var(--lamp); }
+  .t { fill:var(--fg); font:600 15px system-ui, "Malgun Gothic", sans-serif; text-anchor:middle; }
+  .tm { fill:var(--muted); font:400 14px system-ui, "Malgun Gothic", sans-serif; text-anchor:middle; }
+  .frame { fill:var(--dim); stroke:var(--line); }
+  /* 폰 너비에서 그림이 줄어도 글씨가 읽히게 크게 둔다 */
+  svg .t { font-size:19px; } svg .tm { font-size:18px; }
+  .axis { stroke:var(--muted); stroke-width:1.5; fill:none; }
+  .curve { stroke:var(--accent); stroke-width:2.5; fill:none; stroke-dasharray:7,5; }
+  .area { fill:var(--accent); opacity:.15; }
+  .pt { fill:var(--hot); }
+  .three { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:10px; }
+  @media (max-width:560px) { .three { grid-template-columns:1fr; } }
+  .three .card { text-align:center; padding:10px; }
+  .three .mark { font-size:1.6rem; font-weight:700; margin:0; }
+  .sqrow { display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin:8px 0; }
+  .sqrow .lab { width:100%; font-weight:700; font-size:.95rem; }
+  .sq { width:24px; height:24px; border-radius:4px; display:inline-block; }
+  .sq.ok { background:var(--accent); }
+  .sq.bad { background:var(--hot); }
+  .sq.miss { border:2px dashed var(--muted); }
+  .sqrow .res { margin-left:8px; font-family:Consolas, monospace; font-weight:700; }
+</style>
+</head>
+<body>
+<main>
+  <h1>탐지 모델 재기, 아주 쉽게</h1>
+  <p class="lead">박스 개수를 세지 않는다. 정답과 하나씩 맞춰 보고 맞힌 것, 잘못 찾은 것, 놓친 것을 센다.</p>
+
+  <h2><span class="no">1</span>사진 한 장, 박스 10개</h2>
+  <div class="card">
+    <p class="small">원문 예시: 안전모 쓴 작업자 10명. 모델이 박스 10개를 그렸다.</p>
+    <svg viewBox="0 0 600 270" role="img" aria-label="안전모 10개 중 8개에 맞는 박스, 조명 2개에 틀린 박스, 안전모 2개는 박스 없음">
+      <rect class="frame" x="2" y="2" width="596" height="266" rx="10"/>
+      <circle class="lamp" cx="150" cy="44" r="16"/><rect class="s-bad" x="124" y="18" width="52" height="52" rx="4"/>
+      <circle class="lamp" cx="450" cy="44" r="16"/><rect class="s-bad" x="424" y="18" width="52" height="52" rx="4"/>
+      <text class="tm" x="300" y="50">조명 2곳에도 박스</text>
+      <g>
+        <circle class="hat" cx="60" cy="130" r="18"/><rect class="s-ok" x="34" y="104" width="52" height="52" rx="4"/>
+        <circle class="hat" cx="170" cy="130" r="18"/><rect class="s-ok" x="144" y="104" width="52" height="52" rx="4"/>
+        <circle class="hat" cx="280" cy="130" r="18"/><rect class="s-ok" x="254" y="104" width="52" height="52" rx="4"/>
+        <circle class="hat" cx="390" cy="130" r="18"/><rect class="s-ok" x="364" y="104" width="52" height="52" rx="4"/>
+        <circle class="hat" cx="530" cy="130" r="18"/><circle class="s-miss" cx="530" cy="130" r="28"/>
+        <circle class="hat" cx="60" cy="210" r="18"/><rect class="s-ok" x="34" y="184" width="52" height="52" rx="4"/>
+        <circle class="hat" cx="170" cy="210" r="18"/><rect class="s-ok" x="144" y="184" width="52" height="52" rx="4"/>
+        <circle class="hat" cx="280" cy="210" r="18"/><rect class="s-ok" x="254" y="184" width="52" height="52" rx="4"/>
+        <circle class="hat" cx="390" cy="210" r="18"/><rect class="s-ok" x="364" y="184" width="52" height="52" rx="4"/>
+        <circle class="hat" cx="530" cy="210" r="18"/><circle class="s-miss" cx="530" cy="210" r="28"/>
+      </g>
+      <text class="tm" x="530" y="258">박스 없음</text>
+      <text class="tm" x="212" y="258">회색 = 안전모</text>
+    </svg>
+    <div class="three">
+      <div class="card"><p class="mark ok">8</p>맞힘<br><span class="small">TP(티피)</span></div>
+      <div class="card"><p class="mark hotword">2</p>잘못 낸 박스 = 오탐<br><span class="small">FP(에프피)</span></div>
+      <div class="card"><p class="mark" style="color:var(--muted)">2</p>놓침 = 미탐<br><span class="small">FN(에프엔)</span></div>
+    </div>
+    <p class="big">박스도 10개, 안전모도 10개. 그래도 다 맞은 게 아니다.</p>
+  </div>
+
+  <h2><span class="no">2</span>무엇으로 나누느냐가 다르다</h2>
+  <div class="card">
+    <div class="sqrow"><span class="lab">정밀도: 모델이 낸 박스 10개 중 맞힌 것</span>
+      <span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq bad"></span><span class="sq bad"></span><span class="res">8 ÷ 10 = 0.8</span></div>
+    <div class="sqrow"><span class="lab">재현율: 실제 안전모 10개 중 맞힌 것</span>
+      <span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq miss"></span><span class="sq miss"></span><span class="res">8 ÷ 10 = 0.8</span></div>
+    <p class="big">정밀도는 <span class="hotword">오탐</span>이 늘면, 재현율은 <span style="color:var(--muted)">미탐</span>이 늘면 떨어진다.</p>
+    <p class="note">파랑 = 맞힘, 주황 = 오탐, 점선 = 미탐. 둘 다 0.8인 것은 오탐과 미탐이 2개씩이라서다.</p>
+  </div>
+
+  <h2><span class="no">3</span>박스 점수 임계값을 올리면</h2>
+  <div class="card">
+    <p class="small">점수가 낮은 박스 4개가 빠졌다: 조명 박스 2개 + 진짜 안전모 박스 2개 (원문 예시)</p>
+    <div class="sqrow"><span class="lab">정밀도</span>
+      <span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="res">6 ÷ 6 = 1.0</span></div>
+    <div class="sqrow"><span class="lab">재현율</span>
+      <span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq ok"></span><span class="sq miss"></span><span class="sq miss"></span><span class="sq miss"></span><span class="sq miss"></span><span class="res">6 ÷ 10 = 0.6</span></div>
+    <p class="big">틀린 박스는 사라졌지만, 놓친 안전모가 4개가 됐다.</p>
+    <p class="note">같은 모델인데 임계값만 바꿔도 두 숫자가 바뀐다. 그래서 임계값 하나의 숫자로는 모델끼리 비교하기 어렵다.</p>
+  </div>
+
+  <h2><span class="no">4</span>임계값을 여러 번 바꿔 점을 찍는다</h2>
+  <div class="card">
+    <svg viewBox="0 0 600 300" role="img" aria-label="가로 재현율, 세로 정밀도 그래프. 두 점을 지나는 곡선과 그 아래 넓이가 AP">
+      <path class="area" d="M80 40 H368 C 420 40, 440 60, 464 82 S 510 180, 520 250 L 80 250 Z"/>
+      <path class="curve" d="M80 40 H368 C 420 40, 440 60, 464 82 S 510 180, 520 250"/>
+      <path class="axis" d="M80 20 V250 H560"/>
+      <text class="tm" x="320" y="285">재현율 →</text>
+      <text class="tm" x="86" y="15" style="text-anchor:start">정밀도 ↑</text>
+      <text class="tm" x="70" y="255" style="text-anchor:end">0</text>
+      <circle class="pt" cx="368" cy="40" r="7"/><text class="t" x="352" y="72" style="text-anchor:end">임계값 높게 (재현율 0.6, 정밀도 1.0)</text>
+      <circle class="pt" cx="464" cy="82" r="7"/><text class="t" x="448" y="114" style="text-anchor:end">임계값 낮게 (재현율 0.8, 정밀도 0.8)</text>
+      <text class="tm" x="70" y="45" style="text-anchor:end">1</text>
+      <text class="tm" x="560" y="268">1</text>
+      <text class="t" x="230" y="200">이 그래프 넓이 = AP(에이피)</text>
+    </svg>
+    <p class="note">두 점은 원문 예시 값으로, 눈금에 맞춰 찍었다. 두 점을 빼면 곡선 모양은 설명용으로 그린 것이다. 실제로는 평가 자료 전체에서 임계값마다 점을 구한다.</p>
+    <p class="big">클래스마다 AP를 하나씩 구해 평균 내면 mAP(엠에이피)다.</p>
+    <p class="eq">원문 예시: 안전모 AP <span class="r">0.8</span>, 조끼 AP <span class="r">0.6</span> → mAP = (0.8 + 0.6) ÷ 2 = <span class="r">0.7</span></p>
+  </div>
+
+  <h2><span class="no">5</span>“맞혔다”를 정하는 겹침 기준</h2>
+  <div class="card">
+    <svg viewBox="0 0 600 170" role="img" aria-label="정답 박스와 예측 박스가 겹친 부분, IoU는 겹친 넓이 나누기 합친 넓이">
+      <rect class="s-gt" x="140" y="30" width="140" height="110"/>
+      <rect class="s-pred" x="200" y="50" width="140" height="110"/>
+      <rect x="200" y="50" width="80" height="90" style="fill:var(--muted);opacity:.3"/>
+      <text class="tm" x="140" y="22" style="text-anchor:start">정답 박스</text>
+      <text class="tm" x="345" y="165" style="text-anchor:start">모델 박스</text>
+      <text class="t" x="470" y="90">IoU(아이오유)</text>
+      <text class="t" x="470" y="114">= 겹친 넓이 ÷ 합친 넓이</text>
+    </svg>
+    <p class="big">클래스가 맞고 IoU가 겹침 기준(예: 0.5) 이상이어야 “맞힘”이다.</p>
+    <p class="note">mAP@0.5의 0.5는 이 겹침 기준이다. 3번의 박스 점수 임계값과 다른 숫자다. 여기 넓이는 박스의 넓이(픽셀)이고, 4번의 AP는 그래프의 넓이다.</p>
+  </div>
+</main>
+</body>
+</html>
