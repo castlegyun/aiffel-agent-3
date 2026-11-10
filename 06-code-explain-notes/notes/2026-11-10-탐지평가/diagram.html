@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>박스에서 mAP까지</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper:       #f5f5f5;
+      --ink:         #2d3142;
+      --muted:       #4f5d75;
+      --accent:      #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --node-fill:   #ffffff;
+      --node-stroke: #2d3142;
+      --font-sans:   'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:  'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:   'Geist Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:       #2d3142;
+        --ink:         #f5f5f5;
+        --muted:       #bfc0c0;
+        --accent:      #f08a59;
+        --accent-tint: rgba(240,138,89,0.10);
+        --node-fill:   rgba(245,245,245,0.04);
+        --node-stroke: rgba(245,245,245,0.45);
+      }
+    }
+    body { font-family: var(--font-sans); background: var(--paper); color: var(--ink); min-height: 100vh; padding: 1.5rem 1rem; }
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 1rem; }
+    .caption { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; }
+    svg { width: 100%; min-width: 768px; display: block; }
+    .paper  { fill: var(--paper); }
+    .node   { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1; }
+    .focal  { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2; }
+    .line   { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .dash   { stroke-dasharray: 5,4; }
+    .head   { fill: var(--muted); }
+    .t-name { fill: var(--ink); font: 600 13px var(--font-sans); text-anchor: middle; }
+    .t-sub  { fill: var(--muted); font: 400 12px var(--font-sans); text-anchor: middle; }
+    .t-row  { fill: var(--muted); font: 600 12px var(--font-sans); }
+    .t-lab  { fill: var(--muted); font: 500 11px var(--font-sans); text-anchor: middle; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flowchart · from boxes to mAP</p>
+    <h1>박스에서 mAP까지</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 768 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="map-title map-desc">
+        <title id="map-title">박스에서 mAP까지</title>
+        <desc id="map-desc">임계값보다 낮은 박스를 버리고, 겹침 정도로 맞힘을 정하고, 맞힘·오탐·미탐을 세어 정밀도와 재현율을 계산한 뒤, 임계값을 바꿔 그린 곡선의 면적 AP를 클래스별로 평균해 mAP를 만든다.</desc>
+        <defs>
+          <marker id="map-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
+        </defs>
+        <rect class="paper" width="100%" height="100%"/>
+        <text class="t-row" x="8" y="22">박스를 정답과 맞춰 세고, 비율을 구하고, 임계값을 바꿔 모아 mAP로 만드는 순서</text>
+        <line class="line" x1="152" y1="82" x2="164" y2="82" marker-end="url(#map-arrow)"/>
+        <line class="line" x1="308" y1="82" x2="320" y2="82" marker-end="url(#map-arrow)"/>
+        <line class="line" x1="464" y1="82" x2="476" y2="82" marker-end="url(#map-arrow)"/>
+        <line class="line" x1="620" y1="82" x2="632" y2="82" marker-end="url(#map-arrow)"/>
+        <path class="line dash" d="M548 128 V156 Q548 164 540 164 H88 Q80 164 80 156 V130" marker-end="url(#map-arrow)"/>
+        <rect class="paper" x="228" y="174" width="160" height="18"/>
+        <text class="t-lab" x="308" y="187">임계값을 바꾸면 다시</text>
+        <rect class="paper" x="8" y="36" width="144" height="92" rx="6"/>
+        <rect class="node" x="8" y="36" width="144" height="92" rx="6"/>
+        <text class="t-name" x="80" y="62">1 박스 거르기</text>
+        <text class="t-sub" x="80" y="84">점수가 임계값보다</text>
+        <text class="t-sub" x="80" y="100">낮은 박스는 버림</text>
+        <rect class="paper" x="164" y="36" width="144" height="92" rx="6"/>
+        <rect class="node" x="164" y="36" width="144" height="92" rx="6"/>
+        <text class="t-name" x="236" y="62">2 맞힘 정하기</text>
+        <text class="t-sub" x="236" y="84">정답 박스와 겹침이</text>
+        <text class="t-sub" x="236" y="100">기준 이상이면 맞힘</text>
+        <rect class="paper" x="320" y="36" width="144" height="92" rx="6"/>
+        <rect class="node" x="320" y="36" width="144" height="92" rx="6"/>
+        <text class="t-name" x="392" y="62">3 개수 세기</text>
+        <text class="t-sub" x="392" y="84">맞힘·오탐·미탐</text>
+        <text class="t-sub" x="392" y="100">각각 몇 개인지</text>
+        <rect class="paper" x="476" y="36" width="144" height="92" rx="6"/>
+        <rect class="node" x="476" y="36" width="144" height="92" rx="6"/>
+        <text class="t-name" x="548" y="62">4 비율 계산</text>
+        <text class="t-sub" x="548" y="84">정밀도, 재현율</text>
+        <text class="t-sub" x="548" y="100">(임계값 하나의 값)</text>
+        <rect class="paper" x="632" y="36" width="144" height="92" rx="6"/>
+        <rect class="focal" x="632" y="36" width="144" height="92" rx="6"/>
+        <text class="t-name" x="704" y="62">5 AP → mAP</text>
+        <text class="t-sub" x="704" y="84">곡선 아래 면적 AP,</text>
+        <text class="t-sub" x="704" y="100">클래스별 평균 mAP</text>
+      </svg>
+    </div>
+    <p class="caption">숫자가 두 개 나온다. 2단계의 겹침 기준과 1단계의 박스 점수 임계값은 서로 다르다. mAP@0.5의 0.5는 겹침 기준이다.</p>
+  </div>
+</body>
+</html>
