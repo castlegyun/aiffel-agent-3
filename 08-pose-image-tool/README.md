@@ -12,12 +12,23 @@
 - 과제가 "FLUX.2-klein 4B 또는 비슷한 모델"을 허용하므로, 포즈 조건용으로 나온 ControlNet이 있는 Stable Diffusion 1.5로 바꿨습니다.
 
 ## 샘플
-| 파일 | 내용 |
+**포즈 1** — 참조 사진 → 뼈대 → 결과 (프롬프트: `a worker in a yellow helmet standing in a factory`)
+
+| 참조 사진 | 뼈대 (`pose_01.png`) | 결과 (`output_01.png`) |
+|---|---|---|
+| <img src="samples/ref_01.png" width="240"> | <img src="samples/pose_01.png" width="240"> | <img src="samples/output_01.png" width="240"> |
+
+**실험 A** — 같은 포즈, 프롬프트만 변경 (`a young woman in a red dress standing in a park`)
+
+| 뼈대 (`pose_01.png`) | 결과 (`output_01b.png`) |
 |---|---|
-| `samples/ref_01.png` | 포즈 1의 참조 사진 |
-| `samples/pose_01.png` → `samples/output_01.png` | 포즈 1과 결과 (프롬프트 1) |
-| `samples/pose_01.png` → `samples/output_01b.png` | 같은 포즈, 프롬프트만 변경 (실험 A) |
-| `samples/pose_02.png` → `samples/output_02.png` | 다른 포즈, 프롬프트 1 (실험 B) |
+| <img src="samples/pose_01.png" width="240"> | <img src="samples/output_01b.png" width="240"> |
+
+**실험 B** — 다른 포즈, 같은 프롬프트 (`a worker in a yellow helmet standing in a factory`)
+
+| 뼈대 (`pose_02.png`) | 결과 (`output_02.png`) |
+|---|---|
+| <img src="samples/pose_02.png" width="240"> | <img src="samples/output_02.png" width="240"> |
 
 ## 사용법
 1. GitHub의 `pose_tool.ipynb`를 Colab에서 엽니다.
