@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>채점 문제에서 빠른 확산까지</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper:       #f5f5f5;
+      --ink:         #2d3142;
+      --muted:       #4f5d75;
+      --accent:      #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --node-fill:   #ffffff;
+      --node-stroke: #2d3142;
+      --font-sans:   'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:  'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:   'Geist Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:       #2d3142;
+        --ink:         #f5f5f5;
+        --muted:       #bfc0c0;
+        --accent:      #f08a59;
+        --accent-tint: rgba(240,138,89,0.10);
+        --node-fill:   rgba(245,245,245,0.04);
+        --node-stroke: rgba(245,245,245,0.45);
+      }
+    }
+    body { font-family: var(--font-sans); background: var(--paper); color: var(--ink); min-height: 100vh; padding: 1.5rem 1rem; }
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 1rem; }
+    .caption { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; max-width: 768px; word-break: keep-all; overflow-wrap: break-word; }
+    svg { width: 100%; min-width: 768px; display: block; }
+    .paper  { fill: var(--paper); }
+    .node   { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1; }
+    .focal  { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2; }
+    .faint  { fill: var(--node-fill); stroke: var(--muted); stroke-width: 1; stroke-dasharray: 5,4; }
+    .line   { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .line-a { stroke: var(--accent); stroke-width: 1.2; fill: none; }
+    .dash   { stroke-dasharray: 5,4; }
+    .head   { fill: var(--muted); }
+    .head-a { fill: var(--accent); }
+    .t-name { fill: var(--ink); font: 600 13px var(--font-sans); text-anchor: middle; }
+    .t-sub  { fill: var(--muted); font: 400 12px var(--font-sans); text-anchor: middle; }
+    .t-row  { fill: var(--muted); font: 600 12px var(--font-sans); }
+    .t-lab  { fill: var(--muted); font: 500 11px var(--font-sans); text-anchor: middle; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flowchart · from scoring to fast diffusion</p>
+    <h1>채점 문제에서 빠른 확산까지</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 768 316" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="diffusion-title diffusion-desc">
+        <title id="diffusion-title">채점 문제에서 빠른 확산까지</title>
+        <desc id="diffusion-desc">그럴듯함을 채점할 식이 없다는 문제에 GAN과 확산 모델 두 답이 나왔고, 확산 모델에 남은 세 숙제(문장 방향, 계산 비용, 느림)를 언어모델, 잠재 확산, 증류가 각각 메웠다.</desc>
+        <defs>
+          <marker id="diffusion-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
+          <marker id="diffusion-arrow-a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head-a" points="0 0, 8 3, 0 6"/></marker>
+        </defs>
+        <rect class="paper" width="100%" height="100%"/>
+        <text class="t-row" x="8" y="22">채점할 수 없던 문제 → 정답 있는 문제로 바꾼 확산 → 남은 숙제 셋과 해법</text>
+
+        <!-- 화살표 먼저 -->
+        <line class="line-a" x1="184" y1="164" x2="298" y2="164" marker-end="url(#diffusion-arrow-a)"/>
+        <path class="line dash" d="M96 200 V260 Q96 268 104 268 H298" marker-end="url(#diffusion-arrow)"/>
+        <path class="line" d="M476 146 H520 Q528 146 528 138 V84 Q528 76 536 76 H582" marker-end="url(#diffusion-arrow)"/>
+        <line class="line" x1="476" y1="164" x2="582" y2="164" marker-end="url(#diffusion-arrow)"/>
+        <path class="line" d="M476 182 H520 Q528 182 528 190 V244 Q528 252 536 252 H582" marker-end="url(#diffusion-arrow)"/>
+
+        <!-- 화살표 글씨 -->
+        <rect class="paper" x="196" y="140" width="92" height="16"/>
+        <text class="t-lab" x="242" y="152">두 번째 답</text>
+        <rect class="paper" x="152" y="244" width="92" height="16"/>
+        <text class="t-lab" x="198" y="256">첫 번째 답</text>
+
+        <!-- 출발 문제 -->
+        <rect class="paper" x="8" y="128" width="176" height="72" rx="6"/>
+        <rect class="node" x="8" y="128" width="176" height="72" rx="6"/>
+        <text class="t-name" x="96" y="152">출발 문제</text>
+        <text class="t-sub" x="96" y="172">그럴듯함을 숫자로</text>
+        <text class="t-sub" x="96" y="188">채점할 식이 없다</text>
+
+        <!-- 확산 모델 (강조) -->
+        <rect class="paper" x="300" y="128" width="176" height="72" rx="6"/>
+        <rect class="focal" x="300" y="128" width="176" height="72" rx="6"/>
+        <text class="t-name" x="388" y="152">확산 모델 (2015~)</text>
+        <text class="t-sub" x="388" y="172">우리가 섞은 잡음을 맞힘</text>
+        <text class="t-sub" x="388" y="188">→ 정답 있는 문제</text>
+
+        <!-- GAN (곁가지) -->
+        <rect class="paper" x="300" y="232" width="176" height="72" rx="6"/>
+        <rect class="faint" x="300" y="232" width="176" height="72" rx="6"/>
+        <text class="t-name" x="388" y="256">GAN (2014)</text>
+        <text class="t-sub" x="388" y="276">판별 신경망을 함께 학습</text>
+        <text class="t-sub" x="388" y="292">→ 모드 붕괴·불안정</text>
+
+        <!-- 숙제와 해법 -->
+        <rect class="paper" x="584" y="40" width="176" height="72" rx="6"/>
+        <rect class="node" x="584" y="40" width="176" height="72" rx="6"/>
+        <text class="t-name" x="672" y="64">숙제: 문장 방향</text>
+        <text class="t-sub" x="672" y="84">해법: CLIP → 언어모델</text>
+        <text class="t-sub" x="672" y="100">(2021~2022)</text>
+
+        <rect class="paper" x="584" y="128" width="176" height="72" rx="6"/>
+        <rect class="node" x="584" y="128" width="176" height="72" rx="6"/>
+        <text class="t-name" x="672" y="152">숙제: 계산 비용</text>
+        <text class="t-sub" x="672" y="172">해법: 잠재 확산</text>
+        <text class="t-sub" x="672" y="188">(압축한 뒤 확산, 2022)</text>
+
+        <rect class="paper" x="584" y="216" width="176" height="72" rx="6"/>
+        <rect class="node" x="584" y="216" width="176" height="72" rx="6"/>
+        <text class="t-name" x="672" y="240">숙제: 느림 (50스텝)</text>
+        <text class="t-sub" x="672" y="260">해법: 증류 → 4~9스텝</text>
+        <text class="t-sub" x="672" y="276">(2023)</text>
+      </svg>
+    </div>
+    <p class="caption">점선은 주역에서 밀려난 갈래다. GAN의 판별 신경망은 2023년 증류 학습에 다시 쓰인다. 잡음 예측 신경망을 U-Net에서 트랜스포머로 바꾼 변화(2022~2024)는 이 그림에서 뺐다.</p>
+  </div>
+</body>
+</html>

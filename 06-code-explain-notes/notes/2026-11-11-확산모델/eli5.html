@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>잡음에서 그림까지</title>
+<style>
+  :root {
+    --bg:#fbfaf7; --card:#ffffff; --fg:#22252e; --muted:#5d6472; --line:#d9d6cf;
+    --accent:#bf4520; --accent-soft:rgba(191,69,32,.10); --blue:#2f6db5; --blue-soft:rgba(47,109,181,.10);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#16181d; --card:#1e2128; --fg:#eceef2; --muted:#a8afbb; --line:#363a44;
+      --accent:#f08a59; --accent-soft:rgba(240,138,89,.14); --blue:#7fb0f0; --blue-soft:rgba(127,176,240,.14);
+    }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:400 1.0625rem/1.65 var(--font); word-break:keep-all; overflow-wrap:break-word; }
+  main { max-width:880px; margin:0 auto; padding:28px 16px 56px; }
+  h1 { font-size:1.75rem; line-height:1.3; margin:0 0 6px; }
+  .lead { color:var(--muted); margin:0 0 28px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px 18px; margin:0 0 20px; }
+  h2 { font-size:1.2rem; margin:0 0 4px; }
+  h2 .num { display:inline-block; min-width:1.8em; color:var(--accent); }
+  .say { margin:4px 0 14px; color:var(--fg); }
+  .small { color:var(--muted); font-size:.92rem; margin:10px 0 0; }
+  .strip { display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:center; margin:8px 0; }
+  .cell { text-align:center; font-size:.85rem; color:var(--muted); }
+  .cell canvas { display:block; width:96px; height:96px; border:1px solid var(--line); border-radius:6px; image-rendering:pixelated; margin:0 auto 4px; }
+  .arrow { color:var(--muted); font-size:1.3rem; }
+  .arrow.a { color:var(--accent); }
+  .tag { display:inline-block; font-size:.8rem; font-weight:600; padding:1px 8px; border-radius:4px; margin-bottom:6px; }
+  .tag.learn { background:var(--blue-soft); color:var(--blue); }
+  .tag.make { background:var(--accent-soft); color:var(--accent); }
+  .box { border:1px solid var(--line); border-radius:8px; padding:10px 14px; text-align:center; background:var(--bg); }
+  .box.focal { border-color:var(--accent); background:var(--accent-soft); }
+  .row { display:flex; gap:10px; align-items:stretch; justify-content:center; flex-wrap:wrap; }
+  .row .box { flex:1 1 150px; max-width:220px; }
+  .big { font-size:1.6rem; font-weight:700; }
+  /* 슬라이더 */
+  .slider-wrap { display:grid; grid-template-columns:auto 1fr; gap:18px; align-items:center; }
+  @media (max-width:600px) { .slider-wrap { grid-template-columns:1fr; justify-items:center; } }
+  #mix { width:192px; height:192px; border:1px solid var(--line); border-radius:8px; image-rendering:pixelated; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .bars { margin:10px 0 6px; }
+  .bar { display:grid; grid-template-columns:5.5em 1fr 3.2em; gap:8px; align-items:center; font-size:.92rem; margin:6px 0; }
+  .track { height:14px; background:var(--line); border-radius:7px; overflow:hidden; }
+  .fill { height:100%; border-radius:7px; }
+  .fill.o { background:var(--blue); }
+  .fill.n { background:var(--accent); }
+  #status { font-weight:600; min-height:1.65em; }
+  .dots { display:flex; gap:4px; flex-wrap:wrap; margin:4px 0 10px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--muted); opacity:.55; }
+  .dots.fast .dot { background:var(--accent); opacity:1; width:16px; height:16px; }
+  :focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>잡음에서 그림까지</h1>
+  <p class="lead">diffusion model(디퓨전 모델), 즉 확산 모델이 실제로 하는 일을 그림으로 봐요.</p>
+
+  <section>
+    <h2><span class="num">1</span>처음 문제: 점수를 못 매겨요</h2>
+    <p class="say">모델을 학습시키려면 “이 그림이 몇 점인지”를 숫자로 계산해야 해요. 그런데 “그럴듯한 고양이 그림”에는 정답 그림이 하나로 정해져 있지 않아요. 그래서 점수를 계산할 식이 없었어요.</p>
+    <div class="row">
+      <div class="box">모델이 그림을 냄</div>
+      <div class="box">몇 점? <span class="big">?</span></div>
+      <div class="box">고칠 방향을 모름</div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span>해법: 우리가 잡음을 섞어요</h2>
+    <span class="tag learn">학습</span>
+    <p class="say">깨끗한 그림에 우리가 고른 무작위 숫자(잡음)를 더해요. 단계가 갈수록 잡음이 많아져요. 우리가 섞었으니까 <strong>섞인 잡음이 무엇인지 우리가 알아요.</strong> 이제 정답이 있는 문제가 됐어요.</p>
+    <div class="strip" id="forward"></div>
+    <p class="small">위 그림은 아래 슬라이더와 같은 계산으로 이 페이지에서 직접 만든 것이에요.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">3</span>신경망은 “섞인 잡음”을 맞혀요</h2>
+    <span class="tag learn">학습</span>
+    <div class="row">
+      <div class="box">잡음 섞인 그림<br>+ 몇 단계인지</div>
+      <div class="box focal">신경망<br><small>섞인 잡음을 예측</small></div>
+      <div class="box">예측 − 정답 잡음<br><small>차이를 제곱 → 작아지게 고침</small></div>
+    </div>
+    <p class="small">정답 잡음은 우리가 갖고 있어서, 채점하는 신경망이 따로 필요 없어요.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">4</span>단계가 갈수록 원본은 줄고 잡음은 늘어요</h2>
+    <div class="slider-wrap">
+      <canvas id="mix" width="64" height="64" aria-label="원본과 잡음을 섞은 그림"></canvas>
+      <div>
+        <label for="t">단계 t: <strong id="tval">0</strong> / 1000</label>
+        <input id="t" type="range" min="0" max="1000" step="10" value="0">
+        <div class="bars">
+          <div class="bar"><span>원본 비율</span><div class="track"><div class="fill o" id="fo"></div></div><span id="vo">1.00</span></div>
+          <div class="bar"><span>잡음 비율</span><div class="track"><div class="fill n" id="fn"></div></div><span id="vn">0.00</span></div>
+        </div>
+        <p id="status"></p>
+        <p class="small">계산: 섞인 그림 = 원본 × √ᾱ + 잡음 × √(1−ᾱ). ᾱ(알파 바)는 t가 커질수록 1에서 0으로 줄어요. 두 비율을 그냥 더하면 1이 아니에요. 제곱해서 더해야 1이에요. 1000단계와 ᾱ 곡선은 <strong>설명용 예시</strong>예요. 실제 값은 모델마다 달라요.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">5</span>그림 만들기는 거꾸로 해요</h2>
+    <span class="tag make">생성</span>
+    <p class="say">순수한 잡음에서 시작해요. 신경망이 “여기 섞인 잡음”을 예측하면, 그만큼 조금 빼요. 이것을 정해진 횟수만큼 반복해요. <strong>반복 횟수가 step(스텝) 수예요.</strong></p>
+    <div class="strip" id="reverse"></div>
+    <p class="small">이 그림은 원본을 알고 거꾸로 보여 준 것이에요. 실제 생성에서는 원본이 없고, 신경망의 예측으로만 잡음을 빼요.</p>
+    <p class="small">학습할 때 나눈 단계 수(여기서는 1000)와 생성 스텝 수는 달라도 돼요. 스텝이 4번이면 단계를 크게 건너뛰며 내려와요. (원문에 없는 설명이에요.)</p>
+  </section>
+
+  <section>
+    <h2><span class="num">6</span>무엇을 그릴지는 문장이 정해요</h2>
+    <div class="row">
+      <div class="box">prompt(프롬프트)<br><small>“빨간 오두막”</small></div>
+      <div class="box">언어모델<br><small>문장 → 숫자 목록(좌표)</small></div>
+      <div class="box focal">잡음 빼는 방향<br><small>문장에 맞는 쪽으로</small></div>
+    </div>
+    <p class="small">2021년 CLIP(클립)은 그림과 문장을 같은 좌표 공간에 놓았어요. 2022년에는 글만 학습한 언어모델이 문장을 더 잘 읽는다는 결과가 나왔어요.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">7</span>빨라졌어요: 50번 → 4번</h2>
+    <p class="say">예전 기본값은 50스텝이었어요. 증류는 선생 모델이 50스텝 걸려 낸 결과를, 새 모델(학생 모델)이 몇 스텝 만에 내도록 학습시키는 방법이에요.</p>
+    <div><strong>2022년 무렵: 50스텝</strong></div>
+    <div class="dots" id="d50"></div>
+    <div><strong>증류한 모델: 4스텝</strong> <span class="small">(원문: 4~9스텝)</span></div>
+    <div class="dots fast" id="d4"></div>
+    <p class="small">모델마다 guidance(가이던스) 권장값이 달라요. 모델 설명서(모델 카드)를 확인해요.</p>
+  </section>
+</main>
+<script>
+(function () {
+  var N = 64;
+  // 원본: 단순한 집 모양 (값 -1~1)
+  var x0 = new Float32Array(N * N);
+  for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
+    var v = -0.6;                                   // 배경
+    if (y > 50) v = -0.1;                           // 땅
+    if (x >= 18 && x < 46 && y >= 30 && y <= 50) v = 0.9;            // 벽
+    if (y >= 12 && y < 30 && Math.abs(x - 32) <= (y - 12) * 0.9 + 1) v = 0.2; // 지붕
+    if (x >= 28 && x < 36 && y >= 38 && y <= 50) v = -0.9;           // 문
+    var dx = x - 52, dy = y - 12; if (dx * dx + dy * dy < 30) v = 1;   // 해
+    x0[y * N + x] = v;
+  }
+  // 잡음: 고정 시드 정규분포
+  var s = 12345;
+  function rnd() { s = (s * 1103515245 + 12345) & 0x7fffffff; return (s + 1) / 0x80000000; }
+  var eps = new Float32Array(N * N);
+  for (var i = 0; i < N * N; i++) eps[i] = Math.sqrt(-2 * Math.log(rnd())) * Math.cos(2 * Math.PI * rnd());
+
+  function abar(t) { var c = Math.cos(Math.PI / 2 * t / 1000); return c * c; } // 설명용 예시 곡선
+  function draw(cv, t) {
+    var ctx = cv.getContext('2d'), img = ctx.createImageData(N, N);
+    var a = Math.sqrt(abar(t)), b = Math.sqrt(1 - abar(t));
+    for (var i = 0; i < N * N; i++) {
+      var v = a * x0[i] + b * eps[i];
+      var g = Math.max(0, Math.min(255, Math.round((v + 1) * 127.5)));
+      img.data[i * 4] = g; img.data[i * 4 + 1] = g; img.data[i * 4 + 2] = g; img.data[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  function strip(id, ts, arrowClass) {
+    var el = document.getElementById(id);
+    ts.forEach(function (t, k) {
+      if (k > 0) { var ar = document.createElement('span'); ar.className = 'arrow ' + arrowClass; ar.textContent = '→'; el.appendChild(ar); }
+      var c = document.createElement('div'); c.className = 'cell';
+      var cv = document.createElement('canvas'); cv.width = N; cv.height = N; draw(cv, t);
+      c.appendChild(cv); c.appendChild(document.createTextNode('t = ' + t)); el.appendChild(c);
+    });
+  }
+  strip('forward', [0, 300, 600, 850, 1000], '');
+  strip('reverse', [1000, 850, 600, 300, 0], 'a');
+
+  var mix = document.getElementById('mix'), tIn = document.getElementById('t');
+  function say(a) {
+    if (a >= 0.999) return '원본 그대로예요. 잡음이 섞이지 않았어요.';
+    if (a >= 0.95) return '원본이 대부분이에요. 잡음은 조금 섞였어요.';
+    if (a >= 0.8) return '원본 비율이 잡음 비율보다 커요. 원본이 잘 보여요.';
+    if (a >= 0.6) return '원본과 잡음이 거의 같은 비율로 섞였어요.';
+    if (a >= 0.15) return '잡음 비율이 더 커요. 원본은 흐릿하게만 보여요.';
+    return '거의 순수한 잡음이에요. 그림 만들기는 여기서 시작해요.';
+  }
+  function update() {
+    var t = +tIn.value, a = Math.sqrt(abar(t)), b = Math.sqrt(1 - abar(t));
+    document.getElementById('tval').textContent = t;
+    document.getElementById('vo').textContent = a.toFixed(2);
+    document.getElementById('vn').textContent = b.toFixed(2);
+    document.getElementById('fo').style.width = (a * 100) + '%';
+    document.getElementById('fn').style.width = (b * 100) + '%';
+    document.getElementById('status').textContent = say(a);
+    draw(mix, t);
+  }
+  tIn.addEventListener('input', update);
+  update();
+
+  function dots(id, n) { var el = document.getElementById(id); for (var i = 0; i < n; i++) { var d = document.createElement('span'); d.className = 'dot'; el.appendChild(d); } }
+  dots('d50', 50); dots('d4', 4);
+})();
+</script>
+</body>
+</html>
