@@ -14,6 +14,7 @@
 | 05 | [submit-assignment-skill](05-submit-assignment-skill) | 과제를 GitHub에 올리는 반복 작업을 자동화한 Claude Code 스킬 | Claude Code Skill, Markdown | [README](05-submit-assignment-skill/README.md) |
 | 06 | [code-explain-notes](06-code-explain-notes) | 코드를 초보자용 해설 노트(쉬운 주석·단어장)로 만들어 모아 보는 도구 | HTML, Claude Code Skill | [▶ 보관함 열기](https://aiffel-agent-3.onrender.com/) (Render) |
 | 07 | [yolo-service](07-yolo-service) | 사진을 넣으면 YOLO26 탐지·분할 결과를 저장하고 conf 0.25/0.50을 비교하는 노트북 | Python, Ultralytics YOLO26, Jupyter | [README](07-yolo-service/README.md) |
+| 08 | [pose-image-tool](08-pose-image-tool) | 참조 사진의 포즈(OpenPose)를 조건으로 같은 자세의 이미지를 만드는 Colab 튜토리얼 노트 | Python, FLUX.2-klein 4B, Jupyter | [README](08-pose-image-tool/README.md) |
 
 > ▶ 표시는 브라우저에서 바로 열리는 사이트입니다. 02, 03은 GitHub Pages(`https://castlegyun.github.io/aiffel-agent-3/폴더이름/`), 06은 Render입니다.
 
