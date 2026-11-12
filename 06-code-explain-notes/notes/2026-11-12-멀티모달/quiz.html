@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>이미지와 글 연결 퀴즈</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper: #f5f5f5;
+      --card: #ffffff;
+      --ink: #2d3142;
+      --muted: #4f5d75;
+      --line: #d5d7dd;
+      --accent: #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --ok: #1f7a4d;
+      --ok-tint: rgba(31,122,77,0.10);
+      --no: #b3261e;
+      --no-tint: rgba(179,38,30,0.08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #2d3142;
+        --card: #353a4d;
+        --ink: #f5f5f5;
+        --muted: #bfc0c0;
+        --line: #555b70;
+        --accent: #f08a59;
+        --accent-tint: rgba(240,138,89,0.12);
+        --ok: #6fd3a0;
+        --ok-tint: rgba(111,211,160,0.12);
+        --no: #ff8a80;
+        --no-tint: rgba(255,138,128,0.12);
+      }
+    }
+    body { font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: var(--paper); color: var(--ink); line-height: 1.65; padding: 1.5rem 1rem 3rem; word-break: keep-all; overflow-wrap: break-word; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    .eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.4rem; }
+    h1 { font-size: 1.5rem; font-weight: 600; line-height: 1.35; margin-bottom: 0.5rem; }
+    .lead { color: var(--muted); margin-bottom: 1rem; }
+    .bar { position: sticky; top: 0; z-index: 1; background: var(--paper); padding: 0.6rem 0; margin-bottom: 1rem; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 1rem; font-size: 0.95rem; }
+    .bar strong { color: var(--accent); }
+    .q { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 1.1rem 1rem; margin-bottom: 1rem; }
+    .q-num { font-size: 0.8rem; color: var(--accent); font-weight: 600; margin-bottom: 0.3rem; }
+    .q-text { font-weight: 600; margin-bottom: 0.8rem; }
+    .choices { display: flex; flex-direction: column; gap: 0.5rem; }
+    .choice { font: inherit; color: var(--ink); text-align: left; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 0.65rem 0.8rem; cursor: pointer; display: flex; gap: 0.6rem; }
+    .choice:hover:not(:disabled) { border-color: var(--accent); }
+    .choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .choice:disabled { cursor: default; }
+    .choice .mark { flex: none; font-weight: 600; color: var(--muted); min-width: 1.2rem; }
+    .choice.right { border-color: var(--ok); background: var(--ok-tint); }
+    .choice.right .mark { color: var(--ok); }
+    .choice.picked-wrong { border-color: var(--no); background: var(--no-tint); }
+    .choice.picked-wrong .mark { color: var(--no); }
+    .feedback { margin-top: 0.8rem; padding: 0.8rem; border-radius: 6px; border-left: 3px solid var(--line); background: var(--paper); }
+    .feedback[hidden] { display: none; }
+    .verdict { font-weight: 600; margin-bottom: 0.3rem; }
+    .verdict.ok { color: var(--ok); }
+    .verdict.no { color: var(--no); }
+    .feedback p + p { margin-top: 0.4rem; }
+    .label { font-weight: 600; }
+    .result { background: var(--accent-tint); border: 1px solid var(--accent); border-radius: 8px; padding: 1.1rem 1rem; text-align: center; }
+    .result[hidden] { display: none; }
+    .result .score { font-size: 1.6rem; font-weight: 600; color: var(--accent); margin-bottom: 0.3rem; }
+    .q[hidden] { display: none; }
+    .next { display: block; width: 100%; font: inherit; font-weight: 600; margin-top: 0.8rem; padding: 0.7rem 1rem; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--paper); cursor: pointer; }
+    .next[hidden] { display: none; }
+    .next:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+    .retry { font: inherit; margin-top: 0.8rem; padding: 0.55rem 1.2rem; border-radius: 6px; border: 1px solid var(--accent); background: var(--card); color: var(--ink); cursor: pointer; }
+    .retry:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="eyebrow">퀴즈 · 픽셀을 문장처럼 다룬다는 발상</p>
+    <h1>이미지와 글은 어떻게 연결될까요?</h1>
+    <p class="lead">객관식 10문제를 한 문제씩 풀어요. 보기를 누르면 바로 맞았는지와 해설이 나와요. 틀린 보기를 골랐으면 그 보기가 왜 틀렸는지도 함께 나와요. 해설을 읽고 [다음 문제]를 누르세요.</p>
+    <div class="bar" aria-live="polite"><span>문제 <strong id="pos">1</strong> / 10</span><span>맞은 문제 <strong id="score">0</strong></span></div>
+    <div id="quiz"></div>
+    <div class="result" id="result" hidden aria-live="polite">
+      <p class="score" id="final"></p>
+      <p id="final-msg"></p>
+      <button type="button" class="retry" id="retry">다시 풀기</button>
+    </div>
+  </div>
+
+  <script>
+    // answer: 정답 보기 번호(0부터). wrong[i]: i번 보기를 골랐을 때 왜 틀렸는지 (정답 칸은 빈 글자)
+    const QUESTIONS = [
+      {
+        q: '대조 학습(contrastive learning, 컨트래스티브 러닝)은 모델이 무엇을 하도록 학습시키나요?',
+        choices: [
+          '이미지를 보고 그 내용을 설명하는 문장을 먼저 써내도록 학습시킨다',
+          '짝이 맞는 이미지와 설명은 가깝게, 맞지 않는 쌍은 멀게 놓도록 학습시킨다',
+          '이미지의 픽셀 하나하나를 빠짐없이 그대로 기억하도록 학습시킨다',
+          '모든 이미지와 설명을 짝과 상관없이 한 점에 모으도록 학습시킨다'
+        ],
+        answer: 1,
+        why: '원문의 정의 그대로예요. 대조 학습은 짝이 맞는 쌍과 맞지 않는 쌍의 거리를 서로 다르게 만드는 학습이에요. 그래서 학습이 끝나면 거리로 어느 설명이 어느 그림에 가까운지 비교할 수 있어요.',
+        wrong: [
+          '대조 학습은 설명문을 만드는 학습이 아니에요. 이미지와 설명이 놓이는 위치(거리)를 맞추는 학습이에요. 원문은 오히려 설명문으로 바꾸지 않고도 비교할 수 있다고 말해요.',
+          '',
+          '원문은 이미지를 픽셀 그대로 기억하지 않는다고 말해요. 업무에 쓸 수 있는 특징을 숫자 벡터로 압축해요.',
+          '모두 한 점에 모이면 어느 쌍이 짝인지 구별할 수 없어요. 짝이 맞지 않는 쌍을 멀게 놓는 것도 대조 학습에 들어가요.'
+        ]
+      },
+      {
+        q: '인코더(encoder)가 하는 일로 맞는 것은 무엇인가요?',
+        choices: [
+          '그림을 보고 그 그림을 설명하는 문장을 써 준다',
+          '이미지와 문장 중 어느 쪽이 맞는지 최종 답을 낸다',
+          '그림만 받을 수 있고 문장은 받을 수 없다',
+          '그림이나 문장을 받아 숫자 목록으로 바꾼다'
+        ],
+        answer: 3,
+        why: '원문에서 인코더는 "입력을 받아 숫자 목록으로 바꿔 주는 부분"이에요. 그림을 넣어도 숫자 몇백 개가 나오고, 문장을 넣어도 숫자 몇백 개가 나와요. 둘 다 숫자 목록이 되어야 서로 비교할 수 있어요.',
+        wrong: [
+          '인코더가 내놓는 것은 문장이 아니라 숫자 목록이에요. 설명문을 쓰는 것은 "이미지 → 설명문 → LLM(엘엘엠)" 방식의 이야기예요.',
+          '인코더는 입력을 숫자로 바꾸는 데까지만 해요. 어느 쪽이 맞는지는 그렇게 나온 숫자 목록 사이의 거리를 재서 정해요.',
+          'CLIP(클립)에는 이미지 인코더와 텍스트 인코더가 따로 있어요. 문장을 받는 인코더도 있다는 뜻이에요.',
+          ''
+        ]
+      },
+      {
+        q: '"임베딩", "임베딩 공간", "표현" 세 낱말의 관계로 맞는 것은 무엇인가요?',
+        choices: [
+          '숫자 목록이 임베딩, 그것이 놓이는 좌표계가 임베딩 공간이고, 표현은 임베딩과 같은 것이다',
+          '임베딩은 숫자 목록이고, 임베딩 공간은 그 숫자 목록을 저장해 두는 파일의 이름이다',
+          '임베딩과 임베딩 공간은 숫자를 다루지만, 표현은 원본 이미지를 그대로 복사해 둔 것이다',
+          '임베딩은 문장에서 나온 숫자 목록에만, 표현은 그림에서 나온 것에만 쓰는 말이다'
+        ],
+        answer: 0,
+        why: '원문은 인코더에서 나온 숫자 목록을 임베딩, 임베딩이 놓이는 좌표계를 임베딩 공간이라고 불러요. 그리고 "표현"도 같은 것을 가리킨다고 밝혀요. 세 낱말의 관계를 알아 두면 뒤에 나오는 "같은 공간에서 거리를 잰다"는 말이 이해돼요.',
+        wrong: [
+          '',
+          '임베딩 공간은 파일이 아니라 좌표계예요. 숫자 목록이 그 안의 한 위치에 놓여서, 위치끼리 거리를 잴 수 있어요.',
+          '원문은 표현이 원본을 그대로 복사한 것이 아니라고 말해요. 표현도 임베딩과 같은 숫자 목록이에요.',
+          '그림을 넣어도, 문장을 넣어도 인코더는 숫자 목록을 내놓아요. 두 낱말 모두 형식에 상관없이 그 숫자 목록을 가리켜요.'
+        ]
+      },
+      {
+        q: '음성을 모델이 다룰 수 있는 "표현"으로 바꿀 때 일어나는 일로 맞는 것은 무엇인가요?',
+        choices: [
+          '소리의 파형을 조금도 바꾸지 않고 처음 녹음된 그대로 저장해 둔다',
+          '발화 내용만 남기고, 억양과 속도와 배경음은 쓸모없으니 모두 버린다',
+          '발화 내용·억양·속도·배경음 같은 단서를 모델이 다룰 형태로 바꾼다',
+          '사람이 소리를 끝까지 들은 뒤, 그 특징을 직접 숫자로 적어 넣는다'
+        ],
+        answer: 2,
+        why: '원문은 "음성도 파형 그대로가 아니라 발화 내용, 억양, 속도, 배경음 같은 단서를 모델이 처리할 수 있는 형태로 바꾼다"고 말해요. 표현은 원본을 복사한 것이 아니라 일에 쓸 특징을 숫자로 압축한 것이에요.',
+        wrong: [
+          '원문은 음성을 파형 그대로 쓰지 않는다고 말해요. 단서를 모델이 처리할 수 있는 형태로 바꿔요.',
+          '원문이 든 단서 목록에는 억양, 속도, 배경음도 들어 있어요. 발화 내용만 남기는 것이 아니에요.',
+          '',
+          '숫자 목록은 인코더가 만들어요. 사람이 직접 적어 넣는다는 내용은 원문에 없어요.'
+        ]
+      },
+      {
+        q: 'CLIP(클립)에 대한 설명으로 맞는 것은 무엇인가요?',
+        choices: [
+          '오픈AI가 2021년에 공개했고, 이미지-설명글 쌍 4억 개로 짝 맞히기를 학습했다',
+          '구글이 2021년에 공개했고, 이미지마다 사람이 붙인 분류 번호 4억 개로 학습했다',
+          '오픈AI가 공개했고, 이미지를 설명문으로 바꿔 LLM(엘엘엠)에게 넘겨주는 모델이다',
+          '오픈AI가 공개했고, 설명글 없이 이미지 4억 장만으로 학습해 글은 다루지 않는다'
+        ],
+        answer: 0,
+        why: '원문 그대로예요. CLIP은 "어느 설명이 어느 그림에 붙는가"를 맞히도록 학습했어요. 대조 학습을 큰 규모로 적용한 모델이에요. 이미지와 설명글을 짝지어 학습했기 때문에, 이미지와 문장을 같은 공간에서 비교할 수 있어요.',
+        wrong: [
+          '',
+          'CLIP은 오픈AI가 공개했어요. 그리고 분류 번호가 아니라 이미지에 붙은 자연어 설명글로 학습했어요.',
+          'CLIP은 설명문을 만들지 않아요. 이미지 인코더와 텍스트 인코더의 결과를 같은 공간에 놓고 거리로 비교해요.',
+          '학습 자료는 이미지만이 아니라 이미지와 설명글의 쌍 4억 개예요. 글도 텍스트 인코더로 함께 다뤄요.'
+        ]
+      },
+      {
+        q: '이미지를 설명문으로 바꾸지 않고도 이미지와 문장을 비교할 수 있는 이유는 무엇인가요?',
+        choices: [
+          '이미지 인코더와 텍스트 인코더가 사실은 하나의 인코더라서 결과가 똑같기 때문',
+          '모델이 이미지 안에 적힌 글자를 먼저 읽어 내고, 그 글자를 문장과 견주기 때문',
+          '비교할 때마다 사람이 이미지마다 맞는 문장을 하나씩 정해 주기 때문',
+          '두 인코더의 결과가 같은 공간에 놓여, 그 사이 거리를 숫자로 잴 수 있기 때문'
+        ],
+        answer: 3,
+        why: '두 인코더는 따로 있지만 결과는 같은 공간에 놓여요. 원문은 그 공간에서 "가깝다"가 느낌이 아니라 측정할 수 있는 거리라고 강조해요. 거리를 숫자로 잴 수 있으니 이미지를 문장처럼 검색하고 문장을 이미지처럼 비교할 수 있어요.',
+        wrong: [
+          '원문은 "두 인코더는 따로 있지만"이라고 말해요. 인코더는 둘이고, 결과가 놓이는 공간이 하나예요.',
+          '이미지 속 글자를 읽는다는 내용은 원문에 없어요. 글자가 없는 개 사진도 "a photo of a dog(개 사진 한 장)" 문장과 비교할 수 있어요.',
+          '학습 때는 이미지-설명글 쌍을 썼지만, 비교할 때마다 사람이 짝을 정해 주는 것은 아니에요. 원문은 본 적 없는 이미지도 거리로 비교된다고 말해요.',
+          ''
+        ]
+      },
+      {
+        q: '학습 때 본 적 없는 사진을 넣었더니, "파란 하늘"보다 "빨간 자동차"라는 문장에 더 가깝게 놓였어요. 이때 일어난 일로 맞는 것은 무엇인가요?',
+        choices: [
+          '모델이 사진을 "빨간 자동차"라는 설명문으로 번역해 냈다',
+          '같은 공간에서 거리를 재어, 의미가 더 비슷한 문장을 찾았다',
+          '모델이 그 사진을 학습 때 미리 외워 두었다가 떠올렸다',
+          '두 문장 중 글자 수가 더 적은 문장을 골랐다'
+        ],
+        answer: 1,
+        why: '같은 공간에서 사진과 두 문장 사이의 거리를 재면, 의미가 더 비슷한 쪽이 더 가까워요. 원문은 이렇게 서로 다른 형식의 정보를 비교할 수 있도록 맞추는 과정을 "정렬"이라고 불러요.',
+        wrong: [
+          '번역(설명문 만들기)은 일어나지 않아요. 사진의 숫자 목록과 문장의 숫자 목록 사이 거리를 비교했을 뿐이에요.',
+          '',
+          '문제에서 이 사진은 학습 때 본 적이 없어요. 외운 것이 아니라 같은 공간에 놓고 거리로 비교한 것이에요.',
+          '문장 길이는 기준이 아니에요. 기준은 같은 공간에서의 거리예요.'
+        ]
+      },
+      {
+        q: '두 입력의 거리가 가깝게 나왔다는 이유만으로 업무에서 같은 것으로 취급하면 안 되는 이유는 무엇인가요?',
+        choices: [
+          '같은 두 입력이라도 거리 계산 결과가 매번 무작위로 바뀌기 때문',
+          '가까운 거리는 언제나 정답이지만, 계산이 너무 느려 업무에 못 쓰기 때문',
+          '거리는 학습 데이터의 통계적 관계라, 업무상 중요한 차이를 놓칠 수 있기 때문',
+          '거리는 사람이 받는 느낌일 뿐이라 숫자로 잴 수 없기 때문'
+        ],
+        answer: 2,
+        why: '원문은 "가깝다"가 곧 "같다"는 뜻이 아니라고 말해요. 거리는 학습 데이터의 통계적 관계라서, 그 업무에서 진짜 중요한 차이를 항상 잡아내지는 못해요. 그래서 가깝다는 이유만으로 같은 것으로 취급하면 안 돼요.',
+        wrong: [
+          '거리 계산이 무작위로 바뀐다는 내용은 원문에 없어요. 문제는 거리가 무엇을 기준으로 배운 것이냐예요.',
+          '원문은 반대로 "가깝다는 것이 곧 정답은 아니다"라고 말해요. 속도 이야기도 아니에요.',
+          '',
+          '원문은 거리가 느낌이 아니라 "측정 가능한 거리"라고 강조해요. 숫자로 잴 수는 있지만, 그 숫자가 업무상 같음을 보장하지 않는 거예요.'
+        ]
+      },
+      {
+        q: '"이 사진과 비슷한 느낌의 녹음 찾기"처럼, 서로 다른 형식(모달리티, modality) 사이에서 검색하는 일에 가장 잘 맞는 설계는 무엇인가요?',
+        choices: [
+          '공유 임베딩형: 글·이미지·음성을 같은 의미 공간에 놓는다',
+          '연결형: 이미지·음성 전용 인코더가 LLM(엘엘엠)에 정보를 넘긴다',
+          '네이티브 멀티모달형: 글·이미지·음성을 한 모델의 입력·출력 흐름 안에서 다룬다',
+          '이미지를 먼저 설명문으로 바꾼 뒤, 그 글로 검색한다'
+        ],
+        answer: 0,
+        why: '원문의 표에서 공유 임베딩형의 장점은 "이미지-음성 검색, 텍스트-이미지 매칭처럼 교차 검색에 강하다"예요. 형식이 달라도 같은 공간에 놓이므로 거리로 바로 찾을 수 있어요. 다만 이 설계에서도 "가깝다는 것이 곧 정답은 아니다"를 조심해야 해요.',
+        wrong: [
+          '',
+          '연결형의 장점은 기존 언어 모델을 활용하기 좋다는 것이에요. 조심할 점은 세부 시각·음성 단서가 언어로 옮겨지는 과정에서 사라질 수 있다는 것이라, "느낌이 비슷한 녹음"처럼 소리 단서가 중요한 검색에는 불리할 수 있어요.',
+          '원문은 한 모델이 두 방식을 함께 쓰기도 한다고 말해요. 그래도 교차 검색에 강하다고 적힌 것은 공유 임베딩형이에요. 네이티브 멀티모달형의 장점은 대화 중 화면·소리·문맥을 함께 다루기 좋다는 것이에요. 네이티브형은 비용, 지연시간, 안전 정책, 검증 방법이 복잡해진다는 점도 조심해야 해요.',
+          '사진을 글로 옮기면 사라지는 단서가 생겨요. 원문의 설비 사진 예시에서도 녹슨 위치, 주변 배선, 계기판 상태가 텍스트로 옮기면 사라지는 단서로 나와요.'
+        ]
+      },
+      {
+        q: '원문은 좋은 멀티모달 질문에 "판단 기준·근거 위치·불확실한 부분·추가로 필요한 입력"을 함께 요구하라고 해요. 그 이유는 무엇인가요?',
+        choices: [
+          '답이 길고 자세할수록 그만큼 더 정확해지기 때문',
+          '이렇게 물으면 사람이 마지막에 확인하지 않아도 되기 때문',
+          '모델이 이미지를 설명문으로 바꾸지 못하게 막으려고',
+          '모델이 본 것과 추정한 것을 나눠 검토할 수 있게 하려고'
+        ],
+        answer: 3,
+        why: '원문은 "그래야 모델이 본 것과 추정한 것을 분리해 검토할 수 있다"고 말해요. 이 네 가지는 "이 사진 설명해줘"에서 끝나지 않는 좋은 질문의 조건이에요.',
+        wrong: [
+          '원문은 답의 길이를 말하지 않아요. 목적은 검토할 수 있게 나누는 것이에요.',
+          '원문의 표에는 "사람이 마지막에 확인할 점" 칸이 따로 있어요. 좋은 질문을 해도 사람의 확인은 남아요.',
+          '이 질문 방식은 설명문 변환과 관계가 없어요. 모델의 답을 검토하기 쉽게 만드는 방법이에요.',
+          ''
+        ]
+      }
+    ];
+
+    const LETTERS = ['①', '②', '③', '④'];
+    const quizEl = document.getElementById('quiz');
+    const posEl = document.getElementById('pos');
+    const scoreEl = document.getElementById('score');
+    const resultEl = document.getElementById('result');
+    let score = 0;
+    let sections = [];
+
+    function show(i) {
+      sections.forEach((s, k) => { s.hidden = k !== i; });
+      posEl.textContent = String(i + 1);
+      window.scrollTo(0, 0);
+      const first = sections[i].querySelector('.choice');
+      if (first) first.focus({ preventScroll: true });
+    }
+
+    function el(tag, cls, text) {
+      const node = document.createElement(tag);
+      if (cls) node.className = cls;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function render() {
+      score = 0;
+      scoreEl.textContent = '0';
+      resultEl.hidden = true;
+      quizEl.textContent = '';
+      sections = QUESTIONS.map((item, qi) => {
+        const box = el('section', 'q');
+        box.appendChild(el('p', 'q-num', '문제 ' + (qi + 1)));
+        box.appendChild(el('p', 'q-text', item.q));
+        const list = el('div', 'choices');
+        const fb = el('div', 'feedback');
+        fb.hidden = true;
+        const last = qi === QUESTIONS.length - 1;
+        const next = el('button', 'next', last ? '결과 보기' : '다음 문제 →');
+        next.type = 'button';
+        next.hidden = true;
+        next.addEventListener('click', () => {
+          if (last) finish(); else show(qi + 1);
+        });
+        const buttons = item.choices.map((text, ci) => {
+          const b = el('button', 'choice');
+          b.type = 'button';
+          b.appendChild(el('span', 'mark', LETTERS[ci]));
+          b.appendChild(el('span', '', text));
+          b.addEventListener('click', () => pick(item, ci, buttons, fb, next));
+          list.appendChild(b);
+          return b;
+        });
+        box.appendChild(list);
+        box.appendChild(fb);
+        box.appendChild(next);
+        quizEl.appendChild(box);
+        return box;
+      });
+      show(0);
+    }
+
+    function pick(item, ci, buttons, fb, next) {
+      const correct = ci === item.answer;
+      buttons.forEach(b => { b.disabled = true; });
+      buttons[item.answer].classList.add('right');
+      buttons[item.answer].querySelector('.mark').textContent = '✓';
+      if (!correct) {
+        buttons[ci].classList.add('picked-wrong');
+        buttons[ci].querySelector('.mark').textContent = '✗';
+      }
+      fb.textContent = '';
+      fb.appendChild(el('p', 'verdict ' + (correct ? 'ok' : 'no'),
+        correct ? '✓ 맞았어요' : '✗ 틀렸어요 · 정답은 ' + LETTERS[item.answer] + '이에요'));
+      if (!correct) {
+        const p = el('p');
+        p.appendChild(el('span', 'label', '고른 보기(' + LETTERS[ci] + ')가 틀린 이유: '));
+        p.appendChild(document.createTextNode(item.wrong[ci]));
+        fb.appendChild(p);
+      }
+      const w = el('p');
+      w.appendChild(el('span', 'label', '정답 해설: '));
+      w.appendChild(document.createTextNode(item.why));
+      fb.appendChild(w);
+      fb.hidden = false;
+      next.hidden = false;
+      next.focus({ preventScroll: true });
+
+      if (correct) score += 1;
+      scoreEl.textContent = String(score);
+    }
+
+    function finish() {
+      sections.forEach(s => { s.hidden = true; });
+      window.scrollTo(0, 0);
+      document.getElementById('final').textContent = score + ' / ' + QUESTIONS.length;
+      let msg;
+      if (score === QUESTIONS.length) msg = '모두 맞았어요. 이 부분의 핵심을 다 잡았어요.';
+      else if (score >= 7) msg = '대부분 맞았어요. 틀린 문제의 해설만 다시 읽어 보세요.';
+      else msg = '틀린 문제의 해설을 읽고, 원문의 해당 부분을 다시 본 뒤 한 번 더 풀어 보세요.';
+      document.getElementById('final-msg').textContent = msg;
+      resultEl.hidden = false;
+    }
+
+    document.getElementById('retry').addEventListener('click', render);
+
+    render();
+  </script>
+</body>
+</html>
