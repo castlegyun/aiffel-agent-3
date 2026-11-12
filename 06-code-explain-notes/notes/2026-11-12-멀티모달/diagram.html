@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>소리가 답이 되는 두 길</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper:       #f5f5f5;
+      --ink:         #2d3142;
+      --muted:       #4f5d75;
+      --accent:      #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --node-fill:   #ffffff;
+      --node-stroke: #2d3142;
+      --font-sans:   'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:  'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:   'Geist Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:       #2d3142;
+        --ink:         #f5f5f5;
+        --muted:       #bfc0c0;
+        --accent:      #f08a59;
+        --accent-tint: rgba(240,138,89,0.10);
+        --node-fill:   rgba(245,245,245,0.04);
+        --node-stroke: rgba(245,245,245,0.45);
+      }
+    }
+    body { font-family: var(--font-sans); background: var(--paper); color: var(--ink); min-height: 100vh; padding: 1.5rem 1rem; }
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 1rem; }
+    .caption { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; max-width: 768px; word-break: keep-all; overflow-wrap: break-word; }
+    svg { width: 100%; min-width: 768px; display: block; }
+    .paper  { fill: var(--paper); }
+    .node   { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1; }
+    .focal  { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2; }
+    .line   { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .head   { fill: var(--muted); }
+    .t-name { fill: var(--ink); font: 600 13px var(--font-sans); text-anchor: middle; }
+    .t-sub  { fill: var(--muted); font: 400 12px var(--font-sans); text-anchor: middle; }
+    .t-row  { fill: var(--ink); font: 600 13px var(--font-sans); }
+    .t-note { fill: var(--muted); font: 400 12px var(--font-sans); }
+    .t-key  { fill: var(--ink); font: 600 12px var(--font-sans); }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Data flow · two paths from sound to answer</p>
+    <h1>소리가 답이 되는 두 길</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 768 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="multimodal-title multimodal-desc">
+        <title id="multimodal-title">소리가 답이 되는 두 길</title>
+        <desc id="multimodal-desc">길 A는 받아쓰기 도구가 소리를 글자로 바꾼 뒤 언어 모델이 답하므로 중간 글이 남지만 억양과 침묵이 빠지고, 길 B는 옴니 모델이 소리와 그림을 직접 받아 답하므로 소리 단서가 남지만 중간 산출물이 없다.</desc>
+        <defs>
+          <marker id="multimodal-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
+        </defs>
+        <rect class="paper" width="100%" height="100%"/>
+
+        <!-- 길 A 제목 -->
+        <text class="t-row" x="4" y="24">길 A · 나눠서 처리 (받아쓰기 도구 → 언어 모델)</text>
+
+        <!-- 길 A 화살표 (상자보다 먼저) -->
+        <line class="line" x1="124" y1="72" x2="162" y2="72" marker-end="url(#multimodal-arrow)"/>
+        <line class="line" x1="284" y1="72" x2="322" y2="72" marker-end="url(#multimodal-arrow)"/>
+        <line class="line" x1="444" y1="72" x2="482" y2="72" marker-end="url(#multimodal-arrow)"/>
+        <line class="line" x1="604" y1="72" x2="642" y2="72" marker-end="url(#multimodal-arrow)"/>
+
+        <!-- 길 A 상자 -->
+        <rect class="paper" x="4" y="40" width="120" height="64" rx="6"/>
+        <rect class="node" x="4" y="40" width="120" height="64" rx="6"/>
+        <text class="t-name" x="64" y="66">소리</text>
+        <text class="t-sub" x="64" y="86">말소리 녹음</text>
+
+        <rect class="paper" x="164" y="40" width="120" height="64" rx="6"/>
+        <rect class="node" x="164" y="40" width="120" height="64" rx="6"/>
+        <text class="t-name" x="224" y="66">받아쓰기 도구</text>
+        <text class="t-sub" x="224" y="86">예: Whisper</text>
+
+        <rect class="paper" x="324" y="40" width="120" height="64" rx="6"/>
+        <rect class="focal" x="324" y="40" width="120" height="64" rx="6"/>
+        <text class="t-name" x="384" y="66">받아쓴 글</text>
+        <text class="t-sub" x="384" y="86">중간 산출물</text>
+
+        <rect class="paper" x="484" y="40" width="120" height="64" rx="6"/>
+        <rect class="node" x="484" y="40" width="120" height="64" rx="6"/>
+        <text class="t-name" x="544" y="66">언어 모델</text>
+        <text class="t-sub" x="544" y="86">글을 읽고 답함</text>
+
+        <rect class="paper" x="644" y="40" width="120" height="64" rx="6"/>
+        <rect class="node" x="644" y="40" width="120" height="64" rx="6"/>
+        <text class="t-name" x="704" y="66">답</text>
+        <text class="t-sub" x="704" y="86">요약·결론</text>
+
+        <!-- 길 A 설명 -->
+        <text class="t-note" x="4" y="128"><tspan class="t-key">남는 것</tspan>  받아쓴 글. 틀린 결론이 어느 단계에서 나왔는지 되짚을 수 있다</text>
+        <text class="t-note" x="4" y="148"><tspan class="t-key">빠지는 것</tspan>  억양·침묵·머뭇거림. 소리를 글자로 옮길 때 사라진다</text>
+
+        <!-- 길 B 제목 -->
+        <text class="t-row" x="4" y="188">길 B · 한 번에 처리 (옴니 모델)</text>
+
+        <!-- 길 B 화살표 -->
+        <line class="line" x1="124" y1="236" x2="162" y2="236" marker-end="url(#multimodal-arrow)"/>
+        <line class="line" x1="604" y1="236" x2="642" y2="236" marker-end="url(#multimodal-arrow)"/>
+
+        <!-- 길 B 상자 -->
+        <rect class="paper" x="4" y="204" width="120" height="64" rx="6"/>
+        <rect class="node" x="4" y="204" width="120" height="64" rx="6"/>
+        <text class="t-name" x="64" y="230">소리·그림</text>
+        <text class="t-sub" x="64" y="250">녹음, 사진</text>
+
+        <rect class="paper" x="164" y="204" width="440" height="64" rx="6"/>
+        <rect class="node" x="164" y="204" width="440" height="64" rx="6"/>
+        <text class="t-name" x="384" y="230">옴니 모델</text>
+        <text class="t-sub" x="384" y="250">소리·그림·글을 직접 받는다 (예: 젬마 4)</text>
+
+        <rect class="paper" x="644" y="204" width="120" height="64" rx="6"/>
+        <rect class="node" x="644" y="204" width="120" height="64" rx="6"/>
+        <text class="t-name" x="704" y="230">답</text>
+        <text class="t-sub" x="704" y="250">요약·결론</text>
+
+        <!-- 길 B 설명 -->
+        <text class="t-note" x="4" y="288"><tspan class="t-key">남는 것</tspan>  억양·침묵 같은 소리 단서. 모델에게 그대로 물어볼 수 있다</text>
+        <text class="t-note" x="4" y="308"><tspan class="t-key">빠지는 것</tspan>  중간 산출물. 어느 단계에서 틀렸는지 짚기 어렵다</text>
+      </svg>
+    </div>
+    <p class="caption">강조한 상자(받아쓴 글)가 두 길의 차이다. 길 A에는 있고 길 B에는 없다. 원문의 결론: 회의록처럼 나중에 근거를 되짚어야 하는 일이면 길 A, 실시간으로 상황을 파악해야 하는 일이면 길 B가 낫다.</p>
+  </div>
+</body>
+</html>
