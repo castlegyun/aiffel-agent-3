@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사진 여러 장에서 점을 얻고, 반투명 알갱이로 겹쳐 그리면 돌려 볼 수 있는 3차원 장면이 된다 · 코드 해설 노트</title>
+<style>
+  /* 디자인 규칙: DESIGN.md (GitHub 스타일) */
+  :root {
+    --canvas:#ffffff; --subtle:#f6f8fa; --border:#d0d7de; --fg:#1f2328; --muted:#656d76; --link:#0969da;
+    --tab-line:#fd8c73; --code-bg:rgba(175,184,193,.2);
+    --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif;
+    --font-mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --canvas:#0d1117; --subtle:#161b22; --border:#30363d; --fg:#e6edf3; --muted:#a0a9b4; --link:#4493f8;
+      --tab-line:#f78166; --code-bg:rgba(110,118,129,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--canvas); color:var(--fg); font:400 1.0625rem/1.65 var(--font-body); word-break:keep-all; overflow-wrap:break-word; }
+  main { max-width:920px; margin:0 auto; padding:24px 16px 48px; }
+  a { color:var(--link); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  :focus-visible { outline:2px solid var(--link); outline-offset:2px; }
+  h1 { font-size:1.875rem; line-height:1.25; font-weight:600; margin:8px 0 8px; }
+  .summary { color:var(--muted); font-size:1rem; margin:0 0 16px; max-width:68ch; }
+  .nav { margin-bottom:8px; font-size:.9375rem; }
+  .terms { background:var(--subtle); border:1px solid var(--border); border-radius:6px; padding:10px 16px; margin-bottom:16px; font-size:1rem; }
+  .terms h2 { font-size:1rem; margin:0 0 6px; }
+  .terms summary { cursor:pointer; }
+  .terms ul { margin:8px 0 0; padding-left:20px; color:var(--fg); }
+  .flow-frame { width:100%; height:600px; border:1px solid var(--border); border-radius:6px; margin:0 0 16px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px; flex-wrap:wrap; }
+  .tabs button { font:inherit; font-size:1rem; background:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; padding:10px 18px; color:var(--muted); cursor:pointer; border-radius:6px 6px 0 0; }
+  .tabs button:hover { color:var(--fg); background:var(--subtle); }
+  .tabs button[aria-selected="true"] { color:var(--fg); font-weight:600; border-bottom-color:var(--tab-line); }
+  .panel[hidden] { display:none; }
+  table { width:100%; border-collapse:collapse; font-size:1rem; }
+  th, td { text-align:left; vertical-align:top; padding:8px 14px; border:1px solid var(--border); }
+  th { background:var(--subtle); font-weight:600; }
+  td.n { width:2.5em; font-family:var(--font-mono); color:var(--muted); }
+  td:nth-child(2) { min-width:14em; }
+  /* 좁은 화면: 둘째 칸 최소 폭을 줄여 표가 화면 안에 들어오게 한다. 칸보다 긴 낱말·코드 조각만 줄을 바꾸고, 그래도 넓으면 페이지 대신 탭 안에서 가로로 움직인다 */
+  @media (max-width:600px) {
+    td:nth-child(2) { min-width:9em; }
+    th, td { padding:8px; }
+    .panel { overflow-x:auto; }
+    td { overflow-wrap:anywhere; }
+    /* 원문 ↔ 풀어쓰기 표: 두 칸이 좁아져 읽기 힘들어서, 좁은 화면에서는 위아래로 쌓는다 */
+    .para thead { display:none; }
+    .para, .para tbody, .para tr, .para td { display:block; width:100%; }
+    .para tr { border:1px solid var(--border); border-radius:6px; margin:0 0 12px; overflow:hidden; }
+    .para td { border:0; border-top:1px solid var(--border); min-width:0; }
+    .para td.n { width:auto; border-top:0; background:var(--subtle); }
+    .para td:nth-child(2)::before, .para td:nth-child(3)::before { display:block; font-size:.85rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
+    .para td:nth-child(2)::before { content:"원문"; }
+    .para td:nth-child(3)::before { content:"쉽게 풀어쓰기"; }
+  }
+  code, pre { background:var(--code-bg); border-radius:6px; font:.85em/1.5 var(--font-mono); }
+  code { padding:.2em .4em; white-space:pre-wrap; }
+  pre { padding:12px 16px; overflow:auto; }
+  .words li, .points li { margin:4px 0; }
+  .visual-kind, .visual-reason { margin:4px 0; }
+  .visual-buttons { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:12px 0; }
+  .visual-buttons button { font:inherit; font-size:1rem; font-weight:500; padding:6px 18px; border:1px solid var(--border); border-radius:6px; background:var(--subtle); color:var(--fg); cursor:pointer; }
+  .visual-buttons button[aria-pressed="true"] { border-color:var(--link); color:var(--link); }
+  .visual-buttons button:disabled { opacity:.5; cursor:default; }
+  #visual-frame { width:100%; height:75vh; border:1px solid var(--border); border-radius:6px; background:#fff; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration:.01ms !important; } }
+  /* 목록 점: 기본 점은 글자색을 따라가 어두운 화면에서 안 보일 수 있어 고정 색 점을 쓴다 */
+  .points, .terms ul, .words { list-style:none; padding-left:0; }
+  .points li, .terms li, .words li { position:relative; padding-left:1.5em; }
+  .points li::before, .terms li::before, .words li::before { content:""; position:absolute; left:.25em; top:.72em; width:.55em; height:.55em; border-radius:50%; background:var(--tab-line); }
+</style>
+</head>
+<body>
+<main>
+  <div class="nav"><a href="../../index.html">← 노트 보관함</a></div>
+  <h1>사진 여러 장에서 점을 얻고, 반투명 알갱이로 겹쳐 그리면 돌려 볼 수 있는 3차원 장면이 된다</h1>
+  <p class="summary">사진 한 장에는 거리가 없지만, 위치를 옮겨 찍은 여러 장에서는 시차를 이용해 깊이와 카메라 위치를 추정하고 위치·색을 가진 점을 얻는다. 그 점마다 크기와 투명도를 준 알갱이(가우시안 스플랫)는 서로 겹치면서 틈을 메우고, 반투명이라 먼 것부터 겹쳐 그려야 색이 맞는다. 다만 찍지 않은 면은 생기지 않고, 파일 크기·알갱이 수·화질은 따로 재고 따로 고쳐야 한다.</p>
+
+  <details class="terms">
+    <summary><strong>새 용어 32개</strong> (눌러서 펼치기)</summary>
+    <ul>
+      <li><strong>깊이</strong> = 카메라에서 물체까지의 거리. 사진 파일에는 이 값이 적혀 있지 않다</li>
+      <li><strong>시차</strong> = 촬영 위치를 옮겼을 때 물체가 사진 안에서 움직여 보이는 정도. 가까운 물체일수록 크다</li>
+      <li><strong>카메라 정보</strong> = 사진마다 카메라가 공간의 어디에 있었고 어느 쪽을 보고 있었는지</li>
+      <li><strong>추정</strong> = 정확히 잰 것이 아니라 주어진 사진으로 계산해 짐작한 값</li>
+      <li><strong>포인트 클라우드</strong> = 위치와 색을 가진 점들의 모음. 점 사이에는 빈틈이 있다</li>
+      <li><strong>메시</strong> = 꼭짓점을 삼각형으로 이어 만든 표면</li>
+      <li><strong>복셀</strong> = 공간을 같은 크기의 작은 칸으로 나누고, 칸마다 상태(비었는지, 물체가 있는지 등)를 담은 것</li>
+      <li><strong>가우시안 스플랫</strong> = 점에 크기·회전·불투명도를 준 반투명 타원 하나. 화면에서는 가운데가 진하고 가장자리로 갈수록 옅다</li>
+      <li><strong>알갱이</strong> = 원문(과 이 노트)에서 가우시안 스플랫 하나를 부르는 말</li>
+      <li><strong>가우시안 스플래팅</strong> = 알갱이(가우시안 스플랫) 여러 개를 화면에 투영해 겹쳐 그려서 3차원 장면을 보여 주는 기술</li>
+      <li><strong>투영</strong> = 3차원 공간에 있는 것이 2차원 화면의 어디에, 어떤 모양으로 보일지 계산해 옮기는 일</li>
+      <li><strong>불투명도</strong> = 알갱이가 자기 뒤에 있는 것을 얼마나 가리는지</li>
+      <li><strong>기본 색</strong> = 어느 방향에서 보든 공통으로 쓰는 알갱이의 색</li>
+      <li><strong>구면 조화 계수</strong> = 보는 방향에 따라 알갱이의 색이 어떻게 달라지는지를 담은 숫자들</li>
+      <li><strong>법선</strong> = 표면에 수직인 방향. 원문 실습에서는 쓰지 않아 0으로 채운다</li>
+      <li><strong>좌표축</strong> = 공간의 위치를 숫자 3개로 적을 때, 각 숫자가 가리키는 방향(가로·세로·앞뒤)</li>
+      <li><strong>뷰어</strong> = 장면 파일을 읽어 화면에 보여 주는 프로그램. 이번 실습에서는 웹 페이지다</li>
+      <li><strong>렌더링</strong> = 장면 자료(알갱이들)로 화면에 보일 그림을 계산해 그리는 일</li>
+      <li><strong>렌더러</strong> = 렌더링을 맡는 프로그램 부분</li>
+      <li><strong>바이트</strong> = 파일 크기를 세는 단위. 원문 실습에서는 숫자 하나를 4바이트로 저장한다</li>
+      <li><strong>저장 형식</strong> = 같은 내용을 파일에 어떤 순서와 방식으로 적을지 정한 약속. 형식이 다르면 파일 크기가 달라질 수 있다</li>
+      <li><strong>카메라 퍼짐 비</strong> = 장면 크기에 비해 카메라가 얼마나 넓게 움직였는지 보는 보조 값</li>
+      <li><strong>특징점</strong> = 여러 사진에서 "같은 곳"으로 찾아 맞출 수 있는, 눈에 띄는 부분(모서리 등)</li>
+      <li><strong>라이다</strong> = 거리를 재는 센서. 원문 기준으로 기본 관측은 점의 위치와 반사 강도이고, 사진의 색은 없다</li>
+      <li><strong>신경망</strong> = 입력 숫자에 계산을 여러 층 거듭해 출력 숫자를 내는 모델 구조 (덧붙인 설명: 원문에 정의가 없다)</li>
+      <li><strong>밀도</strong> = NeRF가 공간의 한 위치마다 내는 값으로, 그 자리에 무언가가 얼마나 차 있는지 (덧붙인 설명: 원문에 정의가 없다)</li>
+      <li><strong>광선</strong> = 카메라에서 화면의 한 점 쪽으로 뻗은 직선</li>
+      <li><strong>장면별 학습</strong> = 한 장면의 사진에 맞춰, 그 장면만을 위한 값(색·크기 등)을 사진과 비교하며 고쳐 나가는 일</li>
+      <li><strong>화소</strong> = 사진이나 화면을 이루는 가장 작은 점 하나. 점마다 색을 나타내는 숫자가 있다</li>
+      <li><strong>평가용 사진</strong> = 복원에 넣지 않고 따로 떼어 두었다가, 결과와 비교할 정답으로 쓰는 사진</li>
+      <li><strong>특징</strong> = 신경망이 사진에서 뽑아낸 숫자 목록. 무늬·모양 같은 성질을 담는다 (덧붙인 설명: 원문에 정의가 없다)</li>
+      <li><strong>지표</strong> = 결과를 숫자로 비교하는 기준</li>
+    </ul>
+  </details>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="flow">요약</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
+    <button role="tab" aria-selected="false" data-tab="detail">풀어쓰기</button>
+    <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+  </div>
+
+  <section class="panel" id="flow">
+    <iframe class="flow-frame" src="diagram.html" title="사진에서 알갱이 장면까지" style="height:370px"></iframe>
+    <ul class="points">
+      <li>사진 한 장에는 색은 있어도 <strong>거리(깊이)는 없어요</strong>. 위치를 옮겨 다시 찍으면 가까운 것은 많이, 먼 것은 적게 움직이고(<strong>시차</strong>), 이 차이와 카메라 위치를 함께 풀어 거리를 알아내요.</li>
+      <li>그렇게 얻은 결과는 <strong>위치와 색을 가진 점</strong>이에요. 점에는 크기가 없어서 가까이 다가가면 표면이 비어 보여요.</li>
+      <li>점마다 크기와 투명도를 주면 <strong>알갱이(가우시안 스플랫)</strong>가 돼요. 크기가 생긴 알갱이끼리 겹치면서 <strong>틈이 메워지고</strong>, 반투명이라 <strong>먼 것부터 겹쳐</strong> 그려야 색이 맞아요. 다만 메시처럼 이어진 표면은 아니에요.</li>
+      <li><strong>파일 크기를 줄이는 일 ≠ 알갱이 수를 줄이는 일</strong>이에요. 앞은 처음 열릴 때의 기다림을, 뒤는 움직일 때의 끊김을 바꿔요.</li>
+      <li><strong>찍지 않은 면은 어떤 설정으로도 실제 모습대로 생기지 않아요.</strong> 빈 곳이 "점이 없어서"인지 "알갱이 사이 틈"인지에 따라 고칠 곳(다시 촬영 / 크기 조절)이 달라요.</li>
+    </ul>
+  </section>
+
+  <section class="panel" id="detail" hidden>
+    <table class="para">
+      <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>(도입) … 사진을 보고 있지만, 사진 한 장을 확대할 때와는 다릅니다. 보는 위치가 바뀌면 물건 사이의 틈도 달라집니다. …<br><br><strong>핵심 한 문장</strong>: 가우시안 스플래팅은 색과 크기, 투명도가 있는 작은 알갱이들로 3차원 장면을 화면에 그리는 기술입니다.</td><td><strong>결론:</strong> 이 글의 목표는 사진으로 "돌려 볼 수 있는 장면"을 만드는 것이고, 그 장면을 그리는 기술이 가우시안 스플래팅이에요.<br>1. 사진 한 장을 확대하면 그림이 커질 뿐, 보는 위치는 그대로예요.<br>2. 이 글에서 만드는 장면은 보는 위치를 옮길 수 있어요. 위치를 옮기면 물건 사이의 틈(앞 물건 뒤로 무엇이 보이는지)도 달라져요.<br>3. 이 장면은 색·크기·투명도를 가진 작은 알갱이 여러 개로 되어 있어요.<br><strong>이름 정리:</strong> 알갱이 하나 = 가우시안 스플랫. 알갱이로 장면을 그리는 기술 = 가우시안 스플래팅. 이 노트에서는 원문처럼 알갱이 하나를 "알갱이"라고 불러요.<br><strong>그래서?</strong> 보는 위치를 바꾸려면 물건마다 공간의 어디에 있는지 알아야 해요. 그걸 사진에서 어떻게 알아내는지가 2~3행이에요.</td></tr>
+        <tr><td class="n">2</td><td>책상 사진을 한 장 찍었다고 해 보겠습니다. 컵과 모니터의 색은 파일에 들어 있지만, 카메라에서 각각 얼마나 떨어져 있는지는 적혀 있지 않습니다. 멀리 있는 큰 물건과 가까이 있는 작은 물건이 사진에서는 비슷한 크기로 보일 수도 있습니다. 한 장만 보고는 실제 배치를 확정하기 어렵습니다.</td><td><strong>결론:</strong> 사진 한 장에는 색은 있어도 거리(깊이)는 없어요.<br>1. 사진 파일에 들어 있는 것: 화소마다의 색.<br>2. 들어 있지 않은 것: 물건마다 카메라에서 얼마나 떨어져 있었는지.<br>3. 그래서 멀리 있는 큰 물건과 가까이 있는 작은 물건이 사진에서 같은 크기로 찍힐 수 있어요.<br><strong>그래서?</strong> 한 장만으로는 "작아서 작게 보이는지, 멀어서 작게 보이는지"를 가릴 수 없어요. 사진이 더 필요해요.</td></tr>
+        <tr><td class="n">3</td><td>이번에는 몸을 옆으로 옮겨 다시 찍습니다. 가까운 컵은 사진 안에서 크게 움직이고, 먼 벽은 덜 움직입니다. 이렇게 촬영 위치에 따라 물체가 달라 보이는 현상을 시차라고 합니다. 여러 사진에서 같은 부분을 찾고, 카메라가 움직인 위치와 함께 풀면 그 부분이 공간 어디에 있었는지 알아낼 수 있습니다. 오늘 쓸 MapAnything은 여러 사진을 한꺼번에 받아 깊이와 카메라 정보를 추정하는 모델입니다.<br><br>(그림 설명) 두 촬영 위치에서 본 방. 가까운 물건과 먼 물건이 처음 위치를 표시한 점선에서 서로 다른 거리만큼 움직인 모습.</td><td><strong>결론:</strong> 위치를 옮겨 찍으면 가까운 것은 많이, 먼 것은 적게 움직여요. 이 차이(시차)로 거리를 알아내요.<br>1. 몸을 옆으로 옮겨 한 장 더 찍어요.<br>2. 두 사진에서 같은 부분(예: 컵 손잡이)을 찾아요.<br>3. 그 부분이 사진 안에서 얼마나 움직였는지 봐요. 많이 움직였으면 가깝고, 적게 움직였으면 멀어요.<br>4. 카메라가 얼마나 옮겨 갔는지(카메라 정보)와 함께 풀면 그 부분이 공간의 어디에 있었는지 나와요.<br><strong>왜 카메라 정보가 함께 필요한가?</strong> (덧붙인 설명) 사진 속에서 많이 움직였다는 것만으로는 "물건이 가까워서"인지 "카메라가 많이 옮겨 가서"인지 가릴 수 없어요. 카메라가 얼마나 움직였는지 알아야 움직인 양을 거리로 바꿀 수 있어요.<br><strong>MapAnything(맵애니싱)</strong>은 이 일을 한꺼번에 해요: 여러 사진을 받아 깊이와 카메라 정보를 함께 추정해요.<br>[그림] 탭의 <strong>시차 움직여 보기</strong>에서 카메라를 직접 옮겨 볼 수 있어요.</td></tr>
+        <tr><td class="n">4</td><td>깊이를 구하고 나면 공간을 어떤 형태로 저장할지 정해야 합니다. 포인트 클라우드는 위치와 색을 가진 점들의 모음입니다. 방이 어떻게 생겼는지 살펴보기 좋지만, 점 사이에는 빈틈이 있습니다. 메시는 꼭짓점을 삼각형으로 이어 표면을 만듭니다. 물체의 표면이 필요한 작업에 쓰기 좋습니다. 복셀은 공간을 작은 칸으로 나눠 각 칸의 상태를 담습니다. 빈 공간과 물체가 차지한 공간을 구분할 때 쓸 수 있습니다.<br><br>(그림 설명) 삼각형 수가 다른 토끼 메시 세 개 / 라이다로 얻은 도시 교차로의 포인트 클라우드 / 같은 크기 정육면체를 쌓은 복셀.</td><td><strong>결론:</strong> 알아낸 공간을 저장하는 대표적인 형태는 셋이고, 잘하는 일이 서로 달라요.<br>1. <strong>포인트 클라우드</strong>: 위치+색을 가진 점들.<br>&nbsp;&nbsp;· 좋은 점: 방이 어떻게 생겼는지 살펴보기 좋아요.<br>&nbsp;&nbsp;· 한계: 점 사이에 빈틈이 있어요(원문 교차로 그림에서 검은 배경이 보이는 곳).<br>2. <strong>메시</strong>: 꼭짓점을 삼각형으로 이은 표면.<br>&nbsp;&nbsp;· 좋은 점: 물체의 표면이 필요한 작업에 써요.<br>&nbsp;&nbsp;· 원문 토끼 그림: 삼각형 수가 줄면 표면이 더 각져 보여요.<br>3. <strong>복셀</strong>: 공간을 같은 크기 칸으로 나눠 칸마다 상태를 담아요.<br>&nbsp;&nbsp;· 좋은 점: 빈 공간과 물체가 차지한 공간을 구분할 수 있어요.<br><strong>왜 이 셋을 먼저 보나?</strong> (덧붙인 설명) 다음 행의 알갱이가 이 셋 중 포인트 클라우드에서 출발하고, 메시와는 다르다는 걸 비교하기 위해서예요.</td></tr>
+        <tr><td class="n">5</td><td>오늘 만들 가우시안 스플랫은 점에 크기와 투명도를 준 반투명 타원입니다. 화면에 투영하면 가운데가 진하고 가장자리로 갈수록 옅어집니다. 이런 타원들을 겹쳐 그리면 점 사이의 틈이 메워지면서 사진처럼 보이는 장면이 됩니다. 다만 겉보기에 바닥이 있어도 메시처럼 연결된 표면은 아닙니다. 충돌 판정이나 치수 측정이 필요한 서비스라면 보이는 모습만으로 충분한지 따로 판단해야 합니다.</td><td><strong>결론:</strong> 알갱이는 점에 크기와 투명도를 준 반투명 타원이에요. 겹쳐 그리면 틈이 메워지지만, 이어진 표면은 아니에요.<br>1. 출발점: 포인트 클라우드의 점(위치+색).<br>2. 점마다 크기와 투명도를 줘서 타원 모양 알갱이로 만들어요.<br>3. 화면에 투영하면 알갱이는 가운데가 진하고 가장자리로 갈수록 옅어요.<br>4. 이웃한 알갱이의 옅은 가장자리끼리 겹치면 점 사이 틈이 메워져요. (덧붙인 설명: 원문은 "타원들을 겹쳐 그리면 틈이 메워진다"까지 써요.)<br>5. 그래서 사진처럼 보이는 장면이 돼요.<br><strong>주의:</strong> 바닥이 보여도 알갱이가 겹쳐 있을 뿐, 메시처럼 꼭짓점이 이어진 면이 아니에요. 그래서 "물건끼리 부딪쳤나"(충돌 판정)나 "길이가 얼마인가"(치수 측정)가 필요한 서비스라면, 보이는 모습만으로 충분한지 따로 따져야 해요.</td></tr>
+        <tr><td class="n">6</td><td>스플랫 하나에는 다음 값들이 들어갑니다. …<br>위치: 공간에서 알갱이를 놓을 자리 / 기본 색: 어느 방향에서 보든 공통으로 사용할 색 / 크기와 회전: 타원이 얼마나 크고 어느 쪽으로 길쭉한지 / 불투명도: 뒤에 있는 알갱이를 얼마나 가릴지 / 구면 조화 계수: 보는 방향에 따라 색이 어떻게 달라질지</td><td><strong>결론:</strong> 알갱이 하나는 값 다섯 묶음으로 되어 있어요.<br>1. 위치: 공간의 어디에 놓을지<br>2. 기본 색: 어느 방향에서 봐도 공통으로 쓰는 색<br>3. 크기와 회전: 얼마나 크고, 어느 쪽으로 길쭉한지<br>4. 불투명도: 뒤에 있는 알갱이를 얼마나 가리는지<br>5. 구면 조화 계수: 보는 방향에 따라 색이 어떻게 바뀌는지<br><strong>왜 알아야 하나?</strong> 원문: 이 값들을 알면 변환을 에이전트에게 맡긴 뒤에도 무엇이 제대로 만들어졌는지 확인할 수 있어요. (예: 13행에서 파일 크기를 이 값들의 개수로 맞춰 봐요.)</td></tr>
+        <tr><td class="n">7</td><td>금속 표면을 옆으로 돌아가며 보면 반짝이는 자리가 바뀝니다. 이 차이를 표현하는 데 쓰는 값이 구면 조화 계수입니다. 오늘은 위치와 색을 가진 점에서 출발하므로, 방향에 따라 색이 달라지는 효과까지 학습하지는 않습니다. 기본 색만 쓰고 크기와 불투명도는 규칙으로 정합니다. 사진과 비교하며 모든 값을 조정하는 정식 3DGS 학습과는 결과가 다를 수 있습니다.</td><td><strong>결론:</strong> 오늘은 방향에 따른 색 변화를 빼고, 크기와 불투명도도 규칙으로 정해요. 그래서 정식 3DGS와 결과가 다를 수 있어요.<br>1. 금속을 돌아가며 보면 반짝이는 자리가 바뀌어요. 이렇게 보는 방향에 따라 달라지는 색을 담는 값이 구면 조화 계수예요.<br>2. 오늘 출발점은 "위치+색 하나"만 가진 점이에요. 방향마다 다른 색 정보는 들어 있지 않아요.<br>3. 그래서 기본 색만 써요.<br>4. 크기와 불투명도도 사진과 비교해 고치지 않고, 정해 둔 규칙으로 줘요(12행).<br>5. 정식 3DGS 학습은 사진과 비교하며 이 값들을 모두 조정해요.<br><strong>그래서?</strong> 오늘 결과가 정식 3DGS 결과보다 덜 사진 같아도 이상한 일이 아니에요. 만드는 방법이 다르기 때문이에요.</td></tr>
+        <tr><td class="n">8</td><td>(실습 1) … 제자리에서 폰만 돌리면 사진의 방향은 바뀌지만 시차가 충분히 생기지 않습니다. 물건을 바라보며 몸을 옆으로 옮겨 보세요. 컵 뒤에 가려져 있던 책상 면이 조금씩 드러나는지 화면에서 확인하며 원호를 따라 걷습니다. … 앞뒤 사진에 같은 물건이 이어서 보이게 천천히 움직입니다.<br>… 거울이나 유리, 반짝이는 표면은 보는 방향에 따라 모습이 달라져 복원이 어려울 수 있습니다. 사람이나 물건이 촬영 도중 움직여도 사진끼리 맞추기 어렵습니다. … 처음부터 공개할 수 있는 범위를 찍는 편이 좋습니다.</td><td><strong>결론:</strong> 시차가 생기게 찍어야 해요. 제자리에서 폰만 돌리지 말고, 물건을 보며 몸을 옆으로 옮겨요.<br>1. 제자리에서 돌리기: 사진의 방향만 바뀌고, 가까운 것과 먼 것이 움직이는 양의 차이가 충분히 생기지 않아요.<br>2. 몸을 옮기며 원호를 따라 걷기: 컵 뒤에 가려졌던 책상 면이 조금씩 드러나요. 이게 시차가 생기고 있다는 표시예요.<br>3. 천천히 움직여 앞뒤 사진에 같은 물건이 이어서 보이게 해요. 3행처럼 "같은 부분"을 찾아 맞춰야 하기 때문이에요.<br><strong>복원이 어려운 경우와 이유:</strong><br>&nbsp;&nbsp;· 흔들려 번진 장면 → 같은 부분을 찾기 어려워요(덧붙인 설명).<br>&nbsp;&nbsp;· 거울·유리·반짝이는 표면 → 보는 방향마다 모습이 달라져요.<br>&nbsp;&nbsp;· 촬영 중 움직이는 사람·물건 → 사진끼리 맞추기 어려워요.<br><strong>그리고:</strong> 문패·얼굴·모니터의 개인정보는 나중에 지우기보다 처음부터 찍지 않는 편이 좋아요.</td></tr>
+        <tr><td class="n">9</td><td>(실습 1, 에이전트에게 맡길 일 요약) 영상에서 프레임 24장을 고르게 추출 … 각 좌표축에서 위아래 0.5퍼센트 밖으로 튄 점을 제외한 뒤, 점 좌표와 색, 카메라 위치를 파일 하나에 저장 …<br><br>MapAnything은 사진마다 깊이를 추정하고, 카메라 정보를 이용해 점들을 같은 공간에 놓습니다. 출력은 미터 단위 추정이지만, 실제 치수를 정확하게 측정했다는 뜻은 아닙니다. 점이 많이 나왔다고 정확한 복원이라고 할 수도 없습니다. 같은 벽에 점이 빽빽하게 찍혔어도 책상 뒤편은 비어 있을 수 있습니다.</td><td><strong>결론:</strong> 나온 점은 "추정"이에요. 미터 단위로 나와도 정확히 잰 게 아니고, 점이 많아도 정확하다는 뜻이 아니에요.<br>1. (에이전트가 짠 코드) 영상에서 사진(프레임) 24장을 고르게 뽑아요.<br>2. MapAnything이 사진마다 깊이를 추정해요.<br>3. 카메라 정보를 이용해 그 점들을 하나의 공간에 모아요.<br>4. (에이전트가 짠 코드) 좌표마다 지나치게 멀리 튄 점(위아래 0.5%)은 빼요.<br>5. 결과: 점 좌표 + 색 + 카메라 위치.<br><strong>조심할 두 가지:</strong><br>&nbsp;&nbsp;· 숫자가 미터 단위로 나와도 추정값이에요. 줄자로 잰 치수가 아니에요.<br>&nbsp;&nbsp;· 점 개수는 정확도와 다른 이야기예요. 벽에는 점이 빽빽해도 책상 뒤편은 비어 있을 수 있어요.<br><strong>그래서?</strong> "점이 몇 개인가"보다 "어디에 점이 있고 어디가 비었나"를 봐야 해요.</td></tr>
+        <tr><td class="n">10</td><td>결과가 뜨면 촬영한 영상을 옆에 놓고 카메라 배치를 살펴봅니다. 내가 옆으로 걸었는데 카메라가 거의 한곳에 모여 있다면 촬영이나 추정 결과를 다시 볼 필요가 있습니다. 퍼짐 비는 장면 크기에 비해 카메라가 얼마나 움직였는지 살피는 보조 값입니다. 이 값 하나로 합격선을 정하지 않고, 실제 이동 경로와 카메라 방향을 함께 확인합니다. 사진 수를 늘려도 찍지 않은 뒷면이 생기지는 않습니다.<br>(계산: 카메라 위치 상자의 대각선 ÷ 장면 상자의 대각선)</td><td><strong>결론:</strong> 결과의 카메라 배치가 내가 실제로 걸은 길과 맞는지 먼저 봐요. 카메라 퍼짐 비는 보조로만 봐요.<br>1. 결과에 나온 카메라 위치들을 촬영 영상과 나란히 놓아요.<br>2. 옆으로 걸었는데 카메라들이 거의 한곳에 모여 있으면 → 촬영이나 추정이 잘못됐을 수 있어요.<br>3. 퍼짐 비: 카메라들이 차지한 범위가 장면 크기에 비해 얼마나 넓은지를 숫자 하나로 본 값이에요. 클수록 장면에 비해 카메라가 많이 움직였다는 뜻이에요.<br>4. 원문은 이 값 하나로 합격선을 정하지 말고, 실제 이동 경로와 카메라 방향을 함께 확인하라고 해요.<br><strong>덧붙여:</strong> 사진 수를 늘려도 찍지 않은 뒷면은 생기지 않아요(원문). (덧붙인 설명: 같은 쪽 사진이 늘어날 뿐이에요. 17행 참고.)</td></tr>
+        <tr><td class="n">11</td><td>(실습 2) 점 파일을 열면 책상과 벽의 모양을 알아볼 수 있습니다. 하지만 점에는 크기가 없으니 가까이 다가갔을 때 표면이 비어 보입니다. 이제 점 하나마다 크기와 불투명도를 주어 화면을 채울 알갱이로 바꿉니다.<br>복원한 점의 위치와 색을 그대로 파일에 옮기기만 하면 웹 뷰어에서 우리가 기대한 모습으로 보이지 않을 수 있습니다. 복원 모델과 뷰어가 좌표 방향을 다르게 쓰고, 스플랫 파일도 색과 크기를 정해진 방식으로 저장하기 때문입니다. …</td><td><strong>결론:</strong> 점을 알갱이로 바꿀 때는 크기·불투명도를 주는 것과 함께, 뷰어가 읽는 방식에 맞게 값을 고쳐 적어야 해요.<br>1. 점 파일만으로도 책상·벽 모양은 알아볼 수 있어요.<br>2. 하지만 크기 없는 점이라 가까이 가면 표면이 비어 보여요.<br>3. 그래서 점마다 크기와 불투명도를 줘 알갱이로 만들어요.<br>4. 그런데 값을 그대로 옮겨 적으면 안 되는 이유가 둘 있어요.<br>&nbsp;&nbsp;· 복원 모델과 뷰어가 좌표축 방향을 다르게 써요. (원문 실습에서는 두 축 y·z의 부호를 뒤집어 맞춰요.)<br>&nbsp;&nbsp;· 스플랫 파일은 색과 크기를 정해진 방식으로 바꿔 저장해요.<br><strong>그래서?</strong> 맞추지 않으면 장면이 뒤집히거나 알갱이 모양이 달라질 수 있어요. 뷰어에서 천장이 아래로 보이면 좌표 방향부터 확인해요.</td></tr>
+        <tr><td class="n">12</td><td>우리가 조절할 값은 알갱이 크기입니다. 너무 작으면 벽 사이로 검은 틈이 보이고, 너무 크면 책상 모서리가 뭉개집니다. 오늘은 장면 크기와 점 개수를 기준으로 반지름을 정합니다. 반지름은 K에 장면의 가장 긴 변을 곱한 뒤 점 개수 N의 제곱근으로 나눕니다(K × 가장 긴 변 ÷ √N). K의 기본값은 1.4로 두고, 화면을 보며 조절합니다. 점을 줄일수록 알갱이를 크게 만드는 규칙이지만, 장면마다 점이 고르게 퍼져 있는 것은 아니므로 결과를 직접 봐야 합니다.</td><td><strong>결론:</strong> 알갱이는 작으면 틈이 보이고, 크면 모서리가 뭉개져요. 원문은 "장면이 클수록 크게, 점이 많을수록 작게" 정하는 규칙으로 시작하고, 마지막은 화면을 보고 정해요.<br>1. 너무 작으면: 알갱이 사이로 검은 틈이 보여요.<br>2. 너무 크면: 책상 모서리 같은 가는 부분이 뭉개져요.<br>3. 시작값을 정하는 규칙(말로 풀면):<br>&nbsp;&nbsp;· 장면의 가장 긴 변이 길수록 알갱이를 크게 해요.<br>&nbsp;&nbsp;· 점이 많을수록 알갱이를 작게 해요. 반대로 점을 줄이면 알갱이가 커져요.<br>&nbsp;&nbsp;· K는 전체를 얼마나 키울지 정하는 숫자이고, 기본은 1.4예요.<br>&nbsp;&nbsp;· 불투명도는 원문 실습에서 모든 알갱이에 0.9로 똑같이 줘요.<br>4. 하지만 점은 장면 어디에나 고르게 있지 않아요. 그래서 규칙대로 정해도 결과는 직접 봐야 해요.<br><strong>왜 점이 많으면 작게?</strong> (덧붙인 설명) 같은 장면에 점이 많으면 점끼리 사이가 좁아요. 그래서 작은 알갱이로도 틈이 메워져요.<br>[그림] 탭의 <strong>알갱이 크기 바꿔 보기</strong>에서 틈과 뭉개짐이 서로 바뀌는 걸 직접 볼 수 있어요.</td></tr>
+        <tr><td class="n">13</td><td>저장이 끝나면 파일 크기를 알갱이 개수로 나눠 봅니다. 이 구성은 위치 3개, 법선 3개, 기본 색 3개, 불투명도 1개, 크기 3개, 회전 4개로 실수 17개를 저장합니다. 실수 하나가 4바이트이므로 알갱이당 약 68바이트가 됩니다. 파일 앞의 헤더가 조금 더 붙습니다. 방향에 따른 색 계수 45개까지 넣은 구성은 248바이트입니다. 사용하지 않는 계수를 0으로 채워 두기만 해도 파일이 커지는 까닭입니다.<br><br>(그림 설명) 알갱이 하나의 248바이트를 위치, 법선, 기본 색, 구면 조화, 불투명도, 크기, 회전으로 나눈 막대. 그중 180바이트가 방향별 색 계수.</td><td><strong>결론:</strong> 알갱이 하나의 저장 크기는 "어떤 값을 몇 개 저장하나"로 정해져요. 쓰지 않는 값도 자리를 차지해요.<br>1. 이번 실습 구성은 알갱이 하나에 숫자 17개를 저장해요(위치·법선·기본 색·불투명도·크기·회전). 원문 기준으로 알갱이당 약 68바이트예요.<br>2. 방향에 따른 색 계수까지 넣으면 알갱이당 248바이트예요. 그중 180바이트가 방향별 색이에요.<br>3. 이번 실습은 방향별 색을 쓰지 않아요(7행). 그런데 그 자리를 0으로 채워 저장하면, 0도 자리를 차지해서 파일만 커져요.<br><strong>그래서?</strong> 파일 크기 ÷ 알갱이 수로 알갱이당 크기를 구해 봐요. 예상과 크게 다르면 점 개수와 파일 맨 앞(헤더)에 어떤 값이 들어 있는지 확인해요.<br><strong>또 하나:</strong> 알갱이당 크기가 작아도, 알갱이가 수백만 개면 파일은 커져요(14행).</td></tr>
+        <tr><td class="n">14</td><td>(실습 3) PLY 파일 크기를 확인해 보세요. 알갱이당 68바이트만 저장해도 수백만 개가 모이면 큰 파일이 됩니다. GitHub는 100MiB를 넘는 일반 파일의 업로드를 막습니다. 파일이 올라가더라도 폰에서 받는 시간이 길면 보는 사람은 빈 화면 앞에서 기다려야 합니다.<br>먼저 알갱이 수를 유지한 채 저장 형식을 바꿔 보겠습니다. … PLY를 SOG로 변환합니다. …<br>변환 전후의 파일 크기와 알갱이 개수를 비교합니다. 형식 변환으로 값의 정밀도나 저장 방식이 달라질 수 있지만, 여기서는 알갱이 수를 줄이지 않습니다. … .splat, .compressed.ply, .sog, .spz처럼 형식이 여러 개 있으므로 파일 크기뿐 아니라 사용할 뷰어가 읽는 형식인지도 확인해야 합니다.<br><br>(그림 설명) 그림의 예제에서는 SOG가 15.3MB, PLY가 217.5MB지만 알갱이는 둘 다 약 320만 개입니다.</td><td><strong>결론:</strong> 저장 형식을 바꾸면 파일은 작아져도, 그릴 알갱이 수는 그대로일 수 있어요.<br>1. 알갱이당 크기가 작아도 수백만 개면 파일이 커요.<br>2. 큰 파일은 두 가지가 곤란해요: 올리는 곳에 크기 제한이 있고(원문: GitHub는 100MiB 넘는 일반 파일을 막아요), 폰에서 받는 동안 보는 사람은 빈 화면을 봐요.<br>3. 그래서 먼저 알갱이 수는 그대로 두고 저장 형식만 SOG로 바꿔요.<br>4. 원문 그림의 예제: SOG 15.3MB, PLY 217.5MB. 알갱이는 둘 다 약 320만 개예요. (이 숫자는 원문 예제 장면의 값이에요. 장면마다 달라요.)<br>5. 형식을 바꾸면 값의 정밀도나 저장 방식은 달라질 수 있어요. 그래서 개수가 같은지, 화면에서 차이가 보이는지 확인해요.<br><strong>형식을 고를 때:</strong> 형식은 여러 개예요(.splat, .compressed.ply, .sog, .spz). 가장 작은 것만 보지 말고, 쓸 뷰어가 그 형식을 읽을 수 있는지도 봐요.</td></tr>
+        <tr><td class="n">15</td><td>파일을 받은 뒤에도 화면을 움직일 때 끊긴다면 다른 문제가 있습니다. 압축으로 전송량은 줄었어도 렌더러가 그릴 알갱이는 그대로이기 때문입니다. 이때는 N_KEEP로 점 수를 줄여 볼 수 있습니다. 그러면 빈틈이 생길 수 있으니 알갱이 크기를 다시 조절하고, 원래 결과와 비교합니다. 처음 열릴 때의 기다림과 움직일 때의 끊김을 나눠서 확인하면 어느 값을 바꿔야 할지 찾기 쉽습니다.</td><td><strong>결론:</strong> "처음 열릴 때 기다림"과 "움직일 때 끊김"은 원인이 달라요. 나눠서 봐야 바꿀 값을 찾을 수 있어요.<br>1. 처음 기다림 → 받을 파일이 커서 → 저장 형식을 바꿔 파일을 줄여요(14행).<br>2. 받은 뒤 움직일 때 끊김 → 그릴 알갱이가 많아서 → 압축은 소용없어요. 파일이 작아져도 그릴 알갱이 수는 그대로니까요.<br>3. 끊김을 줄이려면 N_KEEP로 점(알갱이) 수 자체를 줄여요.<br>4. 점을 줄이면 사이가 벌어져 빈틈이 생길 수 있어요 → 알갱이 크기를 다시 조절해요(12행).<br>5. 바꾼 뒤에는 원래 결과와 비교해요.<br><strong>정리:</strong> 파일 크기 = 받는 시간, 알갱이 수 = 그리는 양. 둘은 따로 움직일 수 있어요.</td></tr>
+        <tr><td class="n">16</td><td>이제 장면 파일을 읽는 페이지를 만듭니다. three.js는 카메라와 화면 조작을 맡고, Spark는 가우시안 스플랫을 읽어 그립니다. 알갱이는 반투명해서 앞뒤로 겹치는 순서에 따라 색이 달라집니다. 일반적인 점을 그리는 방식으로 대신하면 같은 장면으로 보이지 않을 수 있습니다.<br><br>(그림 설명) 반투명 알갱이를 먼 것부터 겹쳐 그리는 모습입니다. 카메라가 반대편으로 이동하면 그리는 순서도 바뀝니다.<br>… 파일을 다 받았는데도 화면이 검다면 … 일반 three.js의 바깥 상자 대신 Spark가 제공하는 방법으로 크기를 구해야 합니다.</td><td><strong>결론:</strong> 알갱이는 반투명이라 먼 것부터 겹쳐 그려야 하고, 카메라가 옮겨 가면 그 순서도 바뀌어요. 그래서 알갱이 전용 도구로 그려요.<br>1. 반투명 알갱이 뒤에 있는 색은 조금 비쳐 보여요.<br>2. 그래서 어떤 순서로 겹치느냐에 따라 최종 색이 달라져요.<br>3. 먼 알갱이를 먼저 칠하고, 가까운 알갱이를 그 위에 칠해요. (덧붙인 설명: 가까운 것이 먼 것을 일부 가려야 하니까요.)<br>4. 카메라가 반대편으로 가면 먼 것과 가까운 것이 바뀌어요 → 그리는 순서도 바뀌어요.<br>5. 일반적인 점을 그리는 방식으로 대신하면 같은 장면으로 안 보일 수 있어요(원문). 추측: 반투명 알갱이의 겹치는 순서와 옅어지는 가장자리를 그대로 다루지 못하기 때문으로 보여요.<br><strong>역할 나눔:</strong> three.js(쓰리 제이에스) = 카메라와 화면 조작(돌리기·확대). Spark(스파크) = 알갱이 파일을 읽고 그리기. 장면 크기도 Spark가 주는 방법으로 구해야 카메라가 엉뚱한 곳을 보지 않아요.</td></tr>
+        <tr><td class="n">17</td><td>(공간을 복원하는 방법은 어떻게 다른가) 책상 옆으로 움직였더니 의자 뒤편에 구멍이 보입니다. 원본 영상을 되돌려 보니 그 면은 한 번도 찍히지 않았습니다. … 모델이 빠르게 결과를 내더라도, 촬영하지 않은 면까지 실제 모습대로 확인해 준 것은 아닙니다.<br><br>(그림 설명) 촬영한 쪽에는 알갱이가 모여 있지만, 카메라가 보지 못한 면은 비어 있습니다. 그쪽으로 돌아가 보면 빈 곳을 통해 배경이 보일 수 있습니다.</td><td><strong>결론:</strong> 한 번도 찍히지 않은 면은 비어 있어요. 모델이 결과를 빨리 내도, 찍지 않은 면을 실제 모습대로 알려 준 것은 아니에요.<br>1. 카메라가 본 쪽 → 점이 생기고 → 알갱이가 모여 있어요.<br>2. 카메라가 못 본 쪽 → 점이 없어요 → 알갱이도 없어요.<br>3. 그쪽으로 돌아가 보면 빈 곳으로 뒤 배경이 보여요.<br><strong>그래서?</strong> 구멍을 보면 먼저 원본 영상을 되돌려 "그 면이 찍혔나"부터 확인해요. 안 찍혔으면 해결책은 다시 촬영이에요(27행).</td></tr>
+        <tr><td class="n">18</td><td>… 같은 모서리가 여러 사진에서 어디에 찍혔는지 알더라도, 카메라 위치를 모르면 깊이를 풀기 어렵습니다. SfM은 사진 사이의 특징점을 연결해 카메라 위치와 드문드문한 공간의 점을 함께 추정합니다. 그 결과를 바탕으로 MVS는 여러 시점의 사진을 비교해 더 촘촘한 깊이와 점을 구합니다. 사진마다 같은 부분이 이어서 보여야 하는 이유가 여기에 있습니다.</td><td><strong>결론:</strong> 전통적인 방법은 두 단계예요. SfM이 카메라 위치와 성긴 점을 먼저 구하고, MVS가 그걸 바탕으로 촘촘한 점을 구해요.<br>1. 출발 문제: 같은 모서리가 사진마다 어디 찍혔는지 알아도, 카메라 위치를 모르면 깊이를 풀기 어려워요(3행과 같은 이유).<br>2. <strong>SfM</strong>: 사진들 사이에서 특징점(같은 모서리 등)을 찾아 연결해요. 이걸로 카메라 위치와 드문드문한 점을 <strong>함께</strong> 추정해요.<br>3. <strong>MVS</strong>: SfM이 구한 카메라 위치를 바탕으로, 여러 시점의 사진을 비교해 더 촘촘한 깊이와 점을 구해요.<br><strong>그래서?</strong> 특징점이 사진끼리 연결돼야 시작할 수 있어요. 그래서 촬영할 때 앞뒤 사진에 같은 부분이 이어서 보여야 해요(8행).</td></tr>
+        <tr><td class="n">19</td><td>움직이는 로봇은 촬영을 다 마칠 때까지 기다릴 수 없습니다. 이동하면서 자기 위치와 주변 지도를 함께 갱신하는 방식이 SLAM입니다. 카메라를 쓰기도 하고 거리 센서를 함께 쓰기도 합니다. 라이다의 기본 관측은 점의 위치와 반사 강도입니다. 사진의 색과는 다른 정보이며, 색이 필요하면 카메라 정보와 결합할 수 있습니다. 방을 예쁘게 보여 주는 뷰어와 장애물을 피해야 하는 로봇은 필요한 결과가 다릅니다.</td><td><strong>결론:</strong> 움직이면서 바로 써야 하는 로봇은 SLAM으로 "내 위치"와 "주변 지도"를 동시에 계속 고쳐 나가요.<br>1. (덧붙인 설명) 18행의 SfM·MVS는 모아 둔 사진들로 계산해요.<br>2. 원문: 움직이는 로봇은 촬영을 다 마칠 때까지 기다릴 수 없어요. 움직이는 중에 자기 위치를 알아야 해요.<br>3. <strong>SLAM</strong>: 이동하면서 자기 위치와 주변 지도를 함께 갱신해요. 카메라를 쓰기도, 거리 센서를 함께 쓰기도 해요.<br>4. 라이다는 점의 위치와 반사 강도를 줘요. 사진의 색은 없어서, 색이 필요하면 카메라 정보와 합쳐요.<br><strong>그래서?</strong> 원문: 방을 예쁘게 보여 주는 뷰어와 장애물을 피해야 하는 로봇은 필요한 결과가 달라요. (덧붙인 설명: 뷰어에는 보기 좋은 화면이, 로봇에는 자기 위치와 장애물 위치가 더 중요하다는 뜻으로 읽었어요.)</td></tr>
+        <tr><td class="n">20</td><td>반면 새 시점에서 사진 같은 화면을 만드는 데 초점을 둔 방법도 있습니다. NeRF는 공간의 위치와 보는 방향을 받아 색과 밀도를 내는 신경망을 장면에 맞춰 학습합니다. 화면을 만들 때는 카메라에서 뻗은 광선을 따라 여러 위치의 값을 계산합니다. 3D 가우시안 스플래팅은 학습한 알갱이를 화면에 투영해 겹쳐 그립니다. 위치와 크기, 색 같은 값을 장면마다 조정한다는 점은 오늘의 단순 변환과 다릅니다.</td><td><strong>결론:</strong> "찍지 않은 위치에서 본 사진 같은 화면"을 목표로 하는 방법이 둘 있어요. NeRF는 신경망으로, 3D 가우시안 스플래팅은 알갱이로 장면을 담아요. 둘 다 장면마다 학습해요.<br>1. <strong>NeRF</strong>:<br>&nbsp;&nbsp;· 입력: 공간의 위치 + 보는 방향 → 출력: 그 자리의 색과 밀도. 이 일을 하는 신경망을 한 장면에 맞춰 학습해요.<br>&nbsp;&nbsp;· 화면을 만들 때: 카메라에서 화면의 각 점 쪽으로 광선을 뻗고, 그 광선을 따라 여러 위치의 값을 계산해 모아요.<br>2. <strong>3D 가우시안 스플래팅(3DGS)</strong>:<br>&nbsp;&nbsp;· 장면을 알갱이들로 담고, 알갱이의 위치·크기·색 같은 값을 사진에 맞춰 학습해요.<br>&nbsp;&nbsp;· 화면을 만들 때: 알갱이를 화면에 투영해 겹쳐 그려요(16행).<br><strong>오늘과 다른 점:</strong> 정식 3DGS는 장면마다 값을 조정해요. 오늘은 조정 없이 규칙으로 바꾸기만 했어요(7행, 21행).</td></tr>
+        <tr><td class="n">21</td><td>오늘 사용한 MapAnything은 미리 학습된 모델이 입력 사진을 보고 깊이와 카메라 정보를 추정합니다. 그 결과를 알갱이로 바꿨기 때문에 웹에서 빠르게 둘러볼 장면을 만들 수 있었습니다. 더 선명한 결과가 필요하다면 장면별로 알갱이를 학습시키는 방법을 검토할 수 있고, 뒷면이 필요하다면 촬영부터 보완해야 합니다. 어디가 부족한지에 따라 다음 작업이 달라집니다.<br><br>(그림 설명) 특징점으로 카메라 위치를 구하고 점을 촘촘하게 만드는 과정과, 미리 학습된 모델로 점을 얻는 과정을 비교한 그림.</td><td><strong>결론:</strong> 오늘 방식은 "미리 학습된 모델로 점을 얻고, 규칙으로 알갱이로 바꾸기"예요. 빠르지만, 무엇이 부족하냐에 따라 다음 방법이 달라요.<br>1. 점을 얻는 두 길:<br>&nbsp;&nbsp;· 특징점 → 카메라 위치 → 촘촘한 점 (SfM → MVS, 18행)<br>&nbsp;&nbsp;· 미리 학습된 모델이 사진을 보고 바로 깊이와 카메라 정보를 추정 (MapAnything, 오늘)<br>2. 오늘은 그 점을 규칙대로 알갱이로 바꿔서, 웹에서 둘러볼 장면을 빠르게 만들었어요.<br><strong>"학습"이 세 가지 뜻으로 나와요:</strong><br>&nbsp;&nbsp;· 미리 학습된 모델: 많은 자료로 이미 학습을 마친 모델. 오늘은 그대로 쓰기만 해요(MapAnything).<br>&nbsp;&nbsp;· 장면별 학습: 내 장면의 사진에 맞춰 값을 새로 고쳐요(NeRF, 정식 3DGS).<br>&nbsp;&nbsp;· 오늘의 알갱이 만들기: 학습이 아니라 규칙으로 정해요.<br><strong>다음 작업 고르기:</strong> 더 선명하게 → 장면별 학습 검토. 뒷면이 필요 → 다시 촬영.</td></tr>
+        <tr><td class="n">22</td><td>(복원 결과를 비교하고 개선하기) 같은 장면을 두 번 만들었다고 해 보겠습니다. 첫 번째는 벽에 작은 검은 틈이 많고, 두 번째는 틈이 줄었지만 의자 다리가 두꺼워 보입니다. 알갱이 크기를 키워 빈틈을 가린 대신 가느다란 모양이 뭉개진 것입니다. 이때는 파일 크기만 보고 어느 쪽이 더 좋은지 정할 수 없습니다. 같은 위치에서 화면을 열고 원본 사진과 나란히 비교해야 합니다.<br>… 점은 있는데 알갱이 사이가 비는 경우에는 크기 조절이 도움이 될 수 있습니다. 찍히지 않아 점 자체가 없는 면은 크기를 키워도 실제 모습으로 복원되지 않습니다. 거울 주변에 멀리 튄 점이 보인다면 원본 영상과 점 제거 범위를 살펴봅니다.</td><td><strong>결론:</strong> 알갱이를 키우면 틈은 줄지만 가는 모양이 뭉개져요. 이 맞바꿈은 같은 위치에서 원본 사진과 나란히 보고 판단해요.<br>1. 첫 번째 결과: 벽에 작은 검은 틈이 많아요(알갱이가 작음).<br>2. 두 번째 결과: 틈은 줄었지만 의자 다리가 두꺼워 보여요(알갱이가 큼).<br>3. 파일 크기로는 어느 쪽이 나은지 알 수 없어요. 같은 위치에서 원본 사진과 비교해요.<br><strong>빈 곳의 원인을 먼저 가려요:</strong><br>&nbsp;&nbsp;· 점은 있는데 알갱이 사이가 빔 → 크기 조절이 도움이 될 수 있어요.<br>&nbsp;&nbsp;· 찍히지 않아 점 자체가 없음 → 크기를 키워도 실제 모습은 안 생겨요(17행).<br>&nbsp;&nbsp;· 거울 주변에 멀리 튄 점 → 원본 영상과 튄 점을 빼는 범위(9행)를 살펴봐요.<br>[그림] 탭의 <strong>알갱이 크기 바꿔 보기</strong>가 이 행을 그대로 보여 줘요.</td></tr>
+        <tr><td class="n">23</td><td>눈으로 본 차이를 수치로 비교할 때는 평가용 사진이 필요합니다. 촬영한 사진 중 일부를 복원에 넣지 않고 따로 보관합니다. 나머지 사진으로 장면을 만든 뒤, 보관한 사진의 카메라 위치에서 화면을 렌더링해 실제 사진과 비교합니다. 복원에 이미 사용한 사진만으로 평가하면 새로운 시점에서 얼마나 잘 보이는지 확인하기 어렵습니다.</td><td><strong>결론:</strong> 숫자로 비교하려면, 복원에 쓰지 않고 떼어 둔 사진(평가용 사진)이 있어야 해요.<br>1. 찍은 사진 중 일부를 복원에 넣지 않고 따로 둬요.<br>2. 나머지 사진으로 장면을 만들어요.<br>3. 떼어 둔 사진을 찍은 카메라 위치에서 장면을 렌더링해요.<br>4. 그 화면과 떼어 둔 실제 사진을 비교해요.<br><strong>왜 떼어 두나?</strong> 복원에 쓴 사진은 장면이 이미 본 자리라서 잘 맞는 게 당연해요. 우리가 알고 싶은 건 새로운 시점에서 얼마나 잘 보이는지라서, 장면이 본 적 없는 사진으로 비교해야 해요.</td></tr>
+        <tr><td class="n">24</td><td>PSNR: 원본과 렌더링한 화면의 화소 값 차이 — 높을수록 좋음 / SSIM: 밝기와 대비, 무늬와 형태의 유사성 — 높을수록 좋음 / LPIPS: 신경망이 추출한 특징의 차이 — 낮을수록 좋음<br><br>PSNR은 화소 값의 차이를 제곱해 평균한 평균제곱오차(MSE)를 바탕으로 구하며, 데시벨로 표시합니다. 같은 화소 값 범위에서 PSNR이 3dB 높아지면 MSE는 대략 절반이 됩니다. 수치가 30에서 33으로 바뀔 때와 33에서 36으로 바뀔 때 오차가 줄어드는 비율이 같은 이유입니다.</td><td><strong>결론:</strong> 세 지표는 서로 다른 차이를 봐요. PSNR·SSIM은 높을수록, LPIPS는 낮을수록 좋아요.<br>1. <strong>PSNR</strong>: 원본 사진과 렌더링 화면의 화소 값이 얼마나 다른지. 높을수록 차이가 작아요.<br>2. <strong>SSIM</strong>: 밝기·대비·무늬·형태가 얼마나 닮았는지. 높을수록 좋아요.<br>3. <strong>LPIPS</strong>: 신경망이 뽑은 특징이 얼마나 다른지. "차이"를 재므로 <strong>낮을수록</strong> 좋아요.<br><strong>PSNR 숫자 읽기(말로):</strong> PSNR은 오차를 "몇 배 줄었나"로 세는 눈금이에요. 그래서 같은 만큼 오르면 오차는 같은 비율로 줄어요. 원문 기준으로 3dB 오르면 오차(평균제곱오차)가 대략 절반이 돼요. 30→33이든 33→36이든 똑같이 "오차 절반"이에요.<br><strong>그래서?</strong> PSNR 숫자 차이는 빼기로 읽지 말고 "오차가 몇 배 줄었나"로 읽어요.</td></tr>
+        <tr><td class="n">25</td><td>하지만 화소 차이가 작다고 언제나 사람이 보기에 더 선명한 것은 아닙니다. 흐릿한 화면은 세부 무늬를 잃었어도 화소 오차가 작을 수 있습니다. 그래서 무늬와 형태를 비교하는 SSIM, 신경망 특징으로 지각적 차이를 비교하는 LPIPS를 함께 봅니다. 지표마다 다른 차이를 드러내므로 하나의 수치만으로 전체 화질을 설명하기 어렵습니다.</td><td><strong>결론:</strong> 화소 오차가 작다 ≠ 사람 눈에 선명하다. 그래서 세 지표를 함께 봐요.<br>1. 흐릿한 화면은 세부 무늬를 잃어요.<br>2. 그런데 화소마다의 차이는 작게 나올 수 있어요. (덧붙인 설명: 흐리게 뭉갠 색은 원래 색들의 중간값이라, 화소 하나하나로는 크게 틀리지 않을 수 있어요.)<br>3. 그러면 PSNR은 좋게 나오는데 눈으로는 흐릿해요.<br>4. 그래서 무늬·형태를 보는 SSIM, 사람 눈에 가까운 차이를 보는 LPIPS를 함께 봐요.<br><strong>그래서?</strong> 지표 하나만 보고 "화질이 좋다"고 하지 않아요.</td></tr>
+        <tr><td class="n">26</td><td>세 지표 모두 비교할 실제 사진이 있어야 합니다. 아무도 찍지 않은 의자 뒷면에는 정답 사진이 없으니 이 방법으로 평가할 수 없습니다. 또한 한 장의 정지 화면만 비교하면 시점을 움직일 때 반짝임이 어색하게 바뀌는 현상을 놓칠 수 있습니다. 여러 시점에서 따로 비교하고, 장면과 해상도 같은 조건을 맞춰야 합니다. 모든 장면에 적용할 수 있는 합격 점수는 없습니다.<br>오늘 실습에서는 별도의 평가용 촬영을 준비하지 않았다면 이 수치를 억지로 만들 필요는 없습니다. 파일 크기, 알갱이 개수, 첫 화면까지의 시간은 직접 측정하고, 화질은 원본 영상과 같은 시점의 화면을 비교해 설명합니다.</td><td><strong>결론:</strong> 지표에는 한계가 있어요. 정답 사진이 있는 곳만 잴 수 있고, 모든 장면에 통하는 합격 점수는 없어요.<br>1. 정답 사진이 필요해요 → 아무도 찍지 않은 의자 뒷면은 잴 수 없어요.<br>2. 정지 화면 한 장만 비교하면 → 시점을 움직일 때 반짝임이 어색하게 바뀌는 걸 놓칠 수 있어요.<br>3. 그래서 여러 시점에서 따로 비교하고, 장면·해상도 같은 조건을 맞춰요.<br>4. "이 점수 넘으면 합격" 같은 기준은 없어요.<br><strong>오늘은?</strong> 평가용 사진을 따로 찍지 않았다면 지표를 억지로 만들지 않아요. 대신:<br>&nbsp;&nbsp;· 직접 재는 것: 파일 크기, 알갱이 개수, 첫 화면까지의 시간<br>&nbsp;&nbsp;· 화질: 원본 영상과 같은 시점의 화면을 나란히 놓고 설명</td></tr>
+        <tr><td class="n">27</td><td>결과를 더 좋게 만들고 싶다면 발견한 문제부터 고릅니다. 안 찍힌 면은 다시 촬영하고, 알갱이 사이의 틈은 크기를 조절합니다. 움직임이 느리면 점 수를 줄이고, 첫 화면이 늦으면 파일 형식과 전송 크기를 확인합니다. 사진에 맞춰 색과 크기까지 더 정교하게 조정하려면 장면별 3DGS 학습을 검토할 수 있습니다. 바꾼 뒤에는 같은 시점과 같은 기기에서 다시 확인해야 무엇이 좋아졌는지 알 수 있습니다.</td><td><strong>결론:</strong> 문제마다 고칠 곳이 정해져 있어요. 문제를 먼저 고르고, 바꾼 뒤엔 같은 조건에서 다시 봐요.<br>1. 안 찍힌 면(구멍) → 다시 촬영 (17행)<br>2. 알갱이 사이 틈 → 알갱이 크기 조절 (12행, 22행)<br>3. 움직일 때 느림 → 점(알갱이) 수 줄이기 (15행)<br>4. 첫 화면이 늦음 → 파일 형식과 전송 크기 확인 (14행)<br>5. 사진처럼 더 정교하게 → 장면별 3DGS 학습 검토 (20행)<br><strong>왜 같은 조건에서 다시 보나?</strong> 시점이나 기기가 바뀌면 달라진 게 내가 바꾼 설정 때문인지 조건 때문인지 알 수 없어요.</td></tr>
+        <tr><td class="n">28</td><td>(만든 장면을 다시 살펴보기) … 이 과정에서 파일을 줄이는 일과 화면의 빈틈을 메우는 일이 서로 다르다는 것도 보았습니다. … 사진에 없던 면인지, 점은 있지만 알갱이가 작은지, 좌표나 그리는 순서가 어긋난 것인지에 따라 다시 손댈 곳이 달라집니다. …</td><td><strong>결론:</strong> 전체 흐름은 "영상 → 점 → 알갱이 → 줄인 파일 → 웹 화면"이고, 무너져 보이는 곳은 원인 셋 중 하나로 가려요.<br>1. 폰 영상에서 점을 얻었어요.<br>2. 점에 크기와 투명도를 줘 알갱이로 만들었어요.<br>3. 큰 파일을 웹에서 받기 쉬운 형식으로 바꿨어요.<br>4. 파일을 줄이는 일과 화면의 빈틈을 메우는 일은 서로 다른 일이었어요.<br><strong>무너져 보일 때 원인 셋:</strong><br>&nbsp;&nbsp;· 사진에 없던 면 → 다시 촬영<br>&nbsp;&nbsp;· 점은 있지만 알갱이가 작음 → 크기 조절<br>&nbsp;&nbsp;· 좌표 방향이나 그리는 순서가 어긋남 → 변환(11행)과 뷰어(16행) 확인<br>원본 영상과 점 파일을 보관해 두면 다시 찍지 않고도 크기나 형식을 바꿔 볼 수 있어요.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="words" hidden>
+    <ul class="words">
+      <li><strong>3D</strong>(쓰리디): 3-Dimensional(쓰리 디멘셔널)의 줄임말. 3차원</li>
+      <li><strong>Gaussian</strong>(가우시안): 가운데가 가장 진하고 바깥으로 갈수록 부드럽게 옅어지는 모양(종 모양 분포)을 가리키는 말</li>
+      <li><strong>splat</strong>(스플랫): 여기서는 화면에 찍듯이 그리는 알갱이 하나</li>
+      <li><strong>splatting</strong>(스플래팅): 알갱이를 화면에 찍듯이 겹쳐 그리는 방식</li>
+      <li><strong>3DGS</strong>(쓰리디지에스): 3D Gaussian Splatting(쓰리디 가우시안 스플래팅)의 줄임말. 이 글에서는 사진에 맞춰 알갱이 값을 학습하는 정식 방법을 가리킬 때 쓴다</li>
+      <li><strong>MapAnything</strong>(맵애니싱): 여러 사진을 한꺼번에 받아 깊이와 카메라 정보를 추정하는 미리 학습된 모델</li>
+      <li><strong>AI</strong>(에이아이): Artificial Intelligence(아티피셜 인텔리전스)의 줄임말. 인공지능</li>
+      <li><strong>frame</strong>(프레임): 영상을 이루는 사진 한 장</li>
+      <li><strong>SfM</strong>(에스에프엠): Structure from Motion(스트럭처 프롬 모션)의 줄임말. 사진 사이 특징점을 연결해 카메라 위치와 성긴 점을 함께 추정하는 방법</li>
+      <li><strong>MVS</strong>(엠브이에스): Multi-View Stereo(멀티뷰 스테레오)의 줄임말. 여러 시점의 사진을 비교해 촘촘한 깊이와 점을 구하는 방법</li>
+      <li><strong>SLAM</strong>(슬램): Simultaneous Localization and Mapping(사이멀테이니어스 로컬라이제이션 앤 매핑)의 줄임말. 이동하면서 자기 위치와 주변 지도를 함께 갱신하는 방법</li>
+      <li><strong>NeRF</strong>(너프): Neural Radiance Fields(뉴럴 래디언스 필즈)의 줄임말. 위치와 보는 방향을 받아 색과 밀도를 내는 신경망을 장면마다 학습하는 방법</li>
+      <li><strong>PLY</strong>(플라이): 점이나 알갱이의 값을 저장하는 파일 형식. 원문 실습에서는 압축하지 않은 큰 파일</li>
+      <li><strong>SOG</strong>(에스오지): 웹에서 받기 쉽게 크기를 줄인 알갱이 파일 형식 (원문에서 .sog)</li>
+      <li><strong>.splat / .compressed.ply / .spz</strong>(스플랫 / 컴프레스드 플라이 / 에스피지): 원문에 나오는 다른 알갱이 파일 형식들</li>
+      <li><strong>header</strong>(헤더): 파일 맨 앞에 붙어, 어떤 값이 어떤 순서로 들어 있는지 적어 둔 부분</li>
+      <li><strong>K</strong>(케이): 원문에서 알갱이 크기를 전체적으로 얼마나 키울지 정하는 숫자. 기본 1.4</li>
+      <li><strong>N</strong>(엔): 원문에서 점(알갱이) 개수</li>
+      <li><strong>N_KEEP</strong>(엔 킵): 원문 실습에서 사용할 점 개수를 정하는 설정 이름. 0이면 전체를 쓴다</li>
+      <li><strong>MB</strong>(메가바이트): 파일 크기 단위. 약 백만 바이트</li>
+      <li><strong>MiB</strong>(메비바이트): 파일 크기 단위. 1024×1024 바이트</li>
+      <li><strong>GitHub</strong>(깃허브): 코드와 파일을 올려 두고 함께 쓰는 사이트</li>
+      <li><strong>three.js</strong>(쓰리 제이에스): 웹 페이지에서 3차원 화면을 다루는 도구. 이 글에서는 카메라와 화면 조작을 맡는다</li>
+      <li><strong>Spark</strong>(스파크): 가우시안 스플랫 파일을 읽어 그려 주는 도구</li>
+      <li><strong>PSNR</strong>(피에스엔알): Peak Signal-to-Noise Ratio(피크 시그널 투 노이즈 레이쇼)의 줄임말. 화소 값 차이로 화질을 재는 지표. 높을수록 좋음</li>
+      <li><strong>SSIM</strong>(에스에스아이엠): Structural Similarity(스트럭처럴 시밀래리티)에서 온 이름. 밝기·대비·무늬·형태의 닮은 정도를 재는 지표. 높을수록 좋음</li>
+      <li><strong>LPIPS</strong>(엘피아이피에스): Learned Perceptual Image Patch Similarity(런드 퍼셉추얼 이미지 패치 시밀래리티)의 줄임말. 신경망이 뽑은 특징의 차이를 재는 지표. 낮을수록 좋음</li>
+      <li><strong>MSE</strong>(엠에스이): Mean Squared Error(민 스퀘어드 에러)의 줄임말. 평균제곱오차. 화소 값 차이를 제곱해 평균낸 값</li>
+      <li><strong>dB</strong>(데시벨): 몇 배 차이인지를 더하기 눈금으로 나타내는 단위. PSNR을 이 단위로 쓴다</li>
+    </ul>
+  </section>
+  <section class="panel" id="visual" hidden>
+    <p class="visual-kind"><strong>그림 종류:</strong> 데이터 이동 구조도</p>
+    <p class="visual-reason"><strong>고른 이유:</strong> 이 글의 뼈대가 "사진 → 점 → 알갱이 → 화면"으로 자료가 한 단계씩 바뀌어 가는 경로라서, 그 경로를 한 줄로 보여 주는 그림이 글보다 빠르다. 시차와 알갱이 크기는 움직여 봐야 와닿아서 슬라이더 두 개를 따로 붙였다.</p>
+    <div class="visual-buttons">
+      <button type="button" data-src="summary.html">종합 정리</button>
+      <button type="button" data-src="diagram.html">그림 하나</button>
+      <button type="button" data-src="eli5.html">아주 쉽게</button>
+      <button type="button" data-src="parallax.html">시차 움직여 보기</button>
+      <button type="button" data-src="splat-size.html">알갱이 크기 바꿔 보기</button>
+      <a id="visual-open" href="#" target="_blank" rel="noopener" hidden>새 탭으로 열기</a>
+    </div>
+    <iframe id="visual-frame" title="그림 보기" hidden></iframe>
+  </section>
+</main>
+<script>
+  const tabs = document.querySelectorAll('.tabs button');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabs.forEach(function (x) {
+        const on = x === b;
+        x.setAttribute('aria-selected', on);
+        document.getElementById(x.dataset.tab).hidden = !on;
+      });
+    });
+  });
+  const frame = document.getElementById('visual-frame');
+  const openLink = document.getElementById('visual-open');
+  const vbtns = document.querySelectorAll('.visual-buttons button[data-src]');
+  vbtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      vbtns.forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      frame.src = b.dataset.src;
+      frame.hidden = false;
+      openLink.href = b.dataset.src;
+      openLink.hidden = false;
+    });
+  });
+  // 그림(diagram.html)은 프레임 높이를 그림 크기에 맞춘다. 그림 파일은 고치지 않고 불러올 때 스타일을 얹는다.
+  function fitDiagram(f) {
+    try {
+      const d = f.contentDocument;
+      if (!d || !/diagram\.html$/.test(f.contentWindow.location.pathname)) { f.style.height = ''; return; }
+      if (d.getElementById('fit-fix')) return;
+      const st = d.createElement('style');
+      st.id = 'fit-fix';
+      st.textContent = 'body{min-height:0;display:flex;align-items:center;justify-content:center}';
+      d.head.appendChild(st);
+      const fit = function () { f.style.height = (d.body.offsetHeight + 2) + 'px'; };
+      fit();
+      if (d.fonts && d.fonts.ready) d.fonts.ready.then(fit);
+      if (f.contentWindow.ResizeObserver) new f.contentWindow.ResizeObserver(fit).observe(d.body);
+    } catch (e) { /* file:// 에서는 기본 높이를 유지한다 */ }
+  }
+  [document.querySelector('.flow-frame'), document.getElementById('visual-frame')].forEach(function (f) {
+    if (f) f.addEventListener('load', function () { fitDiagram(f); });
+  });
+</script>
+</body>
+</html>

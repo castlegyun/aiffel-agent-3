@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사진에서 알갱이 장면으로</title>
+<style>
+  :root {
+    --bg: #fbfaf7;
+    --card: #ffffff;
+    --ink: #22252f;
+    --muted: #5b6273;
+    --line: #d9d6cf;
+    --cup: #bf4520;
+    --wall: #2f7d6d;
+    --dot: #3b5bab;
+    --soft: rgba(91,98,115,0.10);
+    --photo: #f1ede4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1f27;
+      --card: #252935;
+      --ink: #eceae4;
+      --muted: #a9aebb;
+      --line: #3b4050;
+      --cup: #f08a59;
+      --wall: #6cc5b0;
+      --dot: #8fa9ec;
+      --soft: rgba(169,174,187,0.12);
+      --photo: #31364a;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.6; padding: 24px 16px 48px; }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; line-height: 1.3; margin-bottom: 6px; word-break: keep-all; }
+  .lead { color: var(--muted); margin-bottom: 28px; word-break: keep-all; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px 16px; margin-bottom: 20px; }
+  h2 { font-size: 1.15rem; margin-bottom: 4px; word-break: keep-all; }
+  h2 .num { color: var(--cup); margin-right: 6px; }
+  .say { color: var(--muted); font-size: 0.95rem; margin-bottom: 14px; word-break: keep-all; }
+  .pic { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  svg { width: 100%; min-width: 560px; height: auto; display: block; }
+  .swipe { display: none; color: var(--muted); font-size: 0.8rem; margin-bottom: 6px; }
+  @media (max-width: 600px) { .swipe { display: block; } }
+  svg text { font-family: inherit; fill: var(--ink); font-size: 14px; }
+  .t-muted { fill: var(--muted) !important; font-size: 13px !important; }
+  .t-hot { fill: var(--cup) !important; font-weight: 700; }
+  .photo { fill: var(--photo); stroke: var(--line); stroke-width: 1.5; }
+  .cup { fill: var(--cup); }
+  .wall { fill: var(--wall); }
+  .dot { fill: var(--dot); }
+  .ghost { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 5 4; }
+  .arrow { stroke: var(--muted); stroke-width: 2; fill: none; }
+  .arrow-hot { stroke: var(--cup); stroke-width: 2.5; fill: none; }
+  .ah { fill: var(--muted); }
+  .ah-hot { fill: var(--cup); }
+  .cam { fill: var(--ink); }
+  .empty { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 6 5; }
+</style>
+</head>
+<body>
+<main>
+  <h1>사진에서 돌려 볼 수 있는 장면으로</h1>
+  <p class="lead">사진 여러 장 → 거리 알아내기 → 점 → 알갱이 → 겹쳐 그리기. 다섯 걸음이에요.</p>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <marker id="ah" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon class="ah" points="0 0, 10 4, 0 8"/></marker>
+      <marker id="ah-hot" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon class="ah-hot" points="0 0, 10 4, 0 8"/></marker>
+      <radialGradient id="blob-cup"><stop offset="0" style="stop-color:var(--cup);stop-opacity:.9"/><stop offset="1" style="stop-color:var(--cup);stop-opacity:0"/></radialGradient>
+      <radialGradient id="blob-wall"><stop offset="0" style="stop-color:var(--wall);stop-opacity:.9"/><stop offset="1" style="stop-color:var(--wall);stop-opacity:0"/></radialGradient>
+      <radialGradient id="blob-dot"><stop offset="0" style="stop-color:var(--dot);stop-opacity:.9"/><stop offset="1" style="stop-color:var(--dot);stop-opacity:0"/></radialGradient>
+    </defs>
+  </svg>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>사진 한 장에는 거리가 없어요</h2>
+    <p class="say">가까이 있는 작은 컵을 찍은 사진과 멀리 있는 큰 공을 찍은 사진에서, 둘이 같은 크기로 찍힐 수 있어요. 사진 한 장만 보고는 작아서 작은지, 멀어서 작은지 알 수 없어요.</p>
+    <p class="swipe">← 옆으로 밀어 보세요 →</p>
+    <div class="pic">
+      <svg viewBox="0 0 600 230" role="img" aria-label="장면 ㄱ에서는 가까운 작은 컵을, 장면 ㄴ에서는 먼 큰 공을 찍었는데 두 사진 속 크기가 같다">
+        <!-- 장면 ㄱ: 가까운 작은 컵 -->
+        <text x="14" y="24" class="t-muted">장면 ㄱ</text>
+        <polygon class="cam" points="20,48 20,72 42,60"/>
+        <line class="arrow" x1="42" y1="60" x2="330" y2="18"/>
+        <line class="arrow" x1="42" y1="60" x2="330" y2="102"/>
+        <circle class="cup" cx="100" cy="60" r="8"/>
+        <text x="100" y="40" text-anchor="middle">작은 컵 (가까이)</text>
+        <!-- 장면 ㄴ: 먼 큰 공 -->
+        <text x="14" y="138" class="t-muted">장면 ㄴ</text>
+        <polygon class="cam" points="20,162 20,186 42,174"/>
+        <line class="arrow" x1="42" y1="174" x2="330" y2="132"/>
+        <line class="arrow" x1="42" y1="174" x2="330" y2="216"/>
+        <circle class="wall" cx="290" cy="174" r="34"/>
+        <text x="200" y="226" text-anchor="middle">큰 공 (멀리)</text>
+        <!-- 두 사진 -->
+        <line class="arrow" x1="350" y1="60" x2="400" y2="60" marker-end="url(#ah)"/>
+        <line class="arrow" x1="350" y1="174" x2="400" y2="174" marker-end="url(#ah)"/>
+        <rect class="photo" x="420" y="20" width="110" height="80" rx="6"/>
+        <circle class="cup" cx="475" cy="60" r="24"/>
+        <rect class="photo" x="420" y="134" width="110" height="80" rx="6"/>
+        <circle class="wall" cx="475" cy="174" r="24"/>
+        <text x="545" y="112" class="t-hot">크기가</text>
+        <text x="545" y="130" class="t-hot">같아요</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>옆으로 옮겨 다시 찍으면, 가까운 것이 더 많이 움직여요</h2>
+    <p class="say">이 차이가 <strong>시차</strong>예요. 많이 움직이면 가깝고, 조금 움직이면 멀어요. 카메라가 얼마나 옮겨 갔는지와 함께 풀면 거리가 나와요.</p>
+    <p class="swipe">← 옆으로 밀어 보세요 →</p>
+    <div class="pic">
+      <svg viewBox="0 0 600 210" role="img" aria-label="두 번째 사진에서 컵은 많이, 벽 액자는 조금 움직였다">
+        <text x="140" y="22" text-anchor="middle" class="t-muted">첫 번째 사진</text>
+        <rect class="photo" x="40" y="34" width="200" height="140" rx="6"/>
+        <rect class="wall" x="120" y="54" width="40" height="30"/>
+        <circle class="cup" cx="140" cy="130" r="24"/>
+
+        <text x="440" y="22" text-anchor="middle" class="t-muted">옆으로 옮겨 찍은 사진</text>
+        <rect class="photo" x="340" y="34" width="200" height="140" rx="6"/>
+        <rect class="ghost" x="420" y="54" width="40" height="30"/>
+        <circle class="ghost" cx="440" cy="130" r="24"/>
+        <rect class="wall" x="408" y="54" width="40" height="30"/>
+        <circle class="cup" cx="380" cy="130" r="24"/>
+        <line class="arrow-hot" x1="436" y1="164" x2="388" y2="164" marker-end="url(#ah-hot)"/>
+        <text x="412" y="196" text-anchor="middle" class="t-hot">컵: 많이</text>
+        <line class="arrow" x1="438" y1="92" x2="424" y2="92" marker-end="url(#ah)"/>
+        <text x="500" y="98" text-anchor="middle" class="t-muted">벽: 조금</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>그래서 점이 생겨요: 위치 하나, 색 하나</h2>
+    <p class="say">여러 사진에서 같은 곳을 찾아 거리를 구하면, 공간에 점이 하나씩 놓여요. 점에는 크기가 없어서 가까이 보면 사이가 비어 있어요.</p>
+    <p class="swipe">← 옆으로 밀어 보세요 →</p>
+    <div class="pic">
+      <svg viewBox="0 0 600 190" role="img" aria-label="점들이 책상과 컵 모양으로 놓여 있고, 확대하면 점 사이가 비어 있다">
+        <g id="pts">
+          <!-- 책상 윗면 -->
+          <g class="dot">
+            <circle cx="60" cy="120" r="3"/><circle cx="80" cy="121" r="3"/><circle cx="100" cy="119" r="3"/><circle cx="120" cy="120" r="3"/><circle cx="140" cy="121" r="3"/><circle cx="160" cy="119" r="3"/><circle cx="180" cy="120" r="3"/><circle cx="200" cy="121" r="3"/><circle cx="220" cy="120" r="3"/><circle cx="240" cy="119" r="3"/>
+            <circle cx="70" cy="135" r="3"/><circle cx="90" cy="136" r="3"/><circle cx="110" cy="134" r="3"/><circle cx="130" cy="135" r="3"/><circle cx="150" cy="136" r="3"/><circle cx="170" cy="134" r="3"/><circle cx="190" cy="135" r="3"/><circle cx="210" cy="136" r="3"/><circle cx="230" cy="135" r="3"/>
+            <circle cx="70" cy="155" r="3"/><circle cx="70" cy="172" r="3"/><circle cx="230" cy="155" r="3"/><circle cx="230" cy="172" r="3"/>
+          </g>
+          <g class="cup">
+            <circle cx="140" cy="70" r="3"/><circle cx="156" cy="70" r="3"/><circle cx="172" cy="70" r="3"/>
+            <circle cx="140" cy="86" r="3"/><circle cx="156" cy="86" r="3"/><circle cx="172" cy="86" r="3"/>
+            <circle cx="140" cy="102" r="3"/><circle cx="156" cy="102" r="3"/><circle cx="172" cy="102" r="3"/>
+          </g>
+        </g>
+        <text x="150" y="40" text-anchor="middle" class="t-muted">점으로 본 책상과 컵</text>
+        <line class="arrow" x1="270" y1="100" x2="330" y2="100" marker-end="url(#ah)"/>
+        <rect class="photo" x="350" y="30" width="220" height="150" rx="6"/>
+        <g class="cup"><circle cx="400" cy="70" r="5"/><circle cx="460" cy="70" r="5"/><circle cx="520" cy="70" r="5"/><circle cx="400" cy="130" r="5"/><circle cx="460" cy="130" r="5"/><circle cx="520" cy="130" r="5"/></g>
+        <text x="460" y="106" text-anchor="middle" class="t-hot">가까이 보면 사이가 비어요</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>점마다 크기와 투명도를 주면 알갱이가 돼요</h2>
+    <p class="say">알갱이는 가운데가 진하고 가장자리로 갈수록 옅은 반투명 타원이에요. 옆 알갱이와 가장자리가 겹치면서 틈이 메워져요. 이 알갱이를 Gaussian splat(가우시안 스플랫)이라고 불러요.</p>
+    <p class="swipe">← 옆으로 밀어 보세요 →</p>
+    <div class="pic">
+      <svg viewBox="0 0 600 180" role="img" aria-label="크기 없는 점 여섯 개가 크기와 투명도를 가진 알갱이로 바뀌어 서로 겹친다">
+        <text x="130" y="24" text-anchor="middle" class="t-muted">점 (크기 없음)</text>
+        <g class="cup"><circle cx="60" cy="70" r="4"/><circle cx="130" cy="70" r="4"/><circle cx="200" cy="70" r="4"/><circle cx="60" cy="140" r="4"/><circle cx="130" cy="140" r="4"/><circle cx="200" cy="140" r="4"/></g>
+        <line class="arrow" x1="240" y1="105" x2="300" y2="105" marker-end="url(#ah)"/>
+        <text x="270" y="92" text-anchor="middle" class="t-muted">크기·투명도</text>
+        <text x="460" y="24" text-anchor="middle" class="t-muted">알갱이 (겹쳐서 틈이 메워짐)</text>
+        <rect class="photo" x="320" y="34" width="270" height="140" rx="6"/>
+        <ellipse cx="390" cy="70" rx="56" ry="40" fill="url(#blob-cup)"/>
+        <ellipse cx="460" cy="70" rx="56" ry="40" fill="url(#blob-cup)"/>
+        <ellipse cx="530" cy="70" rx="56" ry="40" fill="url(#blob-cup)"/>
+        <ellipse cx="390" cy="140" rx="56" ry="40" fill="url(#blob-cup)"/>
+        <ellipse cx="460" cy="140" rx="56" ry="40" fill="url(#blob-cup)"/>
+        <ellipse cx="530" cy="140" rx="56" ry="40" fill="url(#blob-cup)"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2><span class="num">5</span>먼 것부터 겹쳐 그려요</h2>
+    <p class="say">알갱이는 반투명이라 순서에 따라 색이 달라져요. 그래서 먼 알갱이를 먼저 칠하고 가까운 알갱이를 위에 칠해요. 카메라가 반대편으로 가면 순서도 반대로 바뀌어요.</p>
+    <p class="swipe">← 옆으로 밀어 보세요 →</p>
+    <div class="pic">
+      <svg viewBox="0 0 600 190" role="img" aria-label="카메라에서 먼 알갱이부터 1, 2, 3 순서로 칠하고, 화면에서는 가까운 것이 앞에 겹친다">
+        <polygon class="cam" points="30,83 30,107 52,95"/>
+        <text x="16" y="135" class="t-muted">카메라</text>
+        <ellipse cx="250" cy="95" rx="30" ry="20" fill="url(#blob-wall)"/>
+        <ellipse cx="170" cy="95" rx="30" ry="20" fill="url(#blob-dot)"/>
+        <ellipse cx="100" cy="95" rx="30" ry="20" fill="url(#blob-cup)"/>
+        <text x="250" y="140" text-anchor="middle" class="t-hot">① 먼저</text>
+        <text x="170" y="140" text-anchor="middle" class="t-hot">②</text>
+        <text x="100" y="140" text-anchor="middle" class="t-hot">③ 마지막</text>
+        <text x="175" y="40" text-anchor="middle" class="t-muted">위에서 본 모습</text>
+        <line class="arrow" x1="310" y1="95" x2="360" y2="95" marker-end="url(#ah)"/>
+        <rect class="photo" x="380" y="34" width="200" height="130" rx="6"/>
+        <ellipse cx="500" cy="95" rx="50" ry="40" fill="url(#blob-wall)"/>
+        <ellipse cx="480" cy="100" rx="50" ry="40" fill="url(#blob-dot)"/>
+        <ellipse cx="460" cy="105" rx="50" ry="40" fill="url(#blob-cup)"/>
+        <text x="480" y="186" text-anchor="middle" class="t-muted">화면: 가까운 것이 앞에 보임</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2><span class="num">6</span>찍지 않은 면은 비어 있어요</h2>
+    <p class="say">카메라가 본 쪽에만 점이 생기고, 그 점이 알갱이가 돼요. 한 번도 찍지 않은 뒤쪽은 알갱이를 키워도 실제 모습이 생기지 않아요. 다시 찍어야 해요.</p>
+    <p class="swipe">← 옆으로 밀어 보세요 →</p>
+    <div class="pic">
+      <svg viewBox="0 0 600 220" role="img" aria-label="카메라가 앞쪽에서만 찍어서 의자 앞면에만 알갱이가 있고 뒷면은 비어 있다">
+        <text x="300" y="22" text-anchor="middle" class="t-muted">위에서 본 의자</text>
+        <!-- 카메라 길 -->
+        <path class="arrow" d="M160 190 Q300 230 440 190" marker-end="url(#ah)"/>
+        <polygon class="cam" points="160,190 172,176 180,192"/>
+        <polygon class="cam" points="300,190 290,205 310,205"/>
+        <polygon class="cam" points="440,190 420,192 428,176"/>
+        <text x="300" y="180" text-anchor="middle" class="t-muted">카메라가 걸은 길</text>
+        <!-- 찍힌 앞면 -->
+        <ellipse cx="240" cy="140" rx="26" ry="14" fill="url(#blob-wall)"/>
+        <ellipse cx="280" cy="142" rx="26" ry="14" fill="url(#blob-wall)"/>
+        <ellipse cx="320" cy="142" rx="26" ry="14" fill="url(#blob-wall)"/>
+        <ellipse cx="360" cy="140" rx="26" ry="14" fill="url(#blob-wall)"/>
+        <ellipse cx="226" cy="105" rx="14" ry="24" fill="url(#blob-wall)"/>
+        <ellipse cx="374" cy="105" rx="14" ry="24" fill="url(#blob-wall)"/>
+        <text x="460" y="128" class="t-hot">찍힌 쪽: 알갱이 있음</text>
+        <!-- 안 찍힌 뒷면 -->
+        <path class="empty" d="M226 80 Q226 50 260 48 L340 48 Q374 50 374 80"/>
+        <text x="300" y="72" text-anchor="middle" class="t-muted">뒤쪽: 비어 있음</text>
+      </svg>
+    </div>
+  </section>
+</main>
+</body>
+</html>

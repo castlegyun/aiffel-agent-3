@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>사진에서 알갱이 장면까지</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper:       #f5f5f5;
+      --ink:         #2d3142;
+      --muted:       #4f5d75;
+      --accent:      #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --node-fill:   #ffffff;
+      --node-stroke: #2d3142;
+      --font-sans:   'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:  'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:   'Geist Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:       #2d3142;
+        --ink:         #f5f5f5;
+        --muted:       #bfc0c0;
+        --accent:      #f08a59;
+        --accent-tint: rgba(240,138,89,0.10);
+        --node-fill:   rgba(245,245,245,0.04);
+        --node-stroke: rgba(245,245,245,0.45);
+      }
+    }
+    body { font-family: var(--font-sans); background: var(--paper); color: var(--ink); min-height: 100vh; padding: 1.5rem 1rem; }
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 1rem; }
+    .caption { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; max-width: 768px; word-break: keep-all; overflow-wrap: break-word; }
+    svg { width: 100%; min-width: 768px; display: block; }
+    .paper  { fill: var(--paper); }
+    .node   { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1; }
+    .node-hi{ fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.5; }
+    .line   { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .head   { fill: var(--muted); }
+    .t-step { fill: var(--muted); font: 500 11px var(--font-mono); text-anchor: middle; }
+    .t-name { fill: var(--ink); font: 600 14px var(--font-sans); text-anchor: middle; }
+    .t-hi   { fill: var(--accent); font: 600 14px var(--font-sans); text-anchor: middle; }
+    .t-sub  { fill: var(--muted); font: 400 12px var(--font-sans); text-anchor: middle; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Data flow · photos to a scene of splats</p>
+    <h1>사진에서 알갱이 장면까지</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 800 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="gs-title gs-desc">
+        <title id="gs-title">사진에서 알갱이 장면까지</title>
+        <desc id="gs-desc">위치를 옮겨 찍은 사진 여러 장에서 시차로 깊이와 카메라 위치를 추정하고, 위치와 색을 가진 점을 얻는다. 점마다 크기와 투명도를 주면 알갱이가 되고, 알갱이를 먼 것부터 겹쳐 그리면 화면이 된다.</desc>
+        <defs>
+          <marker id="gs-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
+        </defs>
+        <rect class="paper" width="100%" height="100%"/>
+
+        <!-- 화살표 -->
+        <line class="line" x1="137" y1="74" x2="164" y2="74" marker-end="url(#gs-arrow)"/>
+        <line class="line" x1="303" y1="74" x2="330" y2="74" marker-end="url(#gs-arrow)"/>
+        <line class="line" x1="469" y1="74" x2="496" y2="74" marker-end="url(#gs-arrow)"/>
+        <line class="line" x1="635" y1="74" x2="662" y2="74" marker-end="url(#gs-arrow)"/>
+
+        <!-- 1 사진 -->
+        <text class="t-step" x="68" y="22">1</text>
+        <rect class="node" x="1" y="36" width="136" height="76" rx="6"/>
+        <text class="t-name" x="69" y="66">사진 여러 장</text>
+        <text class="t-sub"  x="69" y="86">위치를 옮겨 찍음</text>
+
+        <!-- 2 추정 -->
+        <text class="t-step" x="234" y="22">2</text>
+        <rect class="node" x="166" y="36" width="137" height="76" rx="6"/>
+        <text class="t-name" x="234" y="66">거리·카메라 추정</text>
+        <text class="t-sub"  x="234" y="86">시차를 이용</text>
+
+        <!-- 3 점 -->
+        <text class="t-step" x="400" y="22">3</text>
+        <rect class="node" x="332" y="36" width="137" height="76" rx="6"/>
+        <text class="t-name" x="400" y="66">점</text>
+        <text class="t-sub"  x="400" y="86">위치 + 색 (크기 없음)</text>
+
+        <!-- 4 알갱이 -->
+        <text class="t-step" x="566" y="22">4</text>
+        <rect class="node-hi" x="498" y="36" width="137" height="76" rx="6"/>
+        <text class="t-hi"   x="566" y="66">알갱이</text>
+        <text class="t-sub"  x="566" y="86">점 + 크기·투명도</text>
+
+        <!-- 5 화면 -->
+        <text class="t-step" x="732" y="22">5</text>
+        <rect class="node" x="664" y="36" width="135" height="76" rx="6"/>
+        <text class="t-name" x="731" y="66">화면</text>
+        <text class="t-sub"  x="731" y="86">먼 것부터 겹쳐 그림</text>
+      </svg>
+    </div>
+    <p class="caption">점에는 크기가 없어서 가까이 가면 비어 보여요. 4단계에서 크기와 투명도를 준 알갱이로 바꾸면 알갱이끼리 겹쳐 틈이 메워져요. 알갱이는 반투명이라 5단계에서 먼 것부터 겹쳐 그려야 색이 맞아요. 단, 1단계에서 찍지 않은 면은 끝까지 비어 있어요.</p>
+  </div>
+</body>
+</html>

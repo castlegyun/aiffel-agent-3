@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>알갱이 크기 바꿔 보기</title>
+<style>
+  :root { --bg:#ffffff; --subtle:#f6f8fa; --line:#d0d7de; --fg:#1f2328; --muted:#656d76; --accent:#0969da; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0d1117; --subtle:#161b22; --line:#30363d; --fg:#e6edf3; --muted:#a0a9b4; --accent:#4493f8; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:400 1.0625rem/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif; word-break:keep-all; overflow-wrap:break-word; }
+  main { max-width:860px; margin:0 auto; padding:20px 16px 40px; }
+  h1 { font-size:1.5rem; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 16px; font-size:.95rem; }
+  .ctrl { background:var(--subtle); border:1px solid var(--line); border-radius:6px; padding:10px 14px; margin-bottom:14px; }
+  label.slider { display:block; font-weight:600; margin-bottom:4px; }
+  input[type=range] { width:100%; height:32px; accent-color:var(--accent); }
+  label.check { display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:6px; }
+  input[type=checkbox] { width:1.2em; height:1.2em; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  canvas { width:100%; height:auto; display:block; border-radius:6px; background:#000; }
+  table { border-collapse:collapse; width:100%; margin-top:14px; font-size:1rem; }
+  th, td { border:1px solid var(--line); padding:6px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--subtle); font-weight:600; }
+  td.num { font-family:ui-monospace,Consolas,monospace; white-space:nowrap; }
+  .say { margin:12px 0 0; padding:10px 14px; border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:6px; background:var(--subtle); min-height:3.3em; }
+  .note { color:var(--muted); font-size:.85rem; margin-top:10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>알갱이 크기 바꿔 보기</h1>
+  <p class="lead">점 위치는 그대로 두고 알갱이 크기만 바꿔요. 작으면 틈으로 검은 배경이 보이고, 크면 가는 의자 다리가 두꺼워져요. 찍히지 않은 곳은 크기와 상관없이 비어 있어요.</p>
+
+  <div class="ctrl">
+    <label class="slider" for="size" id="size-label">알갱이 크기: 4</label>
+    <input type="range" id="size" min="1" max="16" step="0.5" value="4">
+    <label class="check"><input type="checkbox" id="half"> 벽의 점을 절반만 쓰기 (점 수를 줄였을 때를 흉내 냄)</label>
+  </div>
+
+  <canvas id="cv" width="640" height="300" role="img" aria-label="검은 배경 위에 벽, 찍히지 않은 곳, 의자 다리를 알갱이로 그린 그림"></canvas>
+
+  <table>
+    <thead><tr><th>지금 상태</th><th>값</th></tr></thead>
+    <tbody>
+      <tr><td>벽에서 틈으로 배경이 보이는 비율</td><td class="num" id="v-gap"></td></tr>
+      <tr><td>의자 다리 두께 (실제 폭 12칸)</td><td class="num" id="v-leg"></td></tr>
+      <tr><td>찍히지 않은 곳 가운데</td><td class="num" id="v-hole"></td></tr>
+    </tbody>
+  </table>
+  <p class="say" id="say"></p>
+  <p class="note">점 배치와 숫자는 설명용 예시예요. 실제 장면의 값이 아니에요. "틈"은 알갱이가 겹친 진하기가 절반이 안 되는 곳으로 셌어요. 알맞은 크기는 점이 얼마나 촘촘한지에 따라 달라요. 점을 절반으로 줄이면 같은 크기에서 틈이 더 많이 보여요.</p>
+</main>
+<script>
+  var W = 640, H = 300;
+  var cv = document.getElementById('cv');
+  var dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  cv.width = W * dpr; cv.height = H * dpr;
+  var ctx = cv.getContext('2d', { willReadFrequently: true });
+
+  // 설명용 점 배치 (매번 같은 배치가 나오도록 고정된 난수)
+  var seed = 7;
+  function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var WALL = [], LEG = [];
+  var i = 0;
+  for (var y = 48; y <= 272; y += 16) {
+    for (var x = 28; x <= 284; x += 16) {
+      WALL.push({ x: x + (rnd() - .5) * 8, y: y + (rnd() - .5) * 8, keep: (i++ % 2 === 0) });
+    }
+  }
+  for (var ly = 48; ly <= 272; ly += 8) { LEG.push({ x: 512, y: ly }); LEG.push({ x: 518, y: ly }); LEG.push({ x: 524, y: ly }); }
+  var LEG_REAL = 12; // 다리의 실제 폭(칸)
+  var OPACITY = 0.9;
+  var WALL_RGB = [222, 200, 165], LEG_RGB = [235, 150, 85];
+
+  function splat(p, s, rgb) {
+    var R = 2.5 * s;
+    var g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, R);
+    for (var k = 0; k <= 10; k++) {
+      var t = k / 10, d = t * 2.5; // d = 중심에서 거리 ÷ 크기
+      g.addColorStop(t, 'rgba(' + rgb.join(',') + ',' + (OPACITY * Math.exp(-d * d / 2)).toFixed(4) + ')');
+    }
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(p.x, p.y, R, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function label(t, x) {
+    ctx.fillStyle = '#c9d1d9';
+    ctx.font = '13px -apple-system,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif';
+    ctx.fillText(t, x, 24);
+  }
+
+  // 화면에서 "채워진" 칸 세기: 진하기가 그 재료 최대치의 절반을 넘으면 채워진 것으로 본다
+  function covered(x0, y0, x1, y1, full) {
+    var img = ctx.getImageData(x0 * dpr, y0 * dpr, (x1 - x0) * dpr, (y1 - y0) * dpr).data, n = 0, c = 0;
+    for (var j = 0; j < img.length; j += 4) {
+      n++;
+      if ((img[j] + img[j + 1] + img[j + 2]) / 3 >= full / 2) c++;
+    }
+    return { n: n, c: c };
+  }
+
+  function render() {
+    var s = +document.getElementById('size').value;
+    var half = document.getElementById('half').checked;
+    document.getElementById('size-label').textContent = '알갱이 크기: ' + s + ' (설명용 단위)';
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    WALL.forEach(function (p) { if (!half || p.keep) splat(p, s, WALL_RGB); });
+    LEG.forEach(function (p) { splat(p, s, LEG_RGB); });
+
+    var wallFull = OPACITY * (WALL_RGB[0] + WALL_RGB[1] + WALL_RGB[2]) / 3;
+    var legFull = OPACITY * (LEG_RGB[0] + LEG_RGB[1] + LEG_RGB[2]) / 3;
+
+    // 1) 벽 안쪽(가장자리 제외)에서 틈 비율
+    var w = covered(44, 64, 268, 256, wallFull);
+    var gap = 100 * (1 - w.c / w.n);
+    // 2) 다리 두께: 가운데 한 줄에서 채워진 칸 수
+    var row = covered(440, 160, 600, 161, legFull);
+    var legW = row.c / (dpr * dpr); // 읽은 영역이 가로·세로 모두 dpr배
+    // 3) 찍히지 않은 곳(벽 오른쪽, 점 없음)의 가운데
+    var hole = covered(330, 64, 380, 256, wallFull);
+    var holeFill = 100 * hole.c / hole.n;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.strokeStyle = '#6e7681'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1;
+    ctx.strokeRect(300.5, 40.5, 110, 240);
+    ctx.setLineDash([]);
+    label('벽 (점이 고르게 있음)', 28);
+    label('찍히지 않은 곳', 306);
+    label('의자 다리', 486);
+
+    document.getElementById('v-gap').textContent = gap.toFixed(1) + '%';
+    var legX = legW / LEG_REAL;
+    document.getElementById('v-leg').textContent = legW.toFixed(0) + '칸 (실제의 ' + legX.toFixed(1) + '배)';
+    document.getElementById('v-hole').textContent = holeFill < 1 ? '비어 있음' : holeFill.toFixed(0) + '% 덮임';
+
+    var say;
+    if (gap > 15) say = '알갱이가 작아서 벽 사이로 검은 틈이 ' + gap.toFixed(0) + '%나 보여요. 가까이 다가갔을 때 표면이 비어 보이는 상태예요.';
+    else if (gap > 2) say = '틈이 ' + gap.toFixed(0) + '% 남아 있어요. 조금 더 키우면 벽이 메워져요.';
+    else if (legX < 3.5) say = '벽의 틈이 거의 메워졌고, 다리는 실제의 ' + legX.toFixed(1) + '배예요. 이 설명용 배치에서는 이 근처가 틈과 뭉개짐 사이의 타협점이에요.';
+    else say = '벽의 틈은 메워졌지만 다리가 실제보다 ' + legX.toFixed(1) + '배 두꺼워졌어요. 틈을 가린 대신 가는 모양이 뭉개졌어요.';
+    if (half) say += ' (벽의 점을 절반으로 줄여서, 같은 크기에서도 틈이 더 커요. 메우려면 알갱이를 더 키워야 하고, 그만큼 다리도 더 두꺼워져요.)';
+    say += holeFill < 1
+      ? ' 찍히지 않은 곳은 점이 없어서 크기를 바꿔도 비어 있어요.'
+      : ' 찍히지 않은 곳은 옆 알갱이가 번져 일부 덮였을 뿐, 그 자리의 실제 모습이 생긴 것은 아니에요.';
+    document.getElementById('say').textContent = say;
+  }
+
+  document.getElementById('size').addEventListener('input', render);
+  document.getElementById('half').addEventListener('change', render);
+  render();
+</script>
+</body>
+</html>

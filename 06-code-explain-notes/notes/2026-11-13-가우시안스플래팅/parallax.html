@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시차 움직여 보기</title>
+<style>
+  :root { --bg:#ffffff; --subtle:#f6f8fa; --line:#d0d7de; --fg:#1f2328; --muted:#656d76; --accent:#0969da; --hot:#cf222e; --wall:#e9e2d6; --wall-ink:#8a7a63; --cup:#cf222e; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0d1117; --subtle:#161b22; --line:#30363d; --fg:#e6edf3; --muted:#a0a9b4; --accent:#4493f8; --hot:#ff7b72; --wall:#3a3326; --wall-ink:#c9b48f; --cup:#ff7b72; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:400 1.0625rem/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif; word-break:keep-all; overflow-wrap:break-word; }
+  main { max-width:860px; margin:0 auto; padding:20px 16px 40px; }
+  h1 { font-size:1.5rem; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 16px; font-size:.95rem; }
+  .ctrl { background:var(--subtle); border:1px solid var(--line); border-radius:6px; padding:10px 14px; margin-bottom:14px; }
+  .modes { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+  button { font:inherit; font-size:1rem; padding:6px 16px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); cursor:pointer; min-height:40px; }
+  button:hover { border-color:var(--accent); }
+  button[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); font-weight:600; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  label { display:block; font-weight:600; margin-bottom:4px; }
+  input[type=range] { width:100%; height:32px; accent-color:var(--accent); }
+  .panels { display:flex; flex-wrap:wrap; gap:14px; }
+  .panel { flex:1 1 300px; min-width:0; border:1px solid var(--line); border-radius:6px; padding:8px; }
+  .panel h2 { font-size:1rem; margin:0 0 6px; }
+  svg { width:100%; height:auto; display:block; }
+  .s-wall { stroke:var(--wall-ink); stroke-width:3; }
+  .s-frame { fill:var(--wall-ink); }
+  .s-cup { fill:var(--cup); }
+  .s-cam { fill:var(--accent); }
+  .s-sight { stroke:var(--muted); stroke-width:1; stroke-dasharray:4 3; fill:none; }
+  .s-fov { stroke:var(--accent); stroke-width:1; fill:none; opacity:.6; }
+  .s-start { fill:none; stroke:var(--muted); stroke-width:1.5; stroke-dasharray:4 3; }
+  .s-photo { fill:var(--wall); stroke:var(--line); stroke-width:1; }
+  .s-label { fill:var(--muted); font:400 12px -apple-system,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif; }
+  table { border-collapse:collapse; width:100%; margin-top:14px; font-size:1rem; }
+  th, td { border:1px solid var(--line); padding:6px 10px; text-align:left; }
+  th { background:var(--subtle); font-weight:600; }
+  td.num { font-family:ui-monospace,Consolas,monospace; white-space:nowrap; }
+  .say { margin:12px 0 0; padding:10px 14px; border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:6px; background:var(--subtle); min-height:3.3em; }
+  .note { color:var(--muted); font-size:.85rem; margin-top:10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>시차 움직여 보기</h1>
+  <p class="lead">카메라를 옆으로 옮기면 가까운 컵은 사진 안에서 많이, 먼 벽은 적게 움직여요. 제자리에서 돌리기만 하면 둘이 똑같이 움직여요.</p>
+
+  <div class="ctrl">
+    <div class="modes">
+      <button type="button" data-mode="move" aria-pressed="true">옆으로 옮기기</button>
+      <button type="button" data-mode="turn" aria-pressed="false">제자리에서 돌리기</button>
+    </div>
+    <label for="amt" id="amt-label">카메라를 옆으로 옮긴 거리: 0.00 m</label>
+    <input type="range" id="amt" min="0" max="40" step="1" value="0">
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <h2>위에서 본 방</h2>
+      <svg viewBox="0 0 320 260" role="img" aria-label="위에서 본 카메라, 컵, 벽의 배치">
+        <line class="s-wall" x1="0" y1="40" x2="320" y2="40"/>
+        <rect class="s-frame" x="150" y="34" width="20" height="12"/>
+        <text class="s-label" x="300" y="28" text-anchor="end">벽 (4 m)</text>
+        <circle class="s-cup" cx="160" cy="190" r="7"/>
+        <text class="s-label" x="174" y="194">컵 (1 m)</text>
+        <path id="fov" class="s-fov" d=""/>
+        <line id="sight-wall" class="s-sight" x1="160" y1="240" x2="160" y2="40"/>
+        <line id="sight-cup" class="s-sight" x1="160" y1="240" x2="160" y2="190"/>
+        <g id="cam"><polygon class="s-cam" points="-9,8 9,8 0,-8"/></g>
+        <text class="s-label" x="20" y="252">카메라</text>
+      </svg>
+    </div>
+    <div class="panel">
+      <h2>카메라에 찍힌 사진</h2>
+      <svg viewBox="0 0 320 200" role="img" aria-label="카메라에 찍힌 사진. 점선은 처음 사진에서 물건이 있던 자리">
+        <defs><clipPath id="clip"><rect x="10" y="10" width="300" height="180"/></clipPath></defs>
+        <rect class="s-photo" x="10" y="10" width="300" height="180"/>
+        <g clip-path="url(#clip)">
+          <rect class="s-start" x="140" y="45" width="40" height="30"/>
+          <circle class="s-start" cx="160" cy="140" r="24"/>
+          <rect id="p-frame" class="s-frame" x="140" y="45" width="40" height="30"/>
+          <circle id="p-cup" class="s-cup" cx="160" cy="140" r="24"/>
+        </g>
+        <text class="s-label" x="14" y="186">점선 = 처음 사진에서 있던 자리</text>
+      </svg>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>사진 안에서 움직인 양</th><th>사진 폭 기준</th></tr></thead>
+    <tbody>
+      <tr><td>컵 (가까움, 1 m)</td><td class="num" id="v-cup">0.0%</td></tr>
+      <tr><td>벽 액자 (멂, 4 m)</td><td class="num" id="v-wall">0.0%</td></tr>
+      <tr><td><strong>둘의 차이 = 시차의 단서</strong> (%p = 두 퍼센트 값을 뺀 차이)</td><td class="num" id="v-diff"><strong>0.0%p</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="say" id="say"></p>
+  <p class="note">숫자는 설명용 예시예요. 컵 1 m, 벽 4 m, 화면 각도(카메라가 한 번에 담는 좌우 범위) 60°인 카메라라고 정해 계산했어요. "제자리에서 돌리기"는 렌즈 중심을 축으로 돌렸다고 가정했어요. 손에 든 폰을 돌리면 렌즈가 조금 움직여 작은 차이가 생길 수 있어요(추측: 원문이 "시차가 <em>충분히</em> 생기지 않는다"고 쓴 까닭으로 보여요).</p>
+</main>
+<script>
+  var CUP_Z = 1, WALL_Z = 4, HALF = Math.tan(Math.PI / 6); // 화면 각도 60° → 사진 폭 = 2 × tan(30°)
+  var mode = 'move';
+  var amt = document.getElementById('amt');
+
+  function sx(x) { return 160 + x * 110; }   // 위에서 본 그림: 가로 (m → 화면)
+  function sy(z) { return 240 - z * 50; }    // 위에서 본 그림: 앞뒤 (m → 화면)
+  function pct(v) { return (Math.round(v * 10) / 10).toFixed(1); }
+
+  function render() {
+    var v = +amt.value;
+    var camX = 0, th = 0;
+    if (mode === 'move') camX = v / 100;            // 0 ~ 0.40 m
+    else th = (v / 2) * Math.PI / 180;               // 0 ~ 20°
+
+    // 사진 속 위치: 사진 가운데 0, 사진 폭에 대한 비율. 물건은 둘 다 정면(x = 0)에 있다
+    function u(X, Z) { return Math.tan(Math.atan2(X - camX, Z) - th) / (2 * HALF); }
+    var uc = u(0, CUP_Z), uw = u(0, WALL_Z);
+    var mc = Math.abs(uc) * 100, mw = Math.abs(uw) * 100;
+
+    document.getElementById('amt-label').textContent = mode === 'move'
+      ? '카메라를 옆으로 옮긴 거리: ' + (camX).toFixed(2) + ' m'
+      : '카메라를 제자리에서 돌린 각도: ' + (v / 2).toFixed(1) + '°';
+
+    // 위에서 본 그림
+    var cx = sx(camX), cy = sy(0);
+    document.getElementById('cam').setAttribute('transform', 'translate(' + cx + ',' + cy + ') rotate(' + (th * 180 / Math.PI) + ')');
+    // 시야 경계는 미터 단위로 계산한 뒤 화면으로 옮긴다 (가로·앞뒤 축척이 달라도 컵이 보이는지와 맞게)
+    function edge(a) { var L = 4.4 / Math.cos(a); return sx(camX + L * Math.sin(a)) + ' ' + sy(L * Math.cos(a)); }
+    document.getElementById('fov').setAttribute('d', 'M' + edge(th - Math.PI / 6) + ' L' + cx + ' ' + cy + ' L' + edge(th + Math.PI / 6));
+    ['sight-wall', 'sight-cup'].forEach(function (id) {
+      var e = document.getElementById(id); e.setAttribute('x1', cx); e.setAttribute('y1', cy);
+    });
+
+    // 사진
+    document.getElementById('p-frame').setAttribute('x', 140 + uw * 300);
+    document.getElementById('p-cup').setAttribute('cx', 160 + uc * 300);
+
+    document.getElementById('v-cup').textContent = pct(mc) + '%';
+    document.getElementById('v-wall').textContent = pct(mw) + '%';
+    var d = Math.abs(mc - mw);
+    document.getElementById('v-diff').innerHTML = '<strong>' + pct(d) + '%p</strong>';
+
+    var say;
+    if (v === 0) say = '아직 카메라가 그대로예요. 처음 사진과 같아서 비교할 차이가 없어요. 슬라이더를 움직여 보세요.';
+    else if (mode === 'move') say = '컵은 사진 폭의 ' + pct(mc) + '%, 벽 액자는 ' + pct(mw) + '%만 움직였어요. 컵이 약 ' + (mc / mw).toFixed(0) + '배 더 많이 움직였으니 컵이 더 가까워요. 카메라가 얼마나 옮겨 갔는지 알면 이 차이를 실제 거리로 바꿀 수 있어요.';
+    else say = '컵과 벽 액자가 똑같이 사진 폭의 ' + pct(mc) + '%씩 움직였어요. 차이가 0이라 어느 쪽이 가까운지 알 수 없어요. 그래서 제자리에서 돌리기만 하면 깊이를 구할 단서가 생기지 않아요.';
+    document.getElementById('say').textContent = say;
+  }
+
+  amt.addEventListener('input', render);
+  document.querySelectorAll('[data-mode]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      mode = b.dataset.mode;
+      document.querySelectorAll('[data-mode]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      render();
+    });
+  });
+  render();
+</script>
+</body>
+</html>
