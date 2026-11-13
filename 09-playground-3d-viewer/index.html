@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>놀이터 3D 뷰어</title>
+<style>
+  :root { --bg:#10141a; --panel:rgba(16,20,26,.82); --fg:#e6edf3; --muted:#a0a9b4; --line:#30363d; --accent:#4493f8; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--fg);
+    font:400 15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif; }
+  canvas { display:block; width:100%; height:100%; touch-action:none; }
+  .panel { position:fixed; left:12px; right:12px; top:12px; max-width:420px; padding:10px 14px;
+    background:var(--panel); border:1px solid var(--line); border-radius:8px; backdrop-filter:blur(4px); }
+  h1 { font-size:1rem; margin:0 0 6px; }
+  ol { margin:0 0 8px; padding:0; list-style:none; }
+  li { color:var(--muted); }
+  li::before { content:"○ "; }
+  li.doing { color:var(--accent); } li.doing::before { content:"◔ "; }
+  li.done { color:var(--fg); } li.done::before { content:"● "; }
+  li.fail { color:#ff7b72; } li.fail::before { content:"✕ "; }
+  .stats { margin:0; color:var(--muted); font-size:.9rem; }
+  .stats b { color:var(--fg); font-weight:600; }
+  .hint { margin:6px 0 0; color:var(--muted); font-size:.85rem; }
+  button { font:inherit; margin-top:8px; padding:6px 14px; min-height:40px; border:1px solid var(--line);
+    border-radius:6px; background:#161b22; color:var(--fg); cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .err { color:#ff7b72; white-space:pre-wrap; margin:8px 0 0; font-size:.85rem; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+    "@sparkjsdev/spark": "https://sparkjs.dev/releases/spark/2.4.0/spark.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<div class="panel" id="panel">
+  <h1>놀이터 3D 뷰어</h1>
+  <ol id="steps">
+    <li data-s="lib">라이브러리 불러오기</li>
+    <li data-s="renderer">렌더러 넣기</li>
+    <li data-s="download">파일 받기</li>
+    <li data-s="decode">알갱이로 풀기</li>
+    <li data-s="measure">크기 재기</li>
+  </ol>
+  <p class="stats" id="stats">파일 <b id="v-size">-</b> · 받는 데 <b id="v-time">-</b> · 알갱이 <b id="v-count">-</b></p>
+  <p class="hint">끌면 회전, 휠·두 손가락 벌리기로 확대, 오른쪽 버튼·두 손가락 끌기로 이동해요.</p>
+  <button type="button" id="flip">위아래 뒤집기</button>
+  <p class="err" id="err" role="alert"></p>
+</div>
+<script type="module">
+  // 불러올 장면 파일 이름은 여기서 바꿀 수 있어요
+  const SCENE_FILE = "scene.sog";
+
+  const $ = (id) => document.getElementById(id);
+  const mark = (s, state) => { document.querySelector(`[data-s="${s}"]`).className = state; };
+  const fail = (s, e) => { mark(s, "fail"); $("err").textContent = (s + " 단계에서 멈췄어요: ") + (e && e.message ? e.message : e); console.error(e); };
+
+  let THREE, OrbitControls, SparkRenderer, SplatMesh;
+  mark("lib", "doing");
+  try {
+    THREE = await import("three");
+    ({ OrbitControls } = await import("three/addons/controls/OrbitControls.js"));
+    ({ SparkRenderer, SplatMesh } = await import("@sparkjsdev/spark"));
+    mark("lib", "done");
+  } catch (e) { fail("lib", e); throw e; }
+
+  let renderer, scene, camera, controls, mesh;
+  mark("renderer", "doing");
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.prepend(renderer.domElement);
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 1000);
+    camera.position.set(0, 0, 3);
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    const spark = new SparkRenderer({ renderer });
+    scene.add(spark);
+    renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+    window.addEventListener("resize", () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+    });
+    mark("renderer", "done");
+  } catch (e) { fail("renderer", e); throw e; }
+
+  // 파일 받기: 크기와 걸린 시간을 직접 잰다
+  let bytes;
+  mark("download", "doing");
+  try {
+    const t0 = performance.now();
+    const res = await fetch(SCENE_FILE);
+    if (!res.ok) throw new Error(SCENE_FILE + " 을(를) 받지 못했어요 (HTTP " + res.status + ")");
+    bytes = new Uint8Array(await res.arrayBuffer());
+    const sec = (performance.now() - t0) / 1000;
+    $("v-size").textContent = (bytes.length / 1048576).toFixed(2) + " MB";
+    $("v-time").textContent = sec.toFixed(2) + " 초";
+    mark("download", "done");
+  } catch (e) { fail("download", e); throw e; }
+
+  // 알갱이로 풀기: 형식 이름(pcsogszip)은 공식 문서에 없어서, 안 되면 주소로 읽는다
+  mark("decode", "doing");
+  try {
+    try {
+      mesh = new SplatMesh({ fileBytes: bytes, fileType: "pcsogszip" });
+      await mesh.initialized;
+    } catch (e1) {
+      console.warn("fileBytes 방식 실패, 주소로 다시 시도", e1);
+      mesh = new SplatMesh({ url: SCENE_FILE });
+      await mesh.initialized;
+    }
+    scene.add(mesh);
+    mark("decode", "done");
+  } catch (e) { fail("decode", e); throw e; }
+
+  // 크기 재기: 알갱이 개수와 장면 크기, 카메라 배치
+  mark("measure", "doing");
+  try {
+    const n = mesh.packedSplats?.numSplats ?? mesh.numSplats ?? 0;
+    $("v-count").textContent = n.toLocaleString("ko-KR") + " 개";
+    const box = mesh.getBoundingBox(true);
+    const center = box.getCenter(new THREE.Vector3());
+    const radius = box.getSize(new THREE.Vector3()).length() * 0.5;
+    controls.target.copy(center);
+    camera.position.set(center.x + radius * 0.2, center.y - radius * 0.05, center.z + radius * 0.6);
+    camera.far = radius * 60; camera.updateProjectionMatrix();
+    controls.update();
+    window.__scene = { n, radius, bytes: bytes.length };
+    mark("measure", "done");
+  } catch (e) { fail("measure", e); throw e; }
+
+  let flipped = false;
+  $("flip").addEventListener("click", () => {
+    flipped = !flipped;
+    if (flipped) mesh.quaternion.set(1, 0, 0, 0); else mesh.quaternion.set(0, 0, 0, 1);
+  });
+</script>
+</body>
+</html>
