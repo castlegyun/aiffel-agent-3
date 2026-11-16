@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>표 모델과 비교 실습 심화</title>
+<style>
+  :root {
+    --bg: #fbfaf7;
+    --card: #ffffff;
+    --ink: #22252f;
+    --muted: #5b6273;
+    --line: #d9d6cf;
+    --hot: #bf4520;
+    --ok: #2f7d6d;
+    --hot-soft: rgba(191,69,32,0.10);
+    --ok-soft: rgba(47,125,109,0.12);
+    --tag-add: #6a4fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1f27;
+      --card: #252935;
+      --ink: #eceae4;
+      --muted: #a9aebb;
+      --line: #3b4050;
+      --hot: #f08a59;
+      --ok: #6cc5b0;
+      --hot-soft: rgba(240,138,89,0.14);
+      --ok-soft: rgba(108,197,176,0.14);
+      --tag-add: #b9a4f0;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.75; padding: 24px 16px 64px; word-break: keep-all; overflow-wrap: break-word; }
+  main { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 1.55rem; line-height: 1.35; margin-bottom: 8px; }
+  h2 { font-size: 1.25rem; line-height: 1.4; margin: 36px 0 12px; padding-top: 12px; border-top: 2px solid var(--ink); }
+  h3 { font-size: 1.05rem; line-height: 1.45; margin: 0 0 8px; }
+  p { margin: 8px 0; }
+  .lead { color: var(--muted); }
+  section.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 16px; margin: 14px 0; }
+  .marks { line-height: 2; font-size: 0.9rem; color: var(--muted); border: 1px dashed var(--line); border-radius: 8px; padding: 10px 12px; margin: 14px 0; }
+  .t-add, .t-fake { font-size: 0.78rem; font-weight: 700; white-space: nowrap; border-radius: 4px; padding: 0 5px; margin: 0 2px; border: 1px solid currentColor; }
+  .t-add { color: var(--tag-add); }
+  .t-fake { color: var(--hot); }
+  .t-nb { font-size: 0.78rem; font-weight: 700; white-space: nowrap; border-radius: 4px; padding: 0 5px; margin: 0 2px; border: 1px solid currentColor; color: var(--ok); }
+  ul.dots, ol.steps { margin: 8px 0; }
+  ul.dots { list-style: none; }
+  ul.dots > li { position: relative; padding-left: 1.3em; margin: 6px 0; }
+  ul.dots > li::before { content: ""; position: absolute; left: .25em; top: .72em; width: .5em; height: .5em; border-radius: 50%; background: var(--hot); }
+  ol.steps { list-style: none; counter-reset: s; }
+  ol.steps > li { position: relative; padding-left: 2em; margin: 8px 0; counter-increment: s; }
+  ol.steps > li::before { content: counter(s); position: absolute; left: 0; top: .2em; width: 1.5em; height: 1.5em; border-radius: 50%; background: var(--ink); color: var(--bg); font-size: 0.8rem; font-weight: 700; text-align: center; line-height: 1.5em; }
+  .terms li strong { color: var(--hot); }
+  .why { margin-top: 10px; padding: 10px 12px; border-left: 4px solid var(--ok); background: var(--ok-soft); border-radius: 4px; }
+  .why b { color: var(--ok); }
+  .table-wrap { width: 100%; overflow-x: auto; margin: 10px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--hot-soft); }
+  td.num { font-variant-numeric: tabular-nums; }
+  .bad { color: var(--hot); font-weight: 700; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0; }
+  .flow span.box { border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; background: var(--bg); }
+  .flow span.arrow { color: var(--muted); }
+  a { color: var(--hot); }
+  /* 슬라이더 */
+  .control { margin: 14px 0 6px; }
+  .control label { font-weight: 700; display: block; margin-bottom: 4px; }
+  input[type=range] { width: 100%; accent-color: var(--hot); }
+  .rows { display: flex; flex-wrap: wrap; gap: 3px; margin: 12px 0; }
+  .rows i { display: block; width: 12px; height: 12px; border-radius: 2px; }
+  .rows i.l { background: var(--ok); }
+  .rows i.r { background: var(--hot); }
+  .rows i.cut { width: 3px; height: 16px; margin: -2px 3px; background: var(--ink); border-radius: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 10px; }
+  .stat { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+  .stat .k { font-size: 0.85rem; color: var(--muted); }
+  .stat .v { font-size: 1.35rem; font-weight: 700; }
+  .stat.badv .v { color: var(--hot); }
+  .stat.okv .v { color: var(--ok); }
+  .story { margin-top: 12px; padding: 10px 12px; border-left: 4px solid var(--hot); background: var(--hot-soft); border-radius: 4px; }
+  /* 퀴즈 */
+  details { border: 1px solid var(--line); border-radius: 8px; background: var(--card); margin: 10px 0; }
+  summary { cursor: pointer; padding: 12px 14px; font-weight: 700; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "Q"; display: inline-block; min-width: 1.6em; color: var(--hot); }
+  details[open] summary { border-bottom: 1px solid var(--line); }
+  details .ans { padding: 10px 14px 14px; }
+  details .ans::before { content: "A. "; font-weight: 700; color: var(--ok); }
+  .src { font-size: 0.82rem; color: var(--muted); display: block; margin-top: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>표 모델과 비교 실습 심화</h1>
+  <p class="lead">강의 「AI는 어디까지 쓰이고 있을까?」에서 두 절만 깊게 봅니다. 「표 데이터를 예측하는 모델」과 「실습. 같은 검사표로 모델 비교하기」예요. 맨 아래에 예상 퀴즈가 있어요.</p>
+  <div class="marks">
+    표시 없는 문장은 원문 내용을 풀어 쓴 것이에요.<br>
+    <span class="t-nb">실습 노트북</span> 강의가 링크한 Colab 실습 노트북(table_model_compare)의 코드와 출력에서 확인한 내용이에요.<br>
+    <span class="t-add">덧붙인 설명</span> 원문에 없는 일반 지식이나 계산이에요.
+    <span class="t-fake">설명용 숫자</span> 이해를 도우려고 지어낸 숫자나 가정이에요. 강의 숫자가 아니에요.
+  </div>
+
+  <h2>용어 먼저</h2>
+  <section class="card">
+    <ul class="dots terms">
+      <li><strong>분류</strong> = 표의 각 행이 어느 부류에 속하는지 가르는 일. 예: 불량 / 정상, 악성 / 악성 아님.</li>
+      <li><strong>훈련 자료</strong> = 모델에게 예시로 보여 주는 행. 정답이 함께 보여요.</li>
+      <li><strong>시험 자료</strong> = 채점할 때까지 정답을 감춰 두는 행.</li>
+      <li><strong>기준선</strong> = 새 모델과 비교하려고 같은 자료로 함께 돌리는 기존 방법.</li>
+      <li><strong>정확도</strong> = 시험 행 가운데 정답을 맞힌 비율.</li>
+      <li><strong>AUC</strong> = 양성 하나와 음성 하나를 골랐을 때, 양성에 더 높은 점수를 주는 정도. 동점은 절반(0.5)으로 계산해요.</li>
+      <li><strong>양성</strong> = 우리가 찾아내려는 쪽. 이 실습에서는 악성이에요. "검사 결과가 좋다"는 뜻이 아니에요.</li>
+      <li><strong>음성</strong> = 찾아내려는 쪽이 아닌 사례. 이 실습에서는 악성 아님이에요.</li>
+      <li><strong>문턱</strong> = 몇 점부터 양성으로 판정할지 사람이 정하는 값.</li>
+      <li><strong>사전학습</strong> = 내 표를 받기 전에, 미리 여러 표로 해 둔 학습.</li>
+      <li><strong>가중치</strong> = 학습 결과를 담은 파일. 이 글에서는 이 뜻 하나로만 써요.</li>
+      <li><strong>맥락</strong> = 예측할 때 함께 건네는 예시 행과 그 정답. 이 글에서는 TabICL에게 건네는 훈련 자료를 가리켜요.</li>
+    </ul>
+  </section>
+
+  <h2>결론부터</h2>
+  <section class="card">
+    <ol class="steps">
+      <li><b>표 모델 절:</b> 표 모델은 "언제, 무엇으로 배우느냐"가 달라요. 랜덤 포레스트는 내 표로 직접 배우고, TabICL은 미리 배워 둔 상태에서 내 표를 참고만 해요. 하지만 새 방식이라고 더 낫다는 보장은 없어요. 그래서 같은 시험 자료로, 기준선과 함께, 정확도와 AUC 두 숫자로 비교해야 해요.</li>
+      <li><b>실습 절:</b> 훈련 행이 20개일 때는 모델끼리 차이가 났어요. 특히 그래디언트 부스팅은 AUC 0.5였어요. 200개일 때는 세 모델이 0.01 안팎으로 모였어요. 점수가 이만큼 비슷하면 정확도와 준비 과정을 함께 보고 골라요.</li>
+    </ol>
+  </section>
+
+  <h2>1부. 표 데이터를 예측하는 모델</h2>
+
+  <section class="card">
+    <h3>1-1. 같은 숫자 표라도, 원하는 답에 따라 문제가 달라져요</h3>
+    <ul class="dots">
+      <li>물류 담당자는 출고 기록으로 <b>다음 달 수량</b>을 알고 싶어요. 시간에 따라 이어지는 숫자를 예측하는 문제예요.</li>
+      <li>품질 담당자는 검사표로 <b>부품별 불량 위험</b>을 알고 싶어요. 각 행이 불량인지 정상인지 가르는 <b>분류</b> 문제예요.</li>
+      <li>두 경우 모두 표 모델은 표를 문장으로 바꾸지 않아요. 숫자와 열의 관계를 직접 다뤄요. 표를 챗봇에 올리고 설명을 부탁하는 것과는 다른 방식이에요.</li>
+    </ul>
+    <div class="why"><b>왜 중요해요?</b> 문제가 달라지면 평가 방법도 달라져요. 분류는 정확도와 AUC로 채점해요. 수량 예측은 시간 순서를 지킨 채 실제 출고량과 예측량을 비교해요. 강의 마지막 절은 "오늘의 분류 코드를 그대로 쓰기보다 시계열 예측 도구를 찾아야 한다"고 말해요.</div>
+  </section>
+
+  <section class="card">
+    <h3>1-2. 랜덤 포레스트와 TabICL은 "언제, 무엇으로 배우느냐"가 달라요</h3>
+    <div class="table-wrap"><table>
+      <tr><th></th><th>랜덤 포레스트 · 그래디언트 부스팅</th><th>TabICL (표를 위한 기반 모델)</th></tr>
+      <tr><td>내 표를 받기 전</td><td>아무것도 배우지 않은 상태예요. 주어진 표로 처음 배워요.</td><td>여러 표를 다루는 법을 미리 배워 두었어요 (사전학습).</td></tr>
+      <tr><td>내 표(훈련 자료)의 역할</td><td>이 표로 학습해서 판단 기준을 만들어요.</td><td>예측할 때 참고하는 맥락으로 써요.</td></tr>
+      <tr><td>새 행을 예측할 때</td><td>만들어 둔 판단 기준에 새 행을 넣어요.</td><td>예시 행과 정답, 새 행을 함께 보고 답을 내요.</td></tr>
+      <tr><td>실습에서 필요했던 준비</td><td><span class="t-nb">실습 노트북</span> 첫 설치 셀에서 scikit-learn(사이킷런)을 다른 패키지와 함께 설치해요. 따로 내려받을 파일은 없어요.</td><td>tabicl 패키지 설치 + 처음 실행할 때 가중치 파일 내려받기. <span class="t-nb">실습 노트북</span> 출력에 따르면 약 110MB 파일을 Hugging Face(허깅 페이스)에서 받아요.</td></tr>
+    </table></div>
+    <ul class="dots">
+      <li>"사용자의 표를 보고 답한다"고 해서 학습을 전혀 안 한 모델은 아니에요. TabICL은 이미 사전학습을 거쳤어요.</li>
+      <li>TabICL이 처음 실행할 때 내려받는 <b>가중치</b> 파일에 사전학습 결과가 들어 있어요.</li>
+      <li><span class="t-add">덧붙인 설명</span> TabICL의 Tab은 tabular(태뷸러, 표 형태의)에서, ICL은 in-context learning(인 컨텍스트 러닝)에서 왔어요. "건네받은 맥락 안에서 배운다"는 뜻이에요. 보통 이 방식에서는 내 표를 건네도 모델 속 가중치를 다시 고치지 않아요.</li>
+      <li><span class="t-add">덧붙인 설명</span> 랜덤 포레스트와 그래디언트 부스팅은 둘 다 결정 트리(디시전 트리)를 써요. 결정 트리는 "측정값 A가 얼마보다 큰가?" 같은 판단 기준을 여러 단계로 이어 붙여 행을 갈라 나가는 것이에요. 랜덤 포레스트는 서로 다른 결정 트리를 여러 개 만들어 결과를 모아요. 그래디언트 부스팅은 앞의 트리들이 틀린 부분을 고치는 트리를 하나씩 더해 가요. 원문은 부스팅이 "판단 기준을 하나씩 세워 나간다"고만 말해요.</li>
+    </ul>
+    <div class="why"><b>왜 중요해요?</b> 원문은 "작은 표에서도 이런 방식이 도움이 될 수 있다"고 말해요. 실습의 20행 결과도 이 말과 어긋나지 않아요. 다만 그 순서는 바뀔 수 있다고 원문이 함께 말해요 (2-3). 또 사전학습을 했기 때문에, 공개 평가 자료가 사전학습 자료와 겹치는지 살펴야 해요 (1-7).</div>
+  </section>
+
+  <section class="card">
+    <h3>1-3. 기준선이 없으면 "나아졌다"를 말할 수 없어요</h3>
+    <ul class="dots">
+      <li>새 모델이라는 이유만으로 먼저 고를 수는 없어요. 랜덤 포레스트가 비슷하게 맞히면서 준비는 더 간단할 수도 있어요.</li>
+      <li>그래서 같은 자료로 기존 방법을 함께 돌려요. 이 기존 방법이 <b>기준선</b>이에요. 실습에서는 랜덤 포레스트와 그래디언트 부스팅이 기준선이에요.</li>
+    </ul>
+    <div class="why"><b>왜 필요해요?</b> 기준선이 있어야 "새 모델을 받아 설치하는 수고에 비해 무엇이 나아졌는지" 알 수 있어요. 예를 들어 새 모델이 0.80을 받았다는 숫자만으로는 좋은지 알 수 없어요. 같은 자료에서 랜덤 포레스트도 0.80이면 나아진 것이 없고, 0.70이면 나아진 거예요. <span class="t-fake">설명용 숫자</span></div>
+  </section>
+
+  <section class="card">
+    <h3>1-4. 표를 둘로 나누는 이유는 두 가지예요</h3>
+    <ol class="steps">
+      <li><b>이미 본 문제를 다시 풀면 안 돼요.</b> 훈련에 쓴 행으로 점수를 매기면, 정답을 보고 배운 문제를 다시 푸는 셈이에요. <span class="t-add">덧붙인 설명</span> 그러면 처음 보는 행에서의 실력보다 점수가 높게 나올 수 있어요.</li>
+      <li><b>모든 모델이 같은 문제를 풀어야 해요.</b> 모델마다 시험 자료가 다르면 문제 난이도가 달라져요. 그래서 실습은 시험 자료를 한 번 정해 놓고 끝까지 그대로 써요.</li>
+    </ol>
+    <ul class="dots">
+      <li>TabICL에게도 같은 규칙이 적용돼요. 맥락으로 건네는 예시 행이 훈련 자료이고, 시험 행의 정답은 감춰 둬요.</li>
+      <li>날짜가 있는 업무 자료라면 나누는 방식도 바꿔야 해요. 미래의 정보가 과거의 예측에 섞이면 안 되기 때문이에요.</li>
+    </ul>
+    <div class="why"><b>날짜 자료는 왜 다르게 나눠요?</b> <span class="t-add">덧붙인 설명</span> 행을 무작위로 나누면, 나중 날짜의 행이 훈련 자료에 들어가 앞 날짜의 행을 맞히는 데 쓰일 수 있어요. 실제로 쓸 때는 미래를 모르니까, 시험 점수만 좋고 현장에서는 그만큼 맞히지 못할 수 있어요. 보통은 날짜를 기준으로 앞부분은 훈련, 뒷부분은 시험으로 나눠요.</div>
+  </section>
+
+  <section class="card">
+    <h3>1-5. 정확도 하나만 보면, 아무것도 못 찾는 모델도 좋아 보여요</h3>
+    <p>정확도는 이해하기 쉬워요. 하지만 불량이 드문 표에서는 함정이 있어요.</p>
+    <ol class="steps">
+      <li>부품 100개 가운데 불량이 2개라고 해 볼게요. <span class="t-fake">설명용 숫자</span></li>
+      <li>모델이 측정값을 보지 않고 100개 모두 "정상"이라고 답해요.</li>
+      <li>정상 98개를 맞혔으니 정확도는 98 ÷ 100 = 0.98이에요.</li>
+      <li>그런데 우리가 찾으려던 불량은 하나도 못 찾았어요.</li>
+    </ol>
+    <div class="why"><b>그래서?</b> 모델이 각 행에 매긴 <b>점수의 순서</b>도 봐요. 불량을 찾는 일이라면, 실제 불량인 행이 정상인 행보다 대체로 높은 점수를 받아야 쓸모가 있어요. 이 순서를 재는 숫자가 AUC예요.</div>
+  </section>
+
+  <section class="card">
+    <h3>1-6. AUC는 "양성·음성 짝"을 하나씩 비교해서 센 숫자예요</h3>
+    <p>원문의 정의("양성 하나와 음성 하나를 골랐을 때 양성에 더 높은 점수를 주는 정도, 동점은 절반")를 계산 순서로 풀면 이래요. <span class="t-add">덧붙인 설명</span></p>
+    <ol class="steps">
+      <li>양성 하나와 음성 하나로 만들 수 있는 짝을 모두 만들어요.</li>
+      <li>짝마다 양성 점수가 더 높으면 1, 같으면 0.5, 더 낮으면 0을 줘요.</li>
+      <li>모든 짝의 값을 평균내면 AUC예요.</li>
+    </ol>
+    <p>작은 예로 직접 세어 볼게요. <span class="t-fake">설명용 숫자</span> 양성(악성) 2개의 점수가 0.9와 0.4, 음성(악성 아님) 2개의 점수가 0.6과 0.2예요.</p>
+    <div class="table-wrap"><table>
+      <tr><th>짝 (양성 점수 vs 음성 점수)</th><th>양성이 더 높나?</th><th>값</th></tr>
+      <tr><td>0.9 vs 0.6</td><td>예</td><td class="num">1</td></tr>
+      <tr><td>0.9 vs 0.2</td><td>예</td><td class="num">1</td></tr>
+      <tr><td>0.4 vs 0.6</td><td>아니요</td><td class="num">0</td></tr>
+      <tr><td>0.4 vs 0.2</td><td>예</td><td class="num">1</td></tr>
+      <tr><td colspan="2"><b>평균 = 3 ÷ 4</b></td><td class="num"><b>0.75</b></td></tr>
+    </table></div>
+    <ul class="dots">
+      <li><b>1</b>에 가까울수록 양성과 음성을 잘 구별해요. 모든 짝에서 양성이 위에 있으면 1이에요.</li>
+      <li><b>0.5</b>는 무작위로 순위를 매기는 수준이에요.</li>
+      <li><span class="t-add">덧붙인 설명</span> AUC는 점수의 <b>순서</b>만 봐요. 그래서 문턱을 어디에 두든 값이 그대로예요. 정확도는 문턱에 따라 바뀌어요. 원문은 "AUC는 여러 문턱에서의 구별 능력을 요약한다"고 말해요.</li>
+    </ul>
+    <div class="why"><b>"양성"이 헷갈리는 이유:</b> 이 실습의 자료는 유방암 자료예요. 의학에서 "양성 종양"은 악성이 아닌 종양을 말해요. 그런데 AUC를 계산할 때의 양성은 "찾아내려는 쪽", 즉 <b>악성</b>이에요. 같은 낱말이 거의 반대 대상을 가리켜요. <span class="t-add">덧붙인 설명</span> (의학 용어 부분)<br><span class="t-nb">실습 노트북</span> 실제로 실습 노트북도 두 뜻을 섞어 써요. 코드 출력에는 "정답: 1=악성, 0=양성(비악성)"이라고 적혀 있어요. 그런데 AUC 점수는 악성(1) 쪽 점수로 계산해요.</div>
+  </section>
+
+  <section class="card">
+    <h3>1-7. AUC가 높아도 바로 현장에 쓰지 못해요</h3>
+    <ol class="steps">
+      <li><b>문턱을 정해야 판정이 나와요.</b> AUC는 점수의 순서일 뿐이에요. 실제로는 "몇 점부터 양성으로 판정할지" 정해야 해요.</li>
+      <li><b>문턱에는 맞바꿈이 있어요.</b> 문턱을 낮추면 더 많은 사례를 검사 대상으로 골라요. 그만큼 정상 사례도 함께 늘 수 있어요. <span class="t-add">덧붙인 설명</span> 대신 놓치는 불량은 줄거나 그대로예요. 늘지는 않아요.</li>
+      <li><b>두 숫자는 보는 것이 달라요.</b> AUC는 여러 문턱에서의 구별 능력을 요약해요. 정확도는 실제로 나눈 답이 얼마나 맞았는지 보여 줘요. 그래서 둘을 함께 봐요.</li>
+      <li><b>숫자 밖의 것도 있어요.</b> 사람이 추가 검사를 할 수 있는 양, 놓쳤을 때의 피해는 이 숫자만으로 정해지지 않아요.</li>
+      <li><b>공개 예제 점수를 회사 표에 그대로 옮길 수 없어요.</b> 열의 의미와 자료가 모인 과정이 달라요. 기반 모델이라면 공개 평가 자료가 사전학습 자료와 겹치는지도 살펴야 해요. 실제 도입에서는 따로 확보한 자료로 다시 평가해요.</li>
+    </ol>
+    <div class="why"><b>사전학습과 겹치면 왜 문제예요?</b> <span class="t-add">덧붙인 설명</span> 1-4의 첫째 이유와 같은 구조예요. 모델이 사전학습 때 그 평가 자료를 이미 봤다면, 시험이 "이미 본 문제 다시 풀기"가 되어 점수가 실제보다 높게 나올 수 있어요.</div>
+    <p>문턱을 직접 움직여 보려면 같은 노트의 <a href="threshold.html">문턱 움직여 보기</a>를 여세요.</p>
+  </section>
+
+  <h2>2부. 실습: 같은 검사표로 모델 비교하기</h2>
+
+  <section class="card">
+    <h3>2-1. 실습 준비: 569행을 시험 171행과 나머지 398행으로 나눠요</h3>
+    <ul class="dots">
+      <li>자료: scikit-learn에 들어 있는 유방암 분류 예제 데이터예요.</li>
+      <li><b>569</b>는 행(사례)의 <b>개수</b>예요. <b>30</b>은 사례 하나에 붙은 측정값 <b>열의 개수</b>예요. 여기에 정답 열(악성인지 아닌지)이 따로 붙어 있어요.</li>
+      <li>의료 자료지만 진단 도구를 만드는 실습은 아니에요. 정답이 이미 있는 표를 빌려 비교 과정을 익히는 거예요.</li>
+      <li><span class="t-add">덧붙인 설명</span> scikit-learn 문서 기준으로 569행 가운데 악성은 212행, 악성 아님은 357행이에요.</li>
+    </ul>
+    <div class="flow">
+      <span class="box">전체 569행</span><span class="arrow">→</span>
+      <span class="box">시험 자료 171행 (30%) · 끝까지 고정</span>
+    </div>
+    <div class="flow">
+      <span class="box">남은 398행</span><span class="arrow">→</span>
+      <span class="box">훈련 자료 20행 뽑기</span><span class="arrow">/</span>
+      <span class="box">훈련 자료 200행 뽑기</span>
+    </div>
+    <ol class="steps">
+      <li>훈련 20행일 때와 200행일 때, 각각 세 모델을 돌려요. 랜덤 포레스트와 그래디언트 부스팅(기준선 두 개), 그리고 TabICL이에요.</li>
+      <li>세 모델 모두 같은 시험 자료 171행으로 채점해요.</li>
+      <li>결과는 "훈련 행 수 · 모델 이름 · 정확도 · AUC"가 한 줄씩 적힌 비교표로 나와요.</li>
+      <li>마지막에 비교표는 CSV 파일로, 그래프는 그림 파일로 저장돼요.</li>
+    </ol>
+    <p>아래 점수는 강의가 미리 실행해 둔 출력에서 가져온 값이에요. 직접 실행하면 내 결과와 대조할 수 있어요.</p>
+    <p><span class="t-nb">실습 노트북</span> 코드에서 확인한 나누는 방법이에요.</p>
+    <ul class="dots">
+      <li><b>stratify(스트래티파이):</b> 나눌 때 악성과 악성 아님의 비율을 전체와 같게 맞춰요. 그래서 시험 171행에도 전체와 거의 같은 비율로 악성 아님이 들어가요. 20행과 200행도 같은 방식으로 뽑았어요.</li>
+      <li><b>random_state=0(랜덤 스테이트):</b> 뽑는 순서를 고정해서, 다시 실행해도 같은 행이 뽑혀요. 그래서 랜덤 포레스트와 부스팅은 강의와 같은 숫자가 나와요. TabICL은 패키지 버전에 따라 조금 다를 수 있어요.</li>
+      <li><b>악성을 1로 바꾸기:</b> 원래 데이터는 악성이 0, 악성 아님이 1이에요. 코드는 이것을 뒤집어 악성을 1로 만들어요. 찾아내려는 쪽(양성)을 악성으로 정하는 단계예요.</li>
+      <li><b>판정 문턱 0.5:</b> 모델이 준 악성 점수가 0.5 이상이면 악성으로 판정해서 정확도를 세요. AUC는 판정 없이 점수 자체로 계산해요.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h3>2-2. 결과표: 실습 노트북 출력 전체예요</h3>
+    <div class="table-wrap"><table>
+      <tr><th>훈련 행 수</th><th>랜덤 포레스트</th><th>그래디언트 부스팅</th><th>TabICL</th></tr>
+      <tr><td>20</td><td class="num">AUC 0.9471<br>정확도 0.8889</td><td class="num"><span class="bad">AUC 0.5</span><br><span class="bad">정확도 0.6257</span></td><td class="num">AUC 0.9689<br>정확도 0.9123</td></tr>
+      <tr><td>200</td><td class="num">AUC 0.9788<br>정확도 0.9357</td><td class="num">AUC 0.9828<br>정확도 0.9181</td><td class="num">AUC 0.9880<br>정확도 0.9474</td></tr>
+    </table></div>
+    <ul class="dots">
+      <li>강의 원문에는 이 가운데 일부만 나와요. 20행의 세 AUC, 부스팅 20행의 정확도, 부스팅 200행의 AUC, 그리고 "200행의 세 AUC가 0.9788~0.9880"이에요. 나머지는 <span class="t-nb">실습 노트북</span> 출력에서 가져왔어요.</li>
+      <li>200행의 세 AUC는 차이가 0.01 안팎이에요.</li>
+      <li>TabICL 값은 노트북을 만들 때의 tabicl 2.2.0 버전으로 실행한 값이에요. <span class="t-nb">실습 노트북</span></li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h3>2-3. 비교표는 가로와 세로, 두 방향으로 읽어요</h3>
+    <ol class="steps">
+      <li><b>가로로 읽기: 같은 훈련 행 수에서 모델끼리.</b> 20행에서 TabICL 0.9689가 랜덤 포레스트 0.9471보다 조금 높아요. 예시를 20개만 건넨 TabICL이, 그 20행으로 학습한 랜덤 포레스트보다 조금 나았어요. 정확도도 TabICL 0.9123, 랜덤 포레스트 0.8889로 같은 순서예요. <span class="t-nb">실습 노트북</span></li>
+      <li><b>세로로 읽기: 같은 모델의 20행과 200행.</b> 세 모델 모두 훈련 행이 많을 때 AUC가 높아요. 부스팅은 0.5에서 0.9828까지 올라 다른 두 모델과 비슷해져요.</li>
+    </ol>
+    <div class="why"><b>조심할 점:</b> 20행에서 TabICL이 앞선 순서는 바뀔 수 있어요. 자료를 뽑는 방식을 바꾸거나 다른 표로 반복하면 순서가 달라질 수 있어요. TabICL의 값은 패키지 버전에 따라서도 조금씩 달라질 수 있어요. 그래서 이 결과 하나로 "TabICL이 더 좋은 모델"이라고 말할 수는 없어요.</div>
+  </section>
+
+  <section class="card">
+    <h3>2-4. 20행 부스팅의 AUC 0.5: 측정값을 하나도 보지 않고 한 가지 답만 냈어요</h3>
+    <ol class="steps">
+      <li>그래디언트 부스팅은 학습할 때 판단 기준을 하나씩 세워 나가요.</li>
+      <li>실습에 쓴 기본 설정에서는, 기준을 세울 때마다 갈라진 양쪽에 사례가 <b>20개 이상</b> 남아 있어야 해요.</li>
+      <li>그러려면 훈련 행이 적어도 20 + 20 = <b>40행</b>은 있어야 해요. <span class="t-add">덧붙인 계산</span></li>
+      <li>훈련 자료가 처음부터 20행이면, 어디서 갈라도 한쪽이 20개보다 적어요. 그래서 첫 기준조차 세우지 못해요.</li>
+      <li>기준이 없으니 측정값을 보지 않고, 훈련 자료에서 많은 쪽 부류 하나로만 답해요.</li>
+    </ol>
+    <p><span class="t-nb">실습 노트북</span> 실습에서 쓴 부스팅 모델은 scikit-learn의 HistGradientBoostingClassifier(히스트 그래디언트 부스팅 클래시파이어)이고, 설정을 바꾸지 않고 기본값으로 썼어요. 노트북은 이 조건을 "한 말단에 최소 20개 사례가 들어가야 한다"고 설명해요. 말단은 갈라 나간 끝에 남는 마지막 묶음이에요. <span class="t-add">덧붙인 설명</span> 이 조건의 설정 이름은 min_samples_leaf(민 샘플스 리프)이고, 기본값이 20이에요.</p>
+    <p>아래 슬라이더로 직접 확인해 보세요. <span class="t-fake">설명용 숫자</span> 측정값 하나로 행을 줄 세웠다고 가정하고, 그 줄의 어디에서 가를지만 고르는 그림이에요.</p>
+    <div class="control">
+      <label for="n">훈련 행 수: <span id="nv"></span>행</label>
+      <input id="n" type="range" min="10" max="80" step="2" value="20">
+    </div>
+    <div class="control">
+      <label for="cut">가르는 위치: 앞에서 <span id="cv"></span>번째 행 뒤</label>
+      <input id="cut" type="range" min="1" max="19" step="1" value="10">
+    </div>
+    <div class="rows" id="rows" aria-label="훈련 행을 한 줄로 세운 그림. 초록은 왼쪽, 주황은 오른쪽"></div>
+    <div class="grid">
+      <div class="stat" id="sl"><div class="k">왼쪽 행 수</div><div class="v" id="lv"></div></div>
+      <div class="stat" id="sr"><div class="k">오른쪽 행 수</div><div class="v" id="rv"></div></div>
+      <div class="stat" id="sk"><div class="k">이 자리에 기준을 세울 수 있나</div><div class="v" id="okv"></div></div>
+      <div class="stat" id="sa"><div class="k">기준을 세울 수 있는 자리</div><div class="v" id="av"></div></div>
+    </div>
+    <p class="story" id="story"></p>
+  </section>
+
+  <section class="card">
+    <h3>2-5. 한 가지 답만 내면 AUC는 정확히 0.5, 정확도는 0.6257이 나와요</h3>
+    <ol class="steps">
+      <li><b>AUC 0.5:</b> <span class="t-add">덧붙인 설명</span> 모든 시험 행에 같은 답, 같은 점수를 줬어요. 그러면 양성·음성 짝이 모두 동점이에요. 동점은 0.5로 세니까, 모든 짝의 평균도 정확히 0.5예요. 원문은 "무작위로 순위를 매기는 수준"이라고 말해요. 실제로 일어난 일은 순위를 아예 매기지 않은 것이에요.</li>
+      <li><b>정확도 0.6257:</b> 모든 시험 행에 같은 답 하나를 냈을 때, 그 답과 정답이 같은 행의 비율이에요. 원문은 이것이 "모든 사례에 같은 답 하나만 내놓았을 때 나오는 값"이라고 말해요.</li>
+      <li><b>그 답은 "악성 아님"이었어요.</b> <span class="t-nb">실습 노트북</span> 노트북 설명에 따르면 모델은 모든 사례를 악성 아님으로 답했고, 0.6257은 시험 자료에서 악성 아님이 차지하는 비율이에요. 시험 자료는 비율을 맞춰 나눴으니(stratify), 전체 비율 357 ÷ 569 ≈ 0.627과 거의 같아요.</li>
+      <li><span class="t-add">덧붙인 계산</span> 171 × 0.6257 ≈ 107이에요. 그래서 시험 171행 가운데 악성 아님 107행은 맞히고, 악성 64행은 모두 놓쳤어요.</li>
+      <li><b>왜 하필 "악성 아님"이었나:</b> <span class="t-add">덧붙인 설명</span> 기준이 없으면 모델은 모든 행에 같은 악성 점수를 줘요. 그 점수는 훈련 20행 가운데 악성이 차지하는 비율에 해당하는 값이에요. 훈련 20행도 비율을 맞춰 뽑았으니 악성이 절반보다 적어요. 그래서 그 점수가 판정 문턱 0.5보다 낮았고, 모든 행이 악성 아님으로 판정됐어요.</li>
+    </ol>
+    <div class="why"><b>주의:</b> <span class="t-nb">실습 노트북</span> 노트북 설명은 이 부분을 "모든 사례를 양성으로 답했다"고 적어요. 여기서 양성은 의학 뜻, 즉 악성 아님이에요. AUC를 계산할 때의 양성(악성)과 반대 뜻이니 퀴즈에서 헷갈리지 마세요.</div>
+    <div class="why"><b>그래서 이 결과가 보여 주는 것:</b> 찾아내려는 악성을 하나도 구별하지 못했는데도 정확도는 절반을 넘었어요. 1-5에서 본 함정이 실제 실습에서 나타난 거예요. 정확도만 봤다면 "0.63이면 그럭저럭"이라고 오해할 수 있어요. AUC 0.5를 함께 봐야 "아무것도 구별하지 못했다"는 걸 알 수 있어요.</div>
+  </section>
+
+  <section class="card">
+    <h3>2-6. 점수가 0.01 안팎으로 비슷하면, 점수 말고 다른 것으로 골라요</h3>
+    <ul class="dots">
+      <li>200행의 세 AUC는 0.9788~0.9880이에요. 마지막 단계의 AUC 그래프에서도 세 선이 거의 겹쳐요.</li>
+      <li>이럴 때는 정확도와 준비 과정을 함께 살펴요.</li>
+      <li><span class="t-nb">실습 노트북</span> 200행의 정확도는 TabICL 0.9474, 랜덤 포레스트 0.9357, 그래디언트 부스팅 0.9181이에요.</li>
+      <li><b>AUC 순서와 정확도 순서가 달라요.</b> 부스팅은 AUC가 랜덤 포레스트보다 높아요(0.9828 대 0.9788). 그런데 정확도는 더 낮아요(0.9181 대 0.9357).</li>
+      <li>강의 마지막 절의 말: 점수가 비슷하면 준비와 운영이 간단한 방법을 택할 수 있어요. 차이가 크면 다른 자료에서도 같은지 확인해요.</li>
+      <li>준비 과정의 차이: TabICL은 패키지를 설치하고, 처음 실행할 때 가중치 파일을 내려받아야 했어요. 실습에서는 세 모델 모두 Colab(코랩)의 CPU(씨피유)에서 돌아갔어요.</li>
+    </ul>
+    <div class="why"><b>순서가 왜 달라질 수 있어요?</b> <span class="t-add">덧붙인 설명</span> 두 숫자가 보는 것이 달라서예요. AUC는 점수의 순서만 봐요. 정확도는 문턱 0.5 한 곳에서 자른 판정만 봐요. 그래서 점수 순서는 더 잘 매겼어도, 0.5에서 자른 판정은 더 많이 틀릴 수 있어요. 1-7에서 말한 "두 값을 함께 보는 이유"가 실제 숫자로 나온 경우예요.</div>
+  </section>
+
+  <section class="card">
+    <h3>2-7. 결과를 CSV 파일로 남기면 "누가, 몇 행으로" 얻은 점수인지 남아요</h3>
+    <ul class="dots">
+      <li>CSV에는 모델 이름, 훈련 행 수, 정확도, AUC가 함께 있어요.</li>
+      <li>"잘 맞았다"는 한마디보다, 어느 모델이 몇 행으로 훈련했을 때 얻은 점수인지가 남아요. 나중에 결과를 다시 찾아볼 때 도움이 돼요.</li>
+      <li>하지만 비용이나 업무상 피해는 이 파일에 없어요. 불량을 놓친 경우와 정상 부품을 재검사한 경우의 부담이 다르다면, 실제 판정 문턱에서 각각 몇 건씩 생기는지 따로 따져야 해요.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h3>2-8. 내 업무 표로 옮기려면 세 가지를 먼저 확인해요</h3>
+    <ol class="steps">
+      <li><b>정답 열이 있나요?</b> 불량을 예측하려면 측정값뿐 아니라 나중에 판정한 불량 여부도 있어야 해요. 답을 모르는 표만으로는 이 방식으로 성능을 평가할 수 없어요. 시험 자료를 채점하려면 감춰 둔 정답이 있어야 하기 때문이에요.</li>
+      <li><b>날짜가 있나요?</b> 미래의 정보가 과거의 예측에 섞이지 않도록 나누는 방식을 바꿔야 해요 (1-4).</li>
+      <li><b>올려도 되나요?</b> 회사의 고객 정보나 검사 기록을 공개 Colab에 올리기 전에 사내 규정을 확인해요.</li>
+    </ol>
+  </section>
+
+  <h2>예상 퀴즈</h2>
+  <p class="lead">질문을 누르면 답이 열려요. 답 아래에 근거를 적었어요. "본문"은 원문에 답이 있는 문제, "본문 + 추론"은 원문 내용을 이어 붙여 이유를 설명해야 하는 문제예요.</p>
+
+  <details><summary>랜덤 포레스트와 TabICL은 "학습"하는 방식이 어떻게 다를까?</summary>
+    <div class="ans">랜덤 포레스트는 건네받은 표로 직접 학습해서 판단 기준을 만든 뒤 새 행을 예측합니다. TabICL은 여러 표로 미리 사전학습을 해 두었고, 사용자가 건넨 예시 행과 정답은 예측할 때 참고하는 맥락으로 씁니다. 그래서 TabICL도 "학습을 안 한 모델"은 아닙니다.<span class="src">근거: 본문 (1-2)</span></div></details>
+
+  <details><summary>새 모델을 시험할 때 왜 기준선이 필요할까?</summary>
+    <div class="ans">새 모델의 점수만으로는 나아졌는지 알 수 없습니다. 같은 자료에서 기존 방법이 비슷하게 맞힌다면, 새 모델은 설치 수고만 늘릴 수 있습니다. 기존 방법을 함께 돌려야 수고에 비해 무엇이 나아졌는지 알 수 있습니다.<span class="src">근거: 본문 (1-3)</span></div></details>
+
+  <details><summary>왜 표를 훈련 자료와 시험 자료로 나누고, 시험 자료는 끝까지 바꾸지 않을까?</summary>
+    <div class="ans">훈련에 쓴 행으로 채점하면 이미 본 문제를 다시 푸는 셈이 되기 때문입니다. 또 모델마다 시험 자료가 다르면 문제 난이도가 달라져서 공정하게 비교할 수 없습니다. 그래서 시험 자료를 한 번 정해 두고 모든 모델을 같은 문제로 채점합니다.<span class="src">근거: 본문 (1-4)</span></div></details>
+
+  <details><summary>찾아야 할 사례가 드문 표에서, 정확도만 보면 왜 위험할까?</summary>
+    <div class="ans">모델이 모든 행에 "많은 쪽" 답 하나만 내도 대부분을 맞히기 때문입니다. 예를 들어 100개 중 불량이 2개면, 전부 "정상"이라고 해도 정확도는 0.98입니다. 하지만 찾아야 할 불량은 하나도 못 찾습니다. 그래서 점수의 순서를 보는 AUC를 함께 봅니다.<span class="src">근거: 본문 + 설명용 숫자 (1-5)</span></div></details>
+
+  <details><summary>AUC는 무엇을 재는 숫자이고, 1과 0.5는 각각 무슨 뜻일까?</summary>
+    <div class="ans">양성 하나와 음성 하나를 골랐을 때, 모델이 양성에 더 높은 점수를 주는 정도입니다. 짝마다 양성이 높으면 1, 동점이면 0.5, 낮으면 0으로 세어 평균을 냅니다. 1에 가까울수록 둘을 잘 구별하고, 0.5는 무작위로 순위를 매기는 수준입니다.<span class="src">근거: 본문 + 추론 (계산 순서는 원문 정의를 풀어 쓴 것, 1-6)</span></div></details>
+
+  <details><summary>이 실습에서 "양성"은 무엇이고, 왜 헷갈리기 쉬울까?</summary>
+    <div class="ans">양성은 검사 결과가 좋다는 뜻이 아니라 우리가 찾아내려는 쪽입니다. 이 실습에서는 악성 사례가 양성입니다. 의학에서 "양성 종양"은 악성이 아닌 종양을 뜻하기 때문에, 유방암 자료에서는 같은 낱말이 거의 반대 대상을 가리키게 됩니다.<span class="src">근거: 본문 + 추론 (의학 용어는 덧붙인 설명)</span></div></details>
+
+  <details><summary>AUC가 높은 모델을 왜 바로 현장에 쓸 수 없을까?</summary>
+    <div class="ans">AUC는 점수의 순서만 요약하므로, 실제로 쓰려면 몇 점부터 양성으로 판정할지 문턱을 정해야 합니다. 문턱을 낮추면 더 많은 사례를 고르지만 정상 사례도 함께 골라질 수 있습니다. 추가 검사를 할 수 있는 양과 놓쳤을 때의 피해는 숫자만으로 정해지지 않습니다. 또 공개 예제 점수는 열의 의미와 자료가 모인 과정이 다른 회사 표에 그대로 옮길 수 없습니다.<span class="src">근거: 본문 (1-7)</span></div></details>
+
+  <details><summary>훈련 행이 20개일 때, 그래디언트 부스팅의 AUC가 0.5가 된 이유는?</summary>
+    <div class="ans">실습에 쓴 부스팅의 기본 설정은 판단 기준을 세울 때마다 갈라진 양쪽에 사례가 20개 이상 남아야 합니다. 훈련 자료가 20행뿐이면 첫 기준조차 세울 수 없습니다. 그래서 측정값을 보지 않고 많은 쪽 부류 하나로만 답했고, 사례를 전혀 구별하지 못해 AUC가 0.5가 되었습니다.<span class="src">근거: 본문 (2-4)</span></div></details>
+
+  <details><summary>그 부스팅의 AUC가 "정확히" 0.5인 까닭을 AUC 계산법으로 설명하면?</summary>
+    <div class="ans">모든 시험 행에 같은 점수를 줬기 때문에 양성·음성 짝이 전부 동점입니다. AUC는 동점을 0.5로 세므로, 모든 짝의 평균도 정확히 0.5가 됩니다.<span class="src">근거: 본문의 동점 규칙 + 덧붙인 설명 (2-5)</span></div></details>
+
+  <details><summary>그 부스팅의 정확도가 0.6257로 절반을 넘은 것은 무엇을 보여 줄까?</summary>
+    <div class="ans">모든 사례에 같은 답 하나만 내놓아도, 그 답이 많은 쪽 부류라면 정확도가 절반을 넘을 수 있다는 것을 보여 줍니다. 이 모델은 모든 시험 행을 악성 아님으로 답했고, 0.6257은 시험 자료에서 악성 아님이 차지하는 비율입니다. 찾아내려는 악성은 하나도 구별하지 못했는데도 정확도는 높아 보였습니다. 그래서 정확도와 AUC를 함께 봐야 합니다.<span class="src">근거: 본문 + 실습 노트북 (2-5)</span></div></details>
+
+  <details><summary>200행에서 그래디언트 부스팅은 AUC가 랜덤 포레스트보다 높은데(0.9828 대 0.9788) 정확도는 더 낮다(0.9181 대 0.9357). 어떻게 이런 일이 생길까?</summary>
+    <div class="ans">두 숫자가 보는 것이 다르기 때문입니다. AUC는 점수의 순서만 보고 여러 문턱에서의 구별 능력을 요약합니다. 정확도는 문턱 0.5 한 곳에서 자른 판정이 맞았는지만 봅니다. 그래서 점수 순서는 더 잘 매겨도, 0.5에서 자른 판정은 더 많이 틀릴 수 있습니다. 두 값을 함께 봐야 하는 이유입니다.<span class="src">근거: 실습 노트북 숫자 + 본문 + 덧붙인 설명 (2-6)</span></div></details>
+
+  <details><summary>실습 코드는 왜 원래 정답(악성 = 0)을 뒤집어 악성을 1로 만들었을까?</summary>
+    <div class="ans">찾아내려는 쪽(양성)을 악성으로 정하기 위해서입니다. 코드는 1번 부류의 점수를 AUC 계산에 쓰므로, 악성을 1로 바꿔야 "악성에 더 높은 점수를 주는가"를 잴 수 있습니다.<span class="src">근거: 실습 노트북 + 추론 (2-1)</span></div></details>
+
+  <details><summary>실습 코드가 자료를 나눌 때 쓴 stratify와 random_state는 각각 무엇을 위한 것일까?</summary>
+    <div class="ans">stratify는 나눈 자료에도 악성과 악성 아님의 비율이 전체와 같게 들어가도록 맞춥니다. random_state는 뽑는 순서를 고정해서, 다시 실행해도 같은 행이 뽑히고 같은 결과가 나오게 합니다. 그래야 모든 모델을 같은 시험 자료로 공정하게 비교하고, 나중에 결과를 대조할 수 있습니다.<span class="src">근거: 실습 노트북 (2-1)</span></div></details>
+
+  <details><summary>20행에서 TabICL(0.9689)이 랜덤 포레스트(0.9471)보다 높았다. "TabICL이 더 좋은 모델"이라고 말해도 될까?</summary>
+    <div class="ans">그렇게 말하기 어렵습니다. 자료를 뽑는 방식을 바꾸거나 다른 표로 반복하면 순서가 달라질 수 있고, TabICL의 값은 패키지 버전에 따라서도 달라질 수 있습니다. 또 200행에서는 세 모델의 차이가 0.01 안팎으로 거의 같았습니다. 이 결과는 "이 표, 이번 뽑기에서 예시가 적을 때 조금 나았다"는 정도입니다.<span class="src">근거: 본문 + 추론 (2-3, 2-6)</span></div></details>
+
+  <details><summary>200행에서 세 모델의 AUC가 0.01 안팎으로 비슷하다면, 무엇을 보고 고를까?</summary>
+    <div class="ans">정확도와 준비 과정을 함께 봅니다. 200행 정확도는 TabICL 0.9474, 랜덤 포레스트 0.9357, 그래디언트 부스팅 0.9181이었습니다. 점수가 비슷하다면 준비와 운영이 간단한 방법을 택할 수 있습니다. 예를 들어 TabICL은 패키지를 설치하고 처음 실행할 때 가중치를 내려받아야 했습니다.<span class="src">근거: 본문 + 추론 (2-6, 실행 환경 절, 강의 마지막 절)</span></div></details>
+
+  <details><summary>공개 예제에서 높은 점수가 나와도 회사 표에 그대로 믿을 수 없는 이유는? 기반 모델이라면 무엇을 더 볼까?</summary>
+    <div class="ans">회사 표는 열의 의미와 자료가 모인 과정이 다르기 때문입니다. 기반 모델이라면 공개 평가 자료가 사전학습 자료와 겹치는지도 봐야 합니다. 겹치면 이미 본 문제를 다시 푼 셈이라 점수가 실제보다 높게 나올 수 있습니다. 실제 도입에서는 따로 확보한 자료로 다시 평가합니다.<span class="src">근거: 본문 + 추론 (1-7)</span></div></details>
+
+  <details><summary>같은 비교를 내 업무 표로 해 보려면 먼저 무엇이 있어야 할까? 날짜가 있는 자료라면 무엇을 바꿔야 할까?</summary>
+    <div class="ans">나중에 판정한 정답 열(예: 불량 여부)이 있어야 합니다. 정답이 없으면 시험 자료를 채점할 수 없습니다. 날짜가 있는 자료라면 미래의 정보가 과거의 예측에 섞이지 않도록 나누는 방식을 바꿔야 합니다. 또 고객 정보나 검사 기록을 공개 Colab에 올리기 전에 사내 규정을 확인해야 합니다.<span class="src">근거: 본문 (2-8)</span></div></details>
+
+  <details><summary>물류 담당자의 "다음 달 출고량" 문제에 오늘 실습의 분류 코드를 그대로 쓰면 안 되는 이유는?</summary>
+    <div class="ans">원하는 답이 부류가 아니라 앞으로의 수량이기 때문입니다. 과거에서 미래로 예측해야 하므로 시간 순서를 보존하고, 실제 출고량과 예측량을 비교하는 다른 실험이 필요합니다. 같은 표처럼 보여도 무엇을 답으로 원하는지에 따라 문제와 평가 방법이 달라집니다.<span class="src">근거: 본문 (1-1, 강의 마지막 절)</span></div></details>
+</main>
+
+<script>
+  var MIN = 20; // 원문: 갈라진 양쪽에 사례 20개 이상
+  var nEl = document.getElementById('n'), cEl = document.getElementById('cut');
+  function update() {
+    var n = parseInt(nEl.value, 10);
+    cEl.max = n - 1;
+    var c = Math.min(parseInt(cEl.value, 10), n - 1);
+    cEl.value = c;
+    var l = c, r = n - c;
+    var ok = l >= MIN && r >= MIN;
+    var spots = Math.max(0, n - 2 * MIN + 1);
+    document.getElementById('nv').textContent = n;
+    document.getElementById('cv').textContent = c;
+    document.getElementById('lv').textContent = l + '개';
+    document.getElementById('rv').textContent = r + '개';
+    document.getElementById('okv').textContent = ok ? '예' : '아니요';
+    document.getElementById('av').textContent = spots + '곳';
+    document.getElementById('sl').className = 'stat ' + (l >= MIN ? 'okv' : 'badv');
+    document.getElementById('sr').className = 'stat ' + (r >= MIN ? 'okv' : 'badv');
+    document.getElementById('sk').className = 'stat ' + (ok ? 'okv' : 'badv');
+    document.getElementById('sa').className = 'stat ' + (spots > 0 ? 'okv' : 'badv');
+    var box = document.getElementById('rows');
+    var html = '';
+    for (var i = 1; i <= n; i++) {
+      html += '<i class="' + (i <= c ? 'l' : 'r') + '"></i>';
+      if (i === c) html += '<i class="cut"></i>';
+    }
+    box.innerHTML = html;
+    var msg;
+    if (spots === 0) msg = '훈련 행이 ' + n + '개뿐이라, 어디서 갈라도 한쪽이 20개보다 적어요. 기준을 하나도 세우지 못해서 측정값을 보지 않고 모든 행에 같은 답을 내요. 실습의 20행 부스팅이 바로 이 상태예요.';
+    else if (ok && spots === 1) msg = '양쪽 모두 정확히 20개라 이 자리에 기준을 세울 수 있어요. 40행에서는 한가운데 이 한 곳뿐이에요.';
+    else if (ok) msg = '양쪽 모두 20개 이상이라 이 자리에 기준을 세울 수 있어요. ' + n + '행이면 기준을 세울 수 있는 자리가 ' + spots + '곳 있어요.';
+    else if (spots === 1) msg = '이 자리는 한쪽이 20개보다 적어서 안 돼요. ' + n + '행에서는 20번째 행 뒤, 한가운데 한 곳에서만 세울 수 있어요.';
+    else msg = '이 자리는 한쪽이 20개보다 적어서 안 돼요. 하지만 ' + n + '행이면 ' + MIN + '번째부터 ' + (n - MIN) + '번째 행 뒤까지, ' + spots + '곳에서는 세울 수 있어요.';
+    document.getElementById('story').textContent = msg;
+  }
+  nEl.addEventListener('input', update);
+  cEl.addEventListener('input', update);
+  update();
+</script>
+</body>
+</html>
