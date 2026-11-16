@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>문턱 움직여 보기</title>
+<style>
+  :root {
+    --bg: #fbfaf7;
+    --card: #ffffff;
+    --ink: #22252f;
+    --muted: #5b6273;
+    --line: #d9d6cf;
+    --hot: #bf4520;
+    --ok: #2f7d6d;
+    --hot-soft: rgba(191,69,32,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1f27;
+      --card: #252935;
+      --ink: #eceae4;
+      --muted: #a9aebb;
+      --line: #3b4050;
+      --hot: #f08a59;
+      --ok: #6cc5b0;
+      --hot-soft: rgba(240,138,89,0.14);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.6; padding: 24px 16px 48px; word-break: keep-all; }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; line-height: 1.3; margin-bottom: 6px; }
+  .lead { color: var(--muted); margin-bottom: 8px; }
+  .note { display: inline-block; font-size: 0.85rem; color: var(--hot); border: 1px solid var(--hot); border-radius: 6px; padding: 2px 8px; margin-bottom: 20px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px 16px; margin-bottom: 20px; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .legend .l-hot::before { background: var(--hot); }
+  .legend .l-ok::before { background: var(--ok); }
+  .legend .l-empty::before { border: 2px solid var(--muted); width: 8px; height: 8px; }
+  svg { width: 100%; height: auto; display: block; }
+  .axis { stroke: var(--muted); stroke-width: 1.5; }
+  .tick { fill: var(--muted); font-size: 22px; font-family: inherit; }
+  .rowlabel { fill: var(--muted); font-size: 22px; font-family: inherit; }
+  .zone { fill: var(--hot-soft); }
+  .thr { stroke: var(--hot); stroke-width: 2.5; }
+  .thr-label { fill: var(--hot); font-size: 22px; font-weight: 700; font-family: inherit; }
+  .control { margin: 16px 0 4px; }
+  .control label { font-weight: 700; display: block; margin-bottom: 6px; }
+  input[type=range] { width: 100%; accent-color: var(--hot); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 16px; }
+  .stat { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .stat .k { font-size: 0.85rem; color: var(--muted); }
+  .stat .v { font-size: 1.5rem; font-weight: 700; }
+  .stat.bad .v { color: var(--hot); }
+  .story { margin-top: 16px; padding: 12px 14px; border-left: 4px solid var(--hot); background: var(--hot-soft); border-radius: 4px; }
+  ul.points { list-style: none; }
+  ul.points li { position: relative; padding-left: 1.4em; margin: 6px 0; }
+  ul.points li::before { content: ""; position: absolute; left: .2em; top: .65em; width: .55em; height: .55em; border-radius: 50%; background: var(--hot); }
+</style>
+</head>
+<body>
+<main>
+  <h1>문턱 움직여 보기</h1>
+  <p class="lead">모델은 사례마다 점수만 줘요. “몇 점부터 악성(양성)으로 판정할까?”는 사람이 정하는 문턱이에요.</p>
+  <p class="note">설명용 가상 점수예요. 강의 실습의 실제 점수가 아닙니다.</p>
+
+  <section>
+    <div class="legend">
+      <span class="l-hot">실제 악성 8개</span>
+      <span class="l-ok">실제 악성 아님 12개</span>
+      <span class="l-empty">속이 빈 점 = 문턱 아래(음성으로 판정)</span>
+    </div>
+    <svg id="plot" viewBox="0 0 640 200" role="img" aria-label="점수 축 위의 악성과 악성 아님 사례, 그리고 문턱 선"></svg>
+
+    <div class="control">
+      <label for="thr">문턱: <span id="thrv"></span> 이상이면 양성(악성)으로 판정</label>
+      <input id="thr" type="range" min="0" max="1" step="0.05" value="0.5">
+    </div>
+
+    <div class="grid">
+      <div class="stat"><div class="k">양성으로 고른 수</div><div class="v" id="picked"></div></div>
+      <div class="stat"><div class="k">잡은 악성</div><div class="v" id="tp"></div></div>
+      <div class="stat bad"><div class="k">놓친 악성</div><div class="v" id="fn"></div></div>
+      <div class="stat bad"><div class="k">괜히 고른 악성 아님</div><div class="v" id="fp"></div></div>
+      <div class="stat"><div class="k">정확도 (맞힌 비율)</div><div class="v" id="acc"></div></div>
+      <div class="stat"><div class="k">AUC (문턱과 무관)</div><div class="v" id="auc"></div></div>
+    </div>
+    <p class="story" id="story"></p>
+  </section>
+
+  <section>
+    <ul class="points">
+      <li>문턱을 내리면 놓친 악성은 줄고, 괜히 고른 악성 아님은 늘어요. 둘은 서로 반대로 움직여요.</li>
+      <li>정확도는 문턱마다 바뀌어요. AUC는 점수의 순서만 보므로 문턱을 움직여도 그대로예요.</li>
+      <li>어느 문턱이 맞는지는 숫자가 정하지 않아요. 추가 검사를 할 수 있는 양과 놓쳤을 때의 피해가 정해요.</li>
+    </ul>
+  </section>
+</main>
+<script>
+  // 설명용 가상 점수 (강의에 없는 숫자)
+  var POS = [0.95, 0.90, 0.85, 0.78, 0.70, 0.62, 0.45, 0.30];               // 실제 악성
+  var NEG = [0.72, 0.55, 0.40, 0.35, 0.28, 0.22, 0.18, 0.12, 0.10, 0.08, 0.05, 0.02]; // 실제 악성 아님
+  var X0 = 80, X1 = 610, YP = 62, YN = 122, YA = 152;
+  function x(s) { return X0 + (X1 - X0) * s; }
+
+  // AUC: 악성 하나·악성 아님 하나 짝마다 1 / 0.5 / 0, 평균
+  var sum = 0;
+  POS.forEach(function (p) { NEG.forEach(function (n) { sum += p > n ? 1 : (p === n ? 0.5 : 0); }); });
+  var AUC = sum / (POS.length * NEG.length);
+
+  var svg = document.getElementById('plot');
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(name, attrs, text) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    svg.appendChild(e);
+    return e;
+  }
+  function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+  function draw(t) {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    el('rect', { 'class': 'zone', x: x(t), y: 30, width: X1 - x(t) + 10, height: 112 });
+    el('line', { 'class': 'axis', x1: X0, y1: YA, x2: X1, y2: YA });
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (s) {
+      el('text', { 'class': 'tick', x: x(s), y: YA + 30, 'text-anchor': 'middle' }, s.toFixed(2));
+    });
+    el('text', { 'class': 'rowlabel', x: 4, y: YP + 8 }, '악성');
+    el('text', { 'class': 'rowlabel', x: 4, y: YN + 8 }, '아님');
+    function dots(list, y, color) {
+      list.forEach(function (s) {
+        var on = s >= t;
+        el('circle', { cx: x(s), cy: y, r: 9, fill: on ? color : css('--card'), stroke: on ? color : css('--muted'), 'stroke-width': 2 });
+      });
+    }
+    dots(POS, YP, css('--hot'));
+    dots(NEG, YN, css('--ok'));
+    el('line', { 'class': 'thr', x1: x(t), y1: 30, x2: x(t), y2: YA });
+    el('text', { 'class': 'thr-label', x: Math.min(Math.max(x(t), 130), 560), y: 22, 'text-anchor': 'middle' }, '문턱 ' + t.toFixed(2));
+  }
+
+  function update() {
+    var t = Math.round(parseFloat(document.getElementById('thr').value) * 100) / 100;
+    var tp = POS.filter(function (s) { return s >= t; }).length;
+    var fp = NEG.filter(function (s) { return s >= t; }).length;
+    var fn = POS.length - tp, tn = NEG.length - fp;
+    var acc = (tp + tn) / (POS.length + NEG.length);
+    document.getElementById('thrv').textContent = t.toFixed(2);
+    document.getElementById('picked').textContent = (tp + fp) + '개';
+    document.getElementById('tp').textContent = tp + ' / ' + POS.length;
+    document.getElementById('fn').textContent = fn + '개';
+    document.getElementById('fp').textContent = fp + '개';
+    document.getElementById('acc').textContent = acc.toFixed(2) + ' (' + (tp + tn) + '/20)';
+    document.getElementById('auc').textContent = AUC.toFixed(2);
+    var msg;
+    if (tp + fp === 0) msg = '아무것도 고르지 않았어요. 모두 “악성 아님”이라고 답한 것과 같아요. 악성 8개를 전부 놓쳤는데도 정확도는 절반이 넘어요(' + acc.toFixed(2) + ').';
+    else if (fn === 0 && fp === 0) msg = '이 가상 점수에서는 이런 문턱이 없어요.';
+    else if (fn === 0) msg = '악성을 하나도 놓치지 않았어요. 대신 악성 아님 ' + fp + '개도 추가 검사 대상에 들어갔어요.';
+    else if (fp === 0) msg = '괜히 고른 것은 없어요. 대신 악성 ' + fn + '개를 놓쳤어요.';
+    else msg = '악성 ' + tp + '개를 잡고 ' + fn + '개를 놓쳤어요. 악성 아님 ' + fp + '개는 괜히 골랐어요.';
+    document.getElementById('story').textContent = msg;
+    draw(t);
+  }
+  document.getElementById('thr').addEventListener('input', update);
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    if (mq.addEventListener) mq.addEventListener('change', update);
+  }
+  update();
+</script>
+</body>
+</html>

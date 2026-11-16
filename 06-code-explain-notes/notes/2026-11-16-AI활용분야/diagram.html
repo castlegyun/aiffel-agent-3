@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>받는 자료에서 확인까지</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --paper:       #f5f5f5;
+      --ink:         #2d3142;
+      --muted:       #4f5d75;
+      --accent:      #bf4520;
+      --accent-tint: rgba(191,69,32,0.08);
+      --node-fill:   #ffffff;
+      --node-stroke: #2d3142;
+      --font-sans:   'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:  'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:   'Geist Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:       #2d3142;
+        --ink:         #f5f5f5;
+        --muted:       #bfc0c0;
+        --accent:      #f08a59;
+        --accent-tint: rgba(240,138,89,0.10);
+        --node-fill:   rgba(245,245,245,0.04);
+        --node-stroke: rgba(245,245,245,0.45);
+      }
+    }
+    body { font-family: var(--font-sans); background: var(--paper); color: var(--ink); min-height: 100vh; padding: 1.5rem 1rem; }
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 1rem; }
+    .caption { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; max-width: 768px; word-break: keep-all; overflow-wrap: break-word; }
+    svg { width: 100%; min-width: 800px; display: block; }
+    .paper  { fill: var(--paper); }
+    .node   { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1; }
+    .node-hi{ fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.5; }
+    .line   { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .head   { fill: var(--muted); }
+    .t-step { fill: var(--muted); font: 500 11px var(--font-mono); text-anchor: middle; }
+    .t-name { fill: var(--ink); font: 600 14px var(--font-sans); text-anchor: middle; }
+    .t-hi   { fill: var(--accent); font: 600 14px var(--font-sans); text-anchor: middle; }
+    .t-sub  { fill: var(--muted); font: 400 12px var(--font-sans); text-anchor: middle; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">데이터 이동 구조도</p>
+    <h1>받는 자료에서 확인까지</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 804 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="diagram-title diagram-desc">
+        <title id="diagram-title">받는 자료에서 확인까지</title>
+        <desc id="diagram-desc">어느 분야의 AI든 자료를 받아 모델이 계산하고 결과를 내놓지만, 그 결과가 맞는지는 정답 비교·실험·안전 확인으로 따로 확인해야 한다.</desc>
+        <defs>
+          <marker id="diagram-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="head" points="0 0, 8 3, 0 6"/></marker>
+        </defs>
+        <rect class="paper" width="100%" height="100%"/>
+
+        <!-- 화살표 -->
+        <line class="line" x1="176" y1="72" x2="208" y2="72" marker-end="url(#diagram-arrow)"/>
+        <line class="line" x1="384" y1="72" x2="416" y2="72" marker-end="url(#diagram-arrow)"/>
+        <line class="line" x1="592" y1="72" x2="624" y2="72" marker-end="url(#diagram-arrow)"/>
+
+        <!-- 1 받는 자료 -->
+        <text class="t-step" x="90" y="20">1</text>
+        <rect class="node" x="4" y="32" width="172" height="80" rx="6"/>
+        <text class="t-name" x="90" y="64">받는 자료</text>
+        <text class="t-sub"  x="90" y="86">표·서열·날씨·영상</text>
+
+        <!-- 2 모델 -->
+        <text class="t-step" x="298" y="20">2</text>
+        <rect class="node" x="212" y="32" width="172" height="80" rx="6"/>
+        <text class="t-name" x="298" y="64">모델</text>
+        <text class="t-sub"  x="298" y="86">학습한 관계로 계산</text>
+
+        <!-- 3 내놓는 결과 -->
+        <text class="t-step" x="506" y="20">3</text>
+        <rect class="node" x="420" y="32" width="172" height="80" rx="6"/>
+        <text class="t-name" x="506" y="64">내놓는 결과</text>
+        <text class="t-sub"  x="506" y="86">점수·구조·날씨·동작</text>
+
+        <!-- 4 따로 확인할 것 -->
+        <text class="t-step" x="714" y="20">4</text>
+        <rect class="node-hi" x="628" y="32" width="172" height="80" rx="6"/>
+        <text class="t-hi"   x="714" y="64">따로 확인할 것</text>
+        <text class="t-sub"  x="714" y="86">정답·실험·안전</text>
+      </svg>
+    </div>
+    <p class="caption">3단계에서 결과가 나와도 끝이 아니에요. 표는 감춰 둔 정답과 비교하고, 단백질은 합성과 실험으로, 날씨는 같은 기간·지역·예측 시간으로 비교하고, 로봇은 작업을 안전하게 마쳤는지 봐요.</p>
+  </div>
+</body>
+</html>

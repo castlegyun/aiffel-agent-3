@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>그림과 글을 같은 숫자 공간에 놓으면, 설명문 없이도 거리로 비교할 수 있다 · 코드 해설 노트</title>
+<style>
+  /* 디자인 규칙: DESIGN.md (GitHub 스타일) */
+  :root {
+    --canvas:#ffffff; --subtle:#f6f8fa; --border:#d0d7de; --fg:#1f2328; --muted:#656d76; --link:#0969da;
+    --tab-line:#fd8c73; --code-bg:rgba(175,184,193,.2);
+    --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif;
+    --font-mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --canvas:#0d1117; --subtle:#161b22; --border:#30363d; --fg:#e6edf3; --muted:#a0a9b4; --link:#4493f8;
+      --tab-line:#f78166; --code-bg:rgba(110,118,129,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--canvas); color:var(--fg); font:400 1.0625rem/1.65 var(--font-body); word-break:keep-all; overflow-wrap:break-word; }
+  main { max-width:920px; margin:0 auto; padding:24px 16px 48px; }
+  a { color:var(--link); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  :focus-visible { outline:2px solid var(--link); outline-offset:2px; }
+  h1 { font-size:1.875rem; line-height:1.25; font-weight:600; margin:8px 0 8px; }
+  .summary { color:var(--muted); font-size:1rem; margin:0 0 16px; max-width:68ch; }
+  .nav { margin-bottom:8px; font-size:.9375rem; }
+  .terms { background:var(--subtle); border:1px solid var(--border); border-radius:6px; padding:10px 16px; margin-bottom:16px; font-size:1rem; }
+  .terms h2 { font-size:1rem; margin:0 0 6px; }
+  .terms summary { cursor:pointer; }
+  .terms ul { margin:8px 0 0; padding-left:20px; color:var(--fg); }
+  .flow-frame { width:100%; height:600px; border:1px solid var(--border); border-radius:6px; margin:0 0 16px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px; flex-wrap:wrap; }
+  .tabs button { font:inherit; font-size:1rem; background:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; padding:10px 18px; color:var(--muted); cursor:pointer; border-radius:6px 6px 0 0; }
+  .tabs button:hover { color:var(--fg); background:var(--subtle); }
+  .tabs button[aria-selected="true"] { color:var(--fg); font-weight:600; border-bottom-color:var(--tab-line); }
+  .panel[hidden] { display:none; }
+  table { width:100%; border-collapse:collapse; font-size:1rem; }
+  th, td { text-align:left; vertical-align:top; padding:8px 14px; border:1px solid var(--border); }
+  th { background:var(--subtle); font-weight:600; }
+  td.n { width:2.5em; font-family:var(--font-mono); color:var(--muted); }
+  td:nth-child(2) { min-width:14em; }
+  /* 좁은 화면: 둘째 칸 최소 폭을 줄여 표가 화면 안에 들어오게 한다. 칸보다 긴 낱말·코드 조각만 줄을 바꾸고, 그래도 넓으면 페이지 대신 탭 안에서 가로로 움직인다 */
+  @media (max-width:600px) {
+    td:nth-child(2) { min-width:9em; }
+    th, td { padding:8px; }
+    .panel { overflow-x:auto; }
+    td { overflow-wrap:anywhere; }
+    /* 원문 ↔ 풀어쓰기 표: 두 칸이 좁아져 읽기 힘들어서, 좁은 화면에서는 위아래로 쌓는다 */
+    .para thead { display:none; }
+    .para, .para tbody, .para tr, .para td { display:block; width:100%; }
+    .para tr { border:1px solid var(--border); border-radius:6px; margin:0 0 12px; overflow:hidden; }
+    .para td { border:0; border-top:1px solid var(--border); min-width:0; }
+    .para td.n { width:auto; border-top:0; background:var(--subtle); }
+    .para td:nth-child(2)::before, .para td:nth-child(3)::before { display:block; font-size:.85rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
+    .para td:nth-child(2)::before { content:"원문"; }
+    .para td:nth-child(3)::before { content:"쉽게 풀어쓰기"; }
+  }
+  code, pre { background:var(--code-bg); border-radius:6px; font:.85em/1.5 var(--font-mono); }
+  code { padding:.2em .4em; white-space:pre-wrap; }
+  pre { padding:12px 16px; overflow:auto; }
+  .words li, .points li { margin:4px 0; }
+  .visual-kind, .visual-reason { margin:4px 0; }
+  .visual-buttons { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:12px 0; }
+  .visual-buttons button { font:inherit; font-size:1rem; font-weight:500; padding:6px 18px; border:1px solid var(--border); border-radius:6px; background:var(--subtle); color:var(--fg); cursor:pointer; }
+  .visual-buttons button[aria-pressed="true"] { border-color:var(--link); color:var(--link); }
+  .visual-buttons button:disabled { opacity:.5; cursor:default; }
+  #visual-frame { width:100%; height:75vh; border:1px solid var(--border); border-radius:6px; background:#fff; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration:.01ms !important; } }
+  /* 목록 점: 기본 점은 글자색을 따라가 어두운 화면에서 안 보일 수 있어 고정 색 점을 쓴다 */
+  .points, .terms ul, .words { list-style:none; padding-left:0; }
+  .points li, .terms li, .words li { position:relative; padding-left:1.5em; }
+  .points li::before, .terms li::before, .words li::before { content:""; position:absolute; left:.25em; top:.72em; width:.55em; height:.55em; border-radius:50%; background:var(--tab-line); }
+</style>
+</head>
+<body>
+<main>
+  <div class="nav"><a href="../../index.html">← 노트 보관함</a></div>
+  <h1>그림과 글을 같은 숫자 공간에 놓으면, 설명문 없이도 거리로 비교할 수 있다</h1>
+  <p class="summary">그림과 글은 각각 인코더를 거쳐 숫자 목록(임베딩)이 되고, 대조 학습으로 짝이 맞는 것끼리 가깝게 놓인다. 그래서 설명문으로 바꾸지 않아도 거리로 비교할 수 있다. 다만 가깝다고 같은 것은 아니어서, 설계(연결형·공유 임베딩형·네이티브형)마다 조심할 점이 다르고 질문할 때는 근거를 함께 요구해야 한다.</p>
+
+  <details class="terms">
+    <summary><strong>새 용어 28개</strong> (눌러서 펼치기)</summary>
+    <ul>
+      <li><strong>모달리티</strong> = 정보가 담긴 형식. 글, 이미지, 음성, 영상이 각각 하나의 모달리티다</li>
+      <li><strong>멀티모달 인공지능</strong> = 형식이 다른 정보(글·그림·소리 등)를 함께 받아 질문에 답하거나 작업을 하는 인공지능</li>
+      <li><strong>비전 언어 모델</strong> = 이미지와 언어(글)를 함께 다루는 모델</li>
+      <li><strong>자연어</strong> = 사람이 평소 쓰는 말과 글. 이 글에서는 이미지에 붙은 설명 문장, 그리고 분류할 대상을 적는 문장을 가리킨다</li>
+      <li><strong>대조 학습</strong> = 짝이 맞는 이미지·설명은 가깝게, 짝이 맞지 않는 쌍은 멀게 놓이도록 모델을 고쳐 나가는 학습 방법</li>
+      <li><strong>인코더</strong> = 입력(그림 한 장, 문장 하나)을 받아 숫자 목록으로 바꿔 주는 부분. 그림용과 글용이 따로 있다</li>
+      <li><strong>벡터</strong> = 숫자 여러 개를 순서대로 늘어놓은 목록. 이 글의 "숫자 목록"과 같은 것이다</li>
+      <li><strong>임베딩</strong> = 인코더가 내놓은 숫자 목록(벡터). 원문 기준으로 그림 하나, 문장 하나가 각각 숫자 몇백 개가 된다</li>
+      <li><strong>임베딩 공간</strong> = 임베딩이 놓이는 좌표계. 숫자 목록 하나가 이 공간의 점 하나다</li>
+      <li><strong>표현</strong> = 임베딩과 같은 것을 가리키는 말. 원본을 복사한 것이 아니라 쓸 만한 특징을 숫자로 줄여 담은 것</li>
+      <li><strong>픽셀</strong> = 디지털 이미지를 이루는 가장 작은 점. 점마다 색을 나타내는 숫자가 있다</li>
+      <li><strong>파형</strong> = 소리의 크기가 시간에 따라 어떻게 바뀌는지를 그대로 기록한 것</li>
+      <li><strong>토큰</strong> = 글을 모델이 다루는 작은 조각으로 나눈 단위</li>
+      <li><strong>거리</strong> = 임베딩 공간에서 두 점이 얼마나 떨어져 있는지를 숫자로 계산한 값. 느낌이 아니라 계산 결과다</li>
+      <li><strong>정렬</strong> = 서로 다른 형식(그림·글·소리)의 정보를 같은 공간에서 비교할 수 있도록 맞추는 과정</li>
+      <li><strong>통계적 관계</strong> = 학습 자료에서 찾아낸 관계. 원문은 이 때문에 거리가 업무에서 중요한 차이를 항상 잡아내지는 못한다고 한다</li>
+      <li><strong>교차 검색</strong> = 한 형식으로 다른 형식을 찾는 검색. 예: 문장으로 그림 찾기, 사진으로 녹음 찾기</li>
+      <li><strong>연결형</strong> = 이미지·음성 전용 인코더가 뽑은 정보를 언어 모델에 넘기는 설계</li>
+      <li><strong>공유 임베딩형</strong> = 여러 모달리티를 같은 의미 공간에 놓아 서로 비교하는 설계</li>
+      <li><strong>네이티브 멀티모달형</strong> = 글·이미지·음성을 한 모델의 입력·출력 흐름 안에서 함께 다루도록 만든 설계</li>
+      <li><strong>가중치</strong> = 학습으로 정해진, 모델 안의 숫자들 (덧붙인 설명: 가중치가 공개되지 않으면 모델 파일을 내려받아 쓸 수 없다)</li>
+      <li><strong>지연시간</strong> = 입력을 넣고 답이 나올 때까지 걸리는 시간</li>
+      <li><strong>신경망</strong> = 입력 숫자에 계산을 여러 층 거듭해 출력 숫자를 내는 모델 구조. 이 글의 인코더와 언어 모델도 신경망이다 (덧붙인 설명: 원문에 정의가 없다)</li>
+      <li><strong>공유 맥락</strong> = 여러 형식에서 나온 숫자 목록을 한곳에 모아 함께 참고하는 자리 (덧붙인 설명: 원문에 정의가 없어 8행 흐름에서 읽은 뜻이다)</li>
+      <li><strong>추론</strong> = 학습이 끝난 모델이 입력을 받아 답을 계산해 내는 일</li>
+      <li><strong>안전 필터</strong> = 위험하거나 금지된 입력·출력을 걸러 내는 부품</li>
+      <li><strong>도구 호출</strong> = 모델이 검색·계산 같은 바깥 프로그램을 불러 쓰는 일</li>
+      <li><strong>상용 서비스</strong> = 회사가 돈을 받거나 제품으로 제공하는 서비스. 웹이나 앱으로 쓴다</li>
+    </ul>
+  </details>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="flow">요약</button>
+    <button role="tab" aria-selected="false" data-tab="visual">그림</button>
+    <button role="tab" aria-selected="false" data-tab="detail">풀어쓰기</button>
+    <button role="tab" aria-selected="false" data-tab="words">단어장</button>
+  </div>
+
+  <section class="panel" id="flow">
+    <iframe class="flow-frame" src="diagram.html" title="그림과 글이 같은 공간의 점이 된다" style="height:380px"></iframe>
+    <ul class="points">
+      <li>그림과 글은 각각 <strong>인코더</strong>를 거쳐 숫자 목록(임베딩)이 되고, 숫자 목록 하나는 같은 좌표계(임베딩 공간)의 <strong>점 하나</strong>예요.</li>
+      <li><strong>대조 학습</strong>은 짝이 맞는 그림·설명은 가깝게, 안 맞는 쌍은 멀게 놓이도록 모델을 고쳐요. CLIP(클립)은 이걸 이미지-설명글 4억 쌍으로 했어요.</li>
+      <li>그래서 그림을 <strong>설명문으로 바꾸지 않아도</strong> 숫자로 계산한 거리로 비교할 수 있어요. 처음 보는 그림도 마찬가지예요.</li>
+      <li>다만 <strong>가깝다 ≠ 같다</strong>예요. 거리는 학습 자료의 통계적 관계라서 내 업무에서 중요한 차이를 놓칠 수 있어요.</li>
+      <li>대표적인 설계는 연결형·공유 임베딩형·네이티브형이고(섞어 쓰기도 해요), 조심할 점이 서로 달라요. 질문할 때는 <strong>판단 기준·근거 위치·불확실한 부분·추가로 필요한 입력</strong>을 함께 요구해요.</li>
+    </ul>
+  </section>
+
+  <section class="panel" id="detail" hidden>
+    <table class="para">
+      <thead><tr><th>#</th><th>원문</th><th>쉽게 풀어쓰기</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>(그림 설명) 이미지 인코더와 텍스트 인코더가 개 사진과 영어 문장을 각각 받아 같은 좌표계에 벡터로 놓는 그림. 정답 쌍인 개 사진과 dog 벡터는 가깝게, 오답 쌍인 cat 벡터는 멀게 배치됩니다.</td><td><strong>결론:</strong> 그림과 글이 같은 좌표계의 점이 되고, 짝이 맞으면 가까이 놓인다는 부분을 그림으로 보여 줘요.<br>1. 개 사진 → 이미지 인코더 → 숫자 목록(벡터) → 좌표계의 점 하나<br>2. 영어 문장 → 텍스트 인코더 → 숫자 목록 → 같은 좌표계의 점 하나<br>3. 짝이 맞는 쌍(개 사진 + dog)의 점은 가깝고, 짝이 안 맞는 쌍(개 사진 + cat)의 점은 멀어요.<br><strong>왜 먼저 보나?</strong> 아래 2~6행과 10~11행이 이 그림을 자세히 설명해요. 이 노트 [그림] 탭의 '그림 하나'도 같은 내용이에요.</td></tr>
+        <tr><td class="n">2</td><td>비전 언어 모델 (VLM, Vision-Language Model)은 이미지와 언어를 함께 다루는 모델입니다. 이미지와 글을 연결하는 대표적인 방법으로 대조 학습 (contrastive learning)이 있습니다. 짝이 맞는 이미지와 설명은 가깝게, 맞지 않는 쌍은 멀게 놓도록 학습하는 방식입니다.</td><td><strong>결론:</strong> 그림과 글을 잇는 대표 방법은 대조 학습이에요. 짝이 맞는지에 따라 거리를 다르게 만드는 학습이에요.<br>1. 그림과 그 그림의 설명 문장을 한 쌍으로 준비해요.<br>2. 그림도, 문장도 숫자 목록으로 바꿔요(5행의 인코더가 해요).<br>3. 짝이 맞는 쌍은 거리가 가까워지도록, 짝이 안 맞는 쌍은 멀어지도록 모델 안의 숫자를 고쳐요.<br><strong>왜 "대조"인가?</strong> 맞는 쌍 하나만 보는 게 아니라, 맞는 쌍과 안 맞는 쌍을 서로 견줘서 차이를 만들기 때문이에요. (이 이름 풀이는 추측: 원문에는 이름의 뜻이 없어요.)</td></tr>
+        <tr><td class="n">3</td><td>이미지에 붙은 자연어 설명을 학습에 활용하면, 분류할 대상을 자연어로 알려 줄 수 있습니다.</td><td><strong>결론:</strong> 설명 문장으로 학습했기 때문에, "무엇으로 나눌지"도 문장으로 정해 줄 수 있어요.<br>1. 이미지에 붙은 설명 문장(자연어)으로 학습했어요.<br>2. 그래서 나중에 쓸 때도 나눌 대상을 문장으로 써 주면 돼요.<br>3. 추측: 실제로는 그림의 점과 후보 문장들의 점 사이 거리를 재서 가장 가까운 문장을 고르는 방식으로 보여요. 11행의 "빨간 자동차 / 파란 하늘" 예가 이 방식이에요.<br><strong>그래서?</strong> 새로운 분류가 필요할 때마다 이름표를 붙인 자료를 새로 만들지 않아도 될 수 있어요(추측: 원문은 이 효과까지는 말하지 않아요).</td></tr>
+        <tr><td class="n">4</td><td>이 방법을 대규모로 적용한 모델이 CLIP입니다. 오픈AI가 2021년에 공개했는데, 인터넷에서 이미지와 그 설명글 쌍을 4억 개 모아 "어느 설명이 어느 그림에 붙는가"를 맞히도록 학습시켰습니다.</td><td><strong>결론:</strong> CLIP(클립)은 대조 학습을 아주 큰 규모로 해 본 모델이에요.<br>1. 만든 곳·때: 오픈AI, 2021년 공개<br>2. 재료: 인터넷에서 모은 이미지-설명글 쌍 4억 개<br>3. 학습 문제: 여러 그림과 여러 설명 중에서 "어느 설명이 어느 그림에 붙는가" 맞히기<br><strong>왜 이 문제인가?</strong> (덧붙인 설명) 짝을 맞히려면 짝이 맞는 그림·설명이 가깝고 나머지는 멀어야 해요. 그래서 이 문제를 풀게 하는 것이 곧 2행의 대조 학습이에요.</td></tr>
+        <tr><td class="n">5</td><td>인코더는 입력을 받아 숫자 목록으로 바꿔 주는 부분입니다. 그림을 넣으면 숫자 몇백 개가 나오고, 문장을 넣어도 숫자 몇백 개가 나옵니다. 그렇게 나온 숫자 목록을 임베딩이라고 부르고, 임베딩이 놓이는 좌표계를 임베딩 공간이라고 부릅니다. 앞으로 나올 "표현"도 같은 것을 가리키는 말입니다.</td><td><strong>결론:</strong> 인코더가 만든 숫자 목록 = 임베딩 = 표현이에요. 그 숫자 목록이 놓이는 좌표계가 임베딩 공간이에요.<br>1. 그림 한 장 → 이미지 인코더 → 숫자 몇백 개<br>2. 문장 하나 → 텍스트 인코더 → 숫자 몇백 개<br>3. 숫자 몇백 개짜리 목록 하나 = 좌표계의 점 하나예요. (덧붙인 설명: 숫자가 2개면 종이 위의 점(가로, 세로)이고, 몇백 개라 눈으로 그릴 수 없을 뿐 거리 계산은 같은 방식으로 해요.)<br><strong>왜 숫자로 바꾸나?</strong> 둘 다 숫자 목록이 되면 두 점 사이 거리를 계산할 수 있어요. 그림과 문장이 서로 다른 형식이어도 비교할 수 있게 돼요(6행).<br>("몇백 개"는 원문의 표현이에요. 정확한 개수는 원문에 없어요.)</td></tr>
+        <tr><td class="n">6</td><td>(CLIP 구조 그림 — 출처: OpenAI CLIP GitHub 저장소, CLIP.png. 저장소 라이선스: MIT.)<br><br>두 인코더는 따로 있지만, 그 결과는 서로 비교할 수 있는 공간에 놓입니다. 개 사진과 "a photo of a dog"라는 문장이 가까운 위치에 오면, 모델은 이미지를 문장처럼 검색하고 문장을 이미지처럼 비교할 수 있습니다.</td><td><strong>결론:</strong> 인코더는 둘이지만 결과가 놓이는 공간은 하나예요. 그래서 그림과 문장을 서로 찾을 수 있어요.<br>1. 개 사진 → 이미지 인코더 → 점 A<br>2. "a photo of a dog"(개 사진 한 장) → 텍스트 인코더 → 점 B<br>3. 학습이 잘 됐으면 A와 B가 가까워요.<br>4. 그림으로 문장 찾기 = 점 A에서 가장 가까운 문장의 점 찾기. 문장으로 그림 찾기 = 점 B에서 가장 가까운 그림의 점 찾기.<br><strong>그래서?</strong> 찾기가 "가장 가까운 점 찾기"라는 같은 계산으로 바뀌어요. 형식이 달라도 상관없어요.<br>(원문의 CLIP 구조 그림은 이 노트에 다시 싣지 않았어요. 원문 노트북에서 보세요.)</td></tr>
+        <tr><td class="n">7</td><td>이미지를 이해하는 AI라고 하면 다음 과정을 떠올리기 쉽습니다.<br>이미지 → 먼저 설명문으로 번역 → LLM이 설명문을 읽고 답함<br>실제로 이렇게 동작하는 제품도 있습니다. 하지만 2026년의 멀티모달 AI가 모두 이미지를 설명문으로 바꾸는 것은 아닙니다.</td><td><strong>결론:</strong> "그림 → 설명문 → 언어 모델"은 여러 방법 중 하나일 뿐이에요.<br>1. 이 방법은 그림을 먼저 글로 옮겨요.<br>2. 그다음 언어 모델(LLM, 엘엘엠)이 그 글만 읽고 답해요.<br>3. 실제로 이렇게 도는 제품도 있어요.<br><strong>무엇이 문제일 수 있나?</strong> 언어 모델은 설명문에 적힌 것만 알 수 있어요. 설명문에 안 적힌 단서는 답에 빠질 수 있어요(15행의 "텍스트로 옮기면 사라지는 단서"와 같은 이야기예요).</td></tr>
+        <tr><td class="n">8</td><td>다음처럼 각 입력의 특징을 함께 처리할 수도 있습니다.<br>이미지 조각 / 음성 조각 / 텍스트 토큰 → 각 모달리티를 모델이 다룰 수 있는 표현으로 바꿈 → 공유 맥락 또는 공유 의미 공간에서 함께 추론 → 텍스트·음성·이미지 등 필요한 출력으로 변환</td><td><strong>결론:</strong> 설명문을 거치지 않는 길은 네 단계예요. 모든 입력을 숫자 목록(표현)으로 바꿔 한곳에서 함께 계산해요.<br>1. 입력을 작은 조각으로 나눠요: 이미지 조각, 음성 조각, 글 토큰.<br>2. 조각마다 모델이 다룰 수 있는 숫자 목록(표현)으로 바꿔요.<br>3. 그 숫자들을 한곳(공유 맥락 또는 공유 의미 공간)에 모아 함께 계산해요.<br>4. 필요한 형식(글·소리·그림)으로 바꿔 내보내요.<br><strong>7행과 다른 점:</strong> 2단계에서 글로 옮기지 않아요. 그래서 그림·소리의 특징이 숫자로 남은 채 3단계까지 가요.</td></tr>
+        <tr><td class="n">9</td><td>여기서 "표현 (representation)"은 원본을 그대로 복사한 것이 아닙니다. 이미지를 픽셀 그대로 기억하는 것이 아니라, 업무에 쓸 수 있는 특징을 숫자 벡터로 압축합니다. 음성도 파형 그대로가 아니라 발화 내용, 억양, 속도, 배경음 같은 단서를 모델이 처리할 수 있는 형태로 바꿉니다.</td><td><strong>결론:</strong> 표현은 원본 복사본이 아니라, 쓸 만한 특징만 숫자로 줄여 담은 것이에요.<br>1. 이미지: 픽셀(점마다의 색 숫자)을 그대로 두지 않아요. 쓸 만한 특징을 숫자 목록으로 줄여요.<br>2. 음성: 파형을 그대로 두지 않아요. 아래 단서를 모델이 다룰 수 있는 형태로 바꿔요.<br>&nbsp;&nbsp;· 발화 내용(무슨 말을 했나)<br>&nbsp;&nbsp;· 억양<br>&nbsp;&nbsp;· 속도<br>&nbsp;&nbsp;· 배경음<br><strong>왜 이게 중요한가?</strong> 음성 표현에는 받아쓴 글에는 없는 억양·속도·배경음이 들어갈 수 있어요. 7행의 "설명문 거치기"에서는 이런 단서가 빠질 수 있어요.</td></tr>
+        <tr><td class="n">10</td><td>그렇다면 설명문으로 바꾸지 않고 어떻게 이미지와 글을 연결할까요? … 핵심은 그 공간에서 "가깝다"는 말이 단순히 비슷해 보인다는 느낌이 아니라, 측정 가능한 거리라는 점입니다. 모델은 두 표현 사이의 거리를 숫자로 계산하고, 짝이 맞는 이미지와 문장의 거리가 가장 가까워지도록 학습합니다.</td><td><strong>결론:</strong> "가깝다"는 느낌이 아니라 계산한 숫자예요. 학습은 이 숫자를 기준으로 모델을 고쳐요.<br>1. 그림의 점과 문장의 점 사이 거리를 숫자로 계산해요.<br>2. 짝이 맞는 그림·문장의 거리가 (다른 문장들보다) 가장 가까워지도록 모델 안의 숫자를 고쳐요.<br>3. 이걸 많은 쌍에 대해 되풀이해요.<br><strong>왜 "측정 가능"이 중요한가?</strong> 숫자로 잴 수 있어야 컴퓨터가 "어느 쪽이 더 가까운가"를 계산하고, 학습이 그 숫자를 줄이는 방향으로 모델을 고칠 수 있어요.</td></tr>
+        <tr><td class="n">11</td><td>이렇게 학습이 끝나면 … 학습할 때는 본 적 없는 이미지를 넣어도, 그 이미지가 "빨간 자동차"라는 문장과 "파란 하늘"이라는 문장 사이에서 전자에 더 가깝게 놓입니다. 이처럼 거리를 이용해 의미가 얼마나 비슷한지 비교할 수 있습니다. 음성이나 영상도 같은 방식으로 이 공간에 펼쳐진다고 가정해 보면, "이 사진과 비슷한 느낌의 녹음"을 텍스트 없이도 찾을 수 있습니다. 서로 다른 형식의 정보를 비교할 수 있도록 맞추는 이 과정을 "정렬"이라고 부릅니다.</td><td><strong>결론:</strong> 학습이 끝나면 처음 보는 그림도 거리로 문장과 비교할 수 있어요. 이렇게 형식이 다른 것을 비교할 수 있게 맞추는 일을 <strong>정렬</strong>이라고 해요.<br>1. 학습 때 본 적 없는 빨간 자동차 사진을 넣어요.<br>2. 사진의 점과 "빨간 자동차" 문장의 점, "파란 하늘" 문장의 점 사이 거리를 각각 재요.<br>3. "빨간 자동차" 쪽이 더 가까워요 → 의미가 더 비슷하다고 판단해요.<br>4. 원문은 "소리·영상도 같은 공간에 놓인다고 <strong>가정하면</strong>" 글 없이 "이 사진과 비슷한 느낌의 녹음"도 찾을 수 있다고 해요. 가정이라고 밝힌 부분이에요.<br><strong>그래서?</strong> 미리 짝지어 둔 적 없는 그림도 비교할 수 있으니, 학습 자료에 없던 새 자료에도 쓸 수 있어요.</td></tr>
+        <tr><td class="n">12</td><td>다만 "가깝다"가 곧 "같다"는 뜻은 아닙니다. 모델이 배운 거리는 학습 데이터의 통계적 관계이므로, 그 업무에서 진짜로 중요한 차이를 항상 잡아내지는 못합니다. 따라서 거리가 가깝게 나왔다는 이유만으로 업무에서도 같은 것으로 취급해서는 안 됩니다. …</td><td><strong>결론:</strong> 거리가 가깝게 나왔다고 업무에서 같은 것으로 취급하면 안 돼요.<br>1. 모델이 배운 거리는 학습 자료에서 얻은 통계적 관계예요.<br>2. 학습 자료는 내 업무를 위해 모은 것이 아니에요.<br>3. 그래서 내 업무에서 진짜로 중요한 차이를 거리가 항상 잡아내지는 못해요.<br>4. 그러니 같은 공간에 놓아 비교할 수 있게 됐다는 것만으로는 부족해요. 원문의 결론은 "서로 다른 자료가 같은 질문에 답하는 데 도움이 되는가"를 따져야 한다는 거예요.<br>(원문은 이 부분을 부서별 보고서를 회의 안건 양식으로 맞추는 일에 빗대 설명해요. 이 노트에서는 빗댄 부분을 빼고 뜻만 옮겼어요. 2번 줄은 1번에서 이어지는 설명으로 덧붙였어요.)</td></tr>
+        <tr><td class="n">13</td><td>멀티모달 모델이라고 해서 모두 같은 방식으로 정보를 처리하지는 않습니다. 대표적인 설계는 다음 세 가지입니다. 서로 완전히 나뉘는 분류는 아니어서 한 모델이 두 방식을 함께 쓰기도 합니다.<br>연결형: 이미지/음성 전용 인코더가 LLM에 정보를 넘깁니다. / 공유 임베딩형: 여러 모달리티를 같은 의미 공간에 놓습니다. / 네이티브 멀티모달형: 텍스트·이미지·음성 등을 한 모델의 입력·출력 흐름 안에서 다룹니다.</td><td><strong>결론:</strong> 멀티모달 모델을 만드는 설계는 크게 셋이에요. 칼같이 나뉘지 않아서 한 모델이 둘을 섞어 쓰기도 해요.<br>1. <strong>연결형</strong>: 그림·소리 전용 인코더 → 언어 모델(LLM)<br>&nbsp;&nbsp;· 좋은 점: 이미 있는 언어 모델을 쓰기 좋고, 오픈소스(open source)로 많이 나와 있어요.<br>&nbsp;&nbsp;· 조심할 점: 세부 그림·소리 단서가 언어로 옮겨지면서 사라질 수 있어요.<br>2. <strong>공유 임베딩형</strong>: 모든 형식을 같은 공간에 놓아요. (덧붙인 연결: 2~6행, 10~11행의 CLIP과 같은 생각이에요.)<br>&nbsp;&nbsp;· 좋은 점: 사진으로 녹음 찾기, 문장으로 그림 찾기 같은 교차 검색에 강해요.<br>&nbsp;&nbsp;· 조심할 점: 가깝다고 정답은 아니에요(12행).<br>3. <strong>네이티브 멀티모달형</strong>: 한 모델이 글·그림·소리를 입력과 출력으로 함께 다뤄요.<br>&nbsp;&nbsp;· 좋은 점: 대화하면서 화면·소리·앞뒤 맥락을 함께 다루기 좋아요.<br>&nbsp;&nbsp;· 조심할 점: 비용, 지연시간, 안전 정책, 결과를 검증하는 방법이 복잡해져요.<br><strong>왜 비교하나?</strong> 원문은 "어떤 작업에 쓸지 생각하며" 장점과 한계를 견줘 보라고 해요. 정답 설계가 하나 있는 게 아니라 일에 따라 고르는 것이에요.</td></tr>
+        <tr><td class="n">14</td><td>네이티브 멀티모달형의 대표적인 예는 오픈AI의 GPT-4o와 구글의 Gemini입니다. 둘 다 웹이나 앱으로 쓰는 상용 서비스이고 가중치는 공개돼 있지 않습니다. … 음성 대화도 텍스트를 읽어주는 수준을 넘어 억양·속도·표현·도구 사용까지 함께 설계합니다. 다만 실제 제품은 안전 필터와 도구 호출 같은 여러 구성요소를 함께 묶어 돌리므로, 네이티브는 모델 설계의 방향이지 전체 서비스가 하나의 파일이라는 뜻은 아닙니다.</td><td><strong>결론:</strong> GPT-4o와 Gemini가 네이티브형의 예지만, "네이티브"는 모델을 만든 방향을 말할 뿐 서비스 전체가 모델 하나라는 뜻은 아니에요.<br>1. 예: 오픈AI의 GPT-4o(지피티 포오), 구글의 Gemini(제미나이)<br>2. 둘 다 웹·앱으로 쓰는 상용 서비스이고, 가중치(모델 안의 숫자)는 공개되지 않았어요. (덧붙인 설명: 그래서 모델 파일을 내려받아 내 컴퓨터에서 돌릴 수는 없어요.)<br>3. 글·이미지·소리를 한 신경망 안에서 처음부터 끝까지 함께 다루도록 설계됐어요.<br>4. 음성 대화도 글을 소리 내어 읽는 수준을 넘어, 억양·속도·표현·도구 사용까지 함께 설계해요.<br><strong>주의:</strong> 실제 제품은 안전 필터, 도구 호출 같은 부품이 모델과 함께 돌아가요. 그래서 "네이티브"는 모델 설계의 방향이고, 전체 서비스가 파일 하나라는 뜻이 아니에요.</td></tr>
+        <tr><td class="n">15</td><td>업무에서 보는 시각 자료를 떠올려 보세요. 사진뿐 아니라 화면 캡처·도면·계기판·차트·필기·제품 상태도 여기에 포함됩니다.<br>예: 현장 설비 사진 | 텍스트로 옮기면 사라지는 단서: 녹슨 위치, 주변 배선, 계기판 상태 | AI에게 물어볼 수 있는 좋은 질문: 위험 징후를 위치별로 설명해 주세요. | 사람이 마지막에 확인할 점: 실제 설비 규정과 맞는가</td><td><strong>결론:</strong> 업무 속 시각 자료에는 글로 옮기면 빠지는 단서가 있어요. 그 단서를 묻고, 마지막 확인은 사람이 해요.<br>1. 시각 자료의 범위: 사진, 화면 캡처, 도면, 계기판, 차트, 손글씨 메모, 제품 상태<br>2. 원문의 예(현장 설비 사진)를 순서대로 보면:<br>&nbsp;&nbsp;① 글로 옮기면 사라지는 단서: 녹슨 위치, 주변 배선, 계기판 상태<br>&nbsp;&nbsp;② AI에게 할 질문: "위험 징후를 위치별로 설명해 주세요."<br>&nbsp;&nbsp;③ 사람이 마지막에 확인할 것: 실제 설비 규정과 맞는가<br><strong>왜 "위치별로" 묻나?</strong> ①의 단서가 대부분 위치에 관한 것이라서, 위치를 물어야 그 단서가 답에 나와요. (추측: 원문 표를 읽고 덧붙인 설명이에요.)</td></tr>
+        <tr><td class="n">16</td><td>좋은 멀티모달 질문은 "이 사진 설명해줘"에서 끝나지 않습니다. "판단 기준", "근거 위치", "불확실한 부분", "추가로 필요한 입력"을 함께 요구해야 합니다. 그래야 모델이 본 것과 추정한 것을 분리해 검토할 수 있습니다.</td><td><strong>결론:</strong> 그림을 넣고 질문할 때는 답과 함께 아래 네 가지를 따로 달라고 해요. 그래야 사람이 검토할 수 있어요.<br>1. 판단 기준: 무엇을 기준으로 그렇게 판단했나 (15행 예라면 위험하다고 본 기준)<br>2. 근거 위치: 그림의 어디를 보고 그렇게 말했나<br>3. 불확실한 부분: 확실하지 않은 곳은 어디인가<br>4. 추가로 필요한 입력: 더 정확히 판단하려면 어떤 자료가 더 필요한가<br><strong>왜?</strong> 원문: 그래야 모델이 실제로 <strong>본 것</strong>과 <strong>추정한 것</strong>을 나눠서 검토할 수 있어요. 덧붙인 설명: 12행처럼 모델의 판단이 업무 기준과 다를 수 있으니, 나눠 볼 수 있어야 사람이 마지막 확인(15행 ③)을 할 수 있어요.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="words" hidden>
+    <ul class="words">
+      <li><strong>AI</strong>(에이아이): Artificial Intelligence(아티피셜 인텔리전스)의 줄임말. 인공지능</li>
+      <li><strong>VLM</strong>(브이엘엠): Vision-Language Model(비전 랭귀지 모델)의 줄임말. 비전 언어 모델</li>
+      <li><strong>Vision-Language Model</strong>(비전 랭귀지 모델): 이미지(vision)와 언어(language)를 함께 다루는 모델</li>
+      <li><strong>contrastive learning</strong>(컨트래스티브 러닝): 대조 학습</li>
+      <li><strong>CLIP</strong>(클립): 오픈AI가 2021년에 공개한, 이미지와 설명글을 같은 공간에 놓도록 학습한 모델</li>
+      <li><strong>OpenAI</strong>(오픈에이아이): CLIP과 GPT-4o를 만든 회사. 원문에서는 "오픈AI"로 적었다</li>
+      <li><strong>encoder</strong>(인코더): 입력을 숫자 목록으로 바꾸는 부분</li>
+      <li><strong>embedding</strong>(임베딩): 인코더가 내놓은 숫자 목록</li>
+      <li><strong>representation</strong>(레프리젠테이션): 표현</li>
+      <li><strong>modality</strong>(모달리티): 정보가 담긴 형식</li>
+      <li><strong>multimodal</strong>(멀티모달): 여러 형식의 정보를 함께 다루는</li>
+      <li><strong>vector</strong>(벡터): 숫자를 순서대로 늘어놓은 목록</li>
+      <li><strong>pixel</strong>(픽셀): 이미지를 이루는 가장 작은 점</li>
+      <li><strong>token</strong>(토큰): 글을 모델이 다루는 작은 조각으로 나눈 단위</li>
+      <li><strong>LLM</strong>(엘엘엠): Large Language Model(라지 랭귀지 모델)의 줄임말. 많은 글로 학습한 큰 언어 모델</li>
+      <li><strong>a photo of a dog</strong>(어 포토 오브 어 도그): "개 사진 한 장"이라는 영어 문장. CLIP 예시에 쓰인 설명 문장</li>
+      <li><strong>dog / cat</strong>(도그 / 캣): 개 / 고양이</li>
+      <li><strong>GitHub</strong>(깃허브): 코드를 올려 두고 함께 쓰는 사이트. CLIP 구조 그림의 출처</li>
+      <li><strong>MIT</strong>(엠아이티): CLIP 저장소에 붙은 사용 허락(라이선스)의 이름</li>
+      <li><strong>license</strong>(라이선스): 남이 만든 것을 써도 되는 조건을 적은 허락</li>
+      <li><strong>open source</strong>(오픈 소스): 만든 코드나 모델을 누구나 보고 쓸 수 있게 공개하는 것</li>
+      <li><strong>native</strong>(네이티브): 본래의, 타고난</li>
+      <li><strong>GPT-4o</strong>(지피티 포오): 오픈AI의 상용 멀티모달 모델. 가중치 비공개</li>
+      <li><strong>Gemini</strong>(제미나이): 구글의 상용 멀티모달 모델. 가중치 비공개</li>
+    </ul>
+  </section>
+  <section class="panel" id="visual" hidden>
+    <p class="visual-kind"><strong>그림 종류:</strong> 데이터 이동 구조도</p>
+    <p class="visual-reason"><strong>고른 이유:</strong> 이 절의 핵심이 “그림과 글이 각각 인코더를 지나 같은 공간의 점이 되고, 그 점 사이 거리로 비교한다”는 이동 경로라서, 입력 → 인코더 → 공간의 점을 한 장에 보여 주는 그림이 글보다 빠르다.</p>
+    <div class="visual-buttons">
+      <button type="button" data-src="summary.html">종합 정리</button>
+      <button type="button" data-src="diagram.html">그림 하나</button>
+      <button type="button" data-src="eli5.html">아주 쉽게</button>
+      <a id="visual-open" href="#" target="_blank" rel="noopener" hidden>새 탭으로 열기</a>
+    </div>
+    <iframe id="visual-frame" title="그림 보기" hidden></iframe>
+  </section>
+</main>
+<script>
+  const tabs = document.querySelectorAll('.tabs button');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabs.forEach(function (x) {
+        const on = x === b;
+        x.setAttribute('aria-selected', on);
+        document.getElementById(x.dataset.tab).hidden = !on;
+      });
+    });
+  });
+  const frame = document.getElementById('visual-frame');
+  const openLink = document.getElementById('visual-open');
+  const vbtns = document.querySelectorAll('.visual-buttons button[data-src]');
+  vbtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      vbtns.forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      frame.src = b.dataset.src;
+      frame.hidden = false;
+      openLink.href = b.dataset.src;
+      openLink.hidden = false;
+    });
+  });
+  // 그림(diagram.html)은 프레임 높이를 그림 크기에 맞춘다. 그림 파일은 고치지 않고 불러올 때 스타일을 얹는다.
+  function fitDiagram(f) {
+    try {
+      const d = f.contentDocument;
+      if (!d || !/diagram\.html$/.test(f.contentWindow.location.pathname)) { f.style.height = ''; return; }
+      if (d.getElementById('fit-fix')) return;
+      const st = d.createElement('style');
+      st.id = 'fit-fix';
+      st.textContent = 'body{min-height:0;display:flex;align-items:center;justify-content:center}';
+      d.head.appendChild(st);
+      const fit = function () { f.style.height = (d.body.offsetHeight + 2) + 'px'; };
+      fit();
+      if (d.fonts && d.fonts.ready) d.fonts.ready.then(fit);
+      if (f.contentWindow.ResizeObserver) new f.contentWindow.ResizeObserver(fit).observe(d.body);
+    } catch (e) { /* file:// 에서는 기본 높이를 유지한다 */ }
+  }
+  [document.querySelector('.flow-frame'), document.getElementById('visual-frame')].forEach(function (f) {
+    if (f) f.addEventListener('load', function () { fitDiagram(f); });
+  });
+</script>
+</body>
+</html>

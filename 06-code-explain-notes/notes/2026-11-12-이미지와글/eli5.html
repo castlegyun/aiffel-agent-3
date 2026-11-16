@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>그림과 글, 같은 점</title>
+<style>
+  :root {
+    --bg: #fbfaf7;
+    --card: #ffffff;
+    --ink: #22252f;
+    --muted: #5b6273;
+    --line: #d9d6cf;
+    --img: #2f7d6d;
+    --img-soft: rgba(47,125,109,0.12);
+    --txt: #3b5bab;
+    --txt-soft: rgba(59,91,171,0.12);
+    --hot: #bf4520;
+    --hot-soft: rgba(191,69,32,0.12);
+    --gray-soft: rgba(91,98,115,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1f27;
+      --card: #252935;
+      --ink: #eceae4;
+      --muted: #a9aebb;
+      --line: #3b4050;
+      --img: #6cc5b0;
+      --img-soft: rgba(108,197,176,0.16);
+      --txt: #8fa9ec;
+      --txt-soft: rgba(143,169,236,0.16);
+      --hot: #f08a59;
+      --hot-soft: rgba(240,138,89,0.16);
+      --gray-soft: rgba(169,174,187,0.12);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.6; padding: 24px 16px 48px; }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; line-height: 1.3; margin-bottom: 6px; word-break: keep-all; }
+  .lead { color: var(--muted); margin-bottom: 28px; word-break: keep-all; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px 16px; margin-bottom: 20px; }
+  h2 { font-size: 1.15rem; margin-bottom: 4px; word-break: keep-all; }
+  h2 .num { color: var(--hot); margin-right: 6px; }
+  .say { color: var(--muted); font-size: 0.95rem; margin-bottom: 14px; word-break: keep-all; }
+  .pic { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  svg { width: 100%; min-width: 620px; height: auto; display: block; }
+  .swipe { display: none; color: var(--muted); font-size: 0.8rem; margin-bottom: 6px; }
+  @media (max-width: 640px) { .swipe { display: block; } }
+  .note { color: var(--muted); font-size: 0.85rem; margin-top: 10px; word-break: keep-all; }
+  svg text { font-family: inherit; fill: var(--ink); }
+  .s-muted { fill: var(--muted); }
+  .s-hot { fill: var(--hot); }
+  .arrow { stroke: var(--muted); stroke-width: 2; fill: none; }
+  .ah { fill: var(--muted); }
+  .near { stroke: var(--hot); stroke-width: 3; }
+  .far { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 6 5; }
+  .space { fill: var(--gray-soft); stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 6 5; }
+</style>
+</head>
+<body>
+<main>
+  <h1>그림과 글이 같은 점이 돼요</h1>
+  <p class="lead">AI는 그림을 꼭 글로 바꾸지 않아요. 그림도 글도 <strong>숫자 목록</strong>으로 바꾼 뒤, 두 점이 얼마나 가까운지 계산해요.</p>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>그림도 글도 숫자 목록이 돼요</h2>
+    <p class="say">인코더(encoder)가 그림 한 장, 문장 하나를 각각 숫자 몇백 개로 바꿔요. 숫자 목록 하나는 좌표 위의 점 하나예요.</p>
+    <p class="swipe">← 그림을 옆으로 밀어서 보세요 →</p>
+    <div class="pic">
+    <svg viewBox="0 0 700 260" role="img" aria-label="개 사진과 개 문장이 각각 인코더를 지나 숫자 목록이 되고, 같은 공간의 가까운 점이 되는 그림">
+      <defs><marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="ah" d="M0,0 L8,4 L0,8 z"/></marker></defs>
+      <rect x="10" y="30" width="140" height="64" rx="8" fill="var(--img-soft)" stroke="var(--img)" stroke-width="2"/>
+      <text x="80" y="68" text-anchor="middle" font-size="18" font-weight="700">🐕 개 사진</text>
+      <rect x="10" y="150" width="140" height="64" rx="8" fill="var(--txt-soft)" stroke="var(--txt)" stroke-width="2"/>
+      <text x="80" y="180" text-anchor="middle" font-size="15" font-weight="700">a photo of a dog</text>
+      <text x="80" y="200" text-anchor="middle" font-size="12" class="s-muted">(개 사진 한 장)</text>
+
+      <line class="arrow" x1="154" y1="62" x2="196" y2="62" marker-end="url(#a1)"/>
+      <line class="arrow" x1="154" y1="182" x2="196" y2="182" marker-end="url(#a1)"/>
+
+      <rect x="200" y="30" width="110" height="64" rx="8" fill="var(--card)" stroke="var(--img)" stroke-width="2"/>
+      <text x="255" y="58" text-anchor="middle" font-size="14" font-weight="700">이미지</text>
+      <text x="255" y="78" text-anchor="middle" font-size="14" font-weight="700">인코더</text>
+      <rect x="200" y="150" width="110" height="64" rx="8" fill="var(--card)" stroke="var(--txt)" stroke-width="2"/>
+      <text x="255" y="178" text-anchor="middle" font-size="14" font-weight="700">텍스트</text>
+      <text x="255" y="198" text-anchor="middle" font-size="14" font-weight="700">인코더</text>
+
+      <line class="arrow" x1="314" y1="62" x2="336" y2="62" marker-end="url(#a1)"/>
+      <line class="arrow" x1="314" y1="182" x2="336" y2="182" marker-end="url(#a1)"/>
+
+      <text x="340" y="67" font-size="14" font-family="monospace">[0.12, −0.80, 0.33, …]</text>
+      <text x="340" y="187" font-size="14" font-family="monospace">[0.10, −0.75, 0.30, …]</text>
+
+      <rect class="space" x="540" y="20" width="150" height="220" rx="10"/>
+      <text x="615" y="232" text-anchor="middle" font-size="12" class="s-muted">같은 공간</text>
+      <path class="arrow" d="M512 62 H592 Q600 62 600 70 V106" marker-end="url(#a1)"/>
+      <path class="arrow" d="M512 182 H622 Q630 182 630 174 V146" marker-end="url(#a1)"/>
+      <circle cx="600" cy="120" r="9" fill="var(--img)"/>
+      <circle cx="630" cy="132" r="9" fill="var(--txt)"/>
+      <text x="588" y="134" text-anchor="end" font-size="13" font-weight="700" class="s-hot">가까워요</text>
+    </svg>
+    </div>
+    <p class="note">숫자는 설명용으로 지어낸 값이에요. 실제로는 숫자가 몇백 개 있어요.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>짝이면 가깝게, 아니면 멀게 배워요</h2>
+    <p class="say">대조 학습(contrastive learning, 컨트래스티브 러닝)은 짝이 맞는 그림·문장은 가깝게, 안 맞는 쌍은 멀게 놓이도록 모델을 고쳐요. CLIP(클립)은 그림-설명 4억 쌍으로 이렇게 배웠어요.</p>
+    <p class="swipe">← 그림을 옆으로 밀어서 보세요 →</p>
+    <div class="pic">
+    <svg viewBox="0 0 700 250" role="img" aria-label="처음 보는 빨간 자동차 사진의 점이 빨간 자동차 문장 쪽에 가깝고 파란 하늘 문장 쪽에서 먼 그림">
+      <rect class="space" x="10" y="10" width="680" height="230" rx="12"/>
+      <text x="30" y="36" font-size="13" class="s-muted">학습이 끝난 공간에 처음 보는 사진을 넣으면</text>
+
+      <line class="near" x1="230" y1="140" x2="330" y2="140"/>
+      <line class="far" x1="230" y1="140" x2="560" y2="140"/>
+
+      <circle cx="230" cy="140" r="14" fill="var(--img)"/>
+      <text x="230" y="186" text-anchor="middle" font-size="16" font-weight="700">🚗 처음 보는 사진</text>
+
+      <circle cx="330" cy="140" r="14" fill="var(--txt)"/>
+      <text x="330" y="104" text-anchor="middle" font-size="16" font-weight="700">“빨간 자동차”</text>
+
+      <circle cx="560" cy="140" r="14" fill="var(--muted)"/>
+      <text x="560" y="104" text-anchor="middle" font-size="16" font-weight="700">“파란 하늘”</text>
+
+      <text x="280" y="214" text-anchor="middle" font-size="15" font-weight="700" class="s-hot">가까움 → 이 문장!</text>
+      <text x="470" y="214" text-anchor="middle" font-size="15" class="s-muted">멂</text>
+    </svg>
+    </div>
+    <p class="note">사진을 글로 바꾸지 않았어요. 점 사이 거리만 계산했어요.</p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>가깝다고 같은 건 아니에요</h2>
+    <p class="say">거리는 학습 자료에서 배운 관계예요. 내 일에서 중요한 차이를 놓칠 수 있어요. 그래서 물을 때 근거를 함께 달라고 해요.</p>
+    <p class="swipe">← 그림을 옆으로 밀어서 보세요 →</p>
+    <div class="pic">
+    <svg viewBox="0 0 700 260" role="img" aria-label="짧은 질문 대신 판단 기준, 근거 위치, 불확실한 부분, 추가로 필요한 입력을 함께 묻는 질문이 낫다는 그림">
+      <rect x="10" y="20" width="250" height="220" rx="10" fill="var(--gray-soft)" stroke="var(--line)" stroke-width="1.5"/>
+      <text x="135" y="60" text-anchor="middle" font-size="40" class="s-muted">✗</text>
+      <text x="135" y="120" text-anchor="middle" font-size="18" font-weight="700">“이 사진</text>
+      <text x="135" y="146" text-anchor="middle" font-size="18" font-weight="700">설명해줘”</text>
+      <text x="135" y="196" text-anchor="middle" font-size="13" class="s-muted">본 것과 짐작한 것이</text>
+      <text x="135" y="216" text-anchor="middle" font-size="13" class="s-muted">섞여서 나와요</text>
+
+      <rect x="290" y="20" width="400" height="220" rx="10" fill="var(--hot-soft)" stroke="var(--hot)" stroke-width="2"/>
+      <text x="320" y="60" font-size="32" class="s-hot">✓</text>
+      <text x="360" y="58" font-size="16" font-weight="700">함께 물어요</text>
+      <text x="320" y="100" font-size="16">① 판단 기준</text>
+      <text x="320" y="130" font-size="16">② 근거 위치 (사진의 어디?)</text>
+      <text x="320" y="160" font-size="16">③ 불확실한 부분</text>
+      <text x="320" y="190" font-size="16">④ 추가로 필요한 입력</text>
+      <text x="320" y="224" font-size="13" class="s-muted">→ 본 것과 짐작한 것을 나눠 볼 수 있어요</text>
+    </svg>
+    </div>
+    <p class="note">마지막 확인(예: 실제 설비 규정과 맞는가)은 사람이 해요.</p>
+  </section>
+</main>
+</body>
+</html>
