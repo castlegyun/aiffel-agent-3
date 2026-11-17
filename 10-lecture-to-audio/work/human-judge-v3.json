@@ -1,0 +1,22 @@
+{
+ "judged_at": "2026-11-17T03:47:17.878Z",
+ "marks": {
+  "google-listen|s004|0": "ok",
+  "google-listen|s096|1": "ok",
+  "google-listen|s096|0": "ok",
+  "google-listen|s096|2": "bad",
+  "google-listen|s098|1": "ok",
+  "google-listen|s098|0": "ok",
+  "google-listen|s098|2": "ok",
+  "google-listen|s098|3": "ok",
+  "google-listen|s105|0": "ok",
+  "google-listen|s105|1": "ok",
+  "google-listen|s105|2": "ok",
+  "google-listen|s105|3": "ok",
+  "google-listen|s110|2": "ok",
+  "google-listen|s110|1": "ok",
+  "google-listen|s110|0": "ok",
+  "google-listen|s143|0": "ok",
+  "google-listen|s143|1": "ok"
+ }
+}

@@ -16,6 +16,7 @@
 | 07 | [yolo-service](07-yolo-service) | 사진을 넣으면 YOLO26 탐지·분할 결과를 저장하고 conf 0.25/0.50을 비교하는 노트북 | Python, Ultralytics YOLO26, Jupyter | [README](07-yolo-service/README.md) |
 | 08 | [pose-image-tool](08-pose-image-tool) | 참조 사진의 포즈(OpenPose)를 조건으로 같은 자세의 이미지를 만드는 Colab 튜토리얼 노트 | Python, FLUX.2-klein 4B, Jupyter | [README](08-pose-image-tool/README.md) |
 | 09 | [playground-3d-viewer](09-playground-3d-viewer) | 폰으로 찍은 8초 영상에서 놀이터를 3차원 알갱이(가우시안 스플랫) 장면으로 만들어 브라우저에서 돌려 보는 뷰어 | HTML, three.js, Spark, MapAnything, Colab | [▶ 뷰어 열기](https://castlegyun.github.io/aiffel-agent-3/09-playground-3d-viewer/) |
+| 10 | [lecture-to-audio](10-lecture-to-audio) | 수업 교안을 듣기용 대본으로 바꿔 음성으로 만들고, 음성 인식으로 잘못 읽힌 곳을 찾아 점검하는 PoC | Python, Piper, faster-whisper, Google Cloud TTS | [README](10-lecture-to-audio/README.md) |
 
 > ▶ 표시는 브라우저에서 바로 열리는 사이트입니다. 02, 03, 09는 GitHub Pages(`https://castlegyun.github.io/aiffel-agent-3/폴더이름/`), 06은 Render입니다.
 

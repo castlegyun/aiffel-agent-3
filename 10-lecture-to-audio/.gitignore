@@ -1,0 +1,7 @@
+.venv/
+voices/
+work/segments.json
+work/audio*/
+work/full/
+work/ids_try.json
+.playwright-cli/

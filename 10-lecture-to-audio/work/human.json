@@ -1,0 +1,21 @@
+{
+ "judged_at": "2026-11-17T02:45:59.001Z",
+ "marks": {
+  "heami-plain|s004|0": "ok",
+  "heami-listen|s004|0": "ok",
+  "piper-plain|s004|0": "bad",
+  "piper-listen|s004|0": "ok",
+  "heami-plain|s096|2": "ok",
+  "heami-plain|s096|0": "bad",
+  "heami-plain|s096|1": "ok",
+  "heami-listen|s096|0": "ok",
+  "heami-listen|s096|1": "ok",
+  "heami-listen|s096|2": "bad",
+  "piper-plain|s096|0": "bad",
+  "piper-plain|s096|1": "bad",
+  "piper-plain|s096|2": "bad",
+  "piper-listen|s096|0": "ok",
+  "piper-listen|s096|1": "ok",
+  "piper-listen|s096|2": "bad"
+ }
+}
