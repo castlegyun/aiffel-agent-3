@@ -3,6 +3,25 @@ const CONFIG = {
   // 게임 루프
   maxDelta: 0.05, // 프레임 간격 상한(초): 탭 전환 후 순간이동 방지
 
+  // 픽셀 화면: 세계를 작은 그림판에 그린 뒤 정수 배로 확대한다 (js/render.js)
+  view: {
+    unit: 2,            // 그림판 1픽셀 = 세계 좌표 2
+    targetArea: 230400, // 그림판 넓이 목표(픽셀 수). 640x360 = 1080p에서 도트 1칸이 화면 3px
+    minCssPx: 2,        // 창이 작아도 도트 1칸은 화면 2px 아래로 내려가지 않는다
+  },
+
+  // 조명: 화면 전체를 어둡게 덮고, 빛나는 것 주변만 밝힌다. 반지름은 세계 좌표.
+  light: {
+    color: '6, 3, 10', // 어둠의 색
+    ambient: 0.5,      // 빛이 닿지 않는 곳의 어두움 (0 = 조명 없음)
+    warm: '#2c1707',   // 플레이어 둘레에 더해지는 따뜻한 횃불빛
+    player: 420,
+    bolt: 76,
+    enemyShot: 44,
+    gem: 30,
+    item: 70,
+  },
+
   // 플레이어
   player: {
     radius: 14,
@@ -10,9 +29,8 @@ const CONFIG = {
     maxHp: 100,
     invuln: 0.8,     // 피격 후 무적 시간(초)
     magnet: 90,      // 보석이 끌려오기 시작하는 거리(px)
-    // 머리 위 체력바: 칸 하나 = segmentHp. 최대 체력이 늘면 칸 수도 늘어난다.
-    hpBar: { width: 48, height: 7, segmentHp: 20, gap: 1, offset: 5 },
-    scale: 2,        // 도트 확대 배율
+    // 머리 위 체력바: 칸 하나 = segmentHp. 최대 체력이 늘면 칸 수도 늘어난다. (크기는 도트 픽셀)
+    hpBar: { width: 24, height: 3, segmentHp: 20, offset: 3 },
     stepTime: 0.14,  // 걷기 프레임 전환 간격(초)
   },
 
@@ -27,7 +45,7 @@ const CONFIG = {
       splashMul: 0.5,  // 폭발 피해 = 탄 피해 x 이 값
       speed: 420,
       radius: 6,
-      range: 480,    // 이 거리 안의 적만 노리고, 탄도 이만큼 날아가면 사라진다
+      range: 420,    // 이 거리 안의 적만 노리고, 탄도 이만큼 날아가면 사라진다
       maxLevel: 5,
       // 레벨업마다: 발사 수 +1(탄이 많아진 만큼 한 발의 피해 증가는 줄였다), 간격 x0.92, 폭발 +4
       perLevel: { damage: 2, cooldownMul: 0.92, splash: 4, countAtLevels: [2, 3, 4, 5] },
@@ -54,7 +72,7 @@ const CONFIG = {
     lightning: {
       damage: 16,
       cooldown: 1.3,   // 발사 간격(초)
-      range: 420,      // 첫 대상을 찾는 거리(px)
+      range: 380,      // 첫 대상을 찾는 거리(px)
       jumpRange: 130,  // 확산 거리: 이 거리 안의 다음 적으로 번개가 튄다
       chains: 3,       // 첫 대상 말고 더 튀는 횟수 (= 최대 4마리)
       falloff: 0.88,   // 한 번 튈 때마다 피해가 이 비율로 줄어든다
@@ -87,17 +105,17 @@ const CONFIG = {
   // 적 5종. behavior: AI 행동 (chase 추적 / ranged 거리 유지 + 사격 / charge 돌진)
   // from: 이 시간(초) 이후부터 등장, weight: 등장 비중
   enemies: {
-    normal: { name: '해골', fx: '#d8d0b8', sprite: 'skeleton', hp: 20, speed: 70,  radius: 12, damage: 10, xp: 1, scale: 2, weight: 10, from: 0 },
-    fast:   { name: '임프', fx: '#b45ad0', sprite: 'imp',      hp: 8,  speed: 130, radius: 9,  damage: 6,  xp: 1, scale: 2, weight: 5,  from: 15 },
-    tough:  { name: '중갑병', fx: '#8a909c', sprite: 'brute',    hp: 60, speed: 45,  radius: 17, damage: 18, xp: 3, scale: 2, weight: 3,  from: 40 },
+    normal: { name: '해골', fx: '#d8d0b8', sprite: 'skeleton', hp: 20, speed: 70,  radius: 12, damage: 10, xp: 1, weight: 10, from: 0 },
+    fast:   { name: '임프', fx: '#b45ad0', sprite: 'imp',      hp: 8,  speed: 130, radius: 9,  damage: 6,  xp: 1, weight: 5,  from: 15 },
+    tough:  { name: '중갑병', fx: '#8a909c', sprite: 'brute',    hp: 60, speed: 45,  radius: 17, damage: 18, xp: 3, weight: 3,  from: 40 },
     // 원거리형: 거리를 유지하며 탄을 쏜다
     ranged: {
-      name: '광신도', fx: '#5e4590', sprite: 'mage', behavior: 'ranged', hp: 14, speed: 60, radius: 11, damage: 8, xp: 2, scale: 2, weight: 4, from: 50,
-      keepDist: 230, shootInterval: 2.2, shootRange: 460, bulletSpeed: 190, bulletDamage: 7,
+      name: '광신도', fx: '#5e4590', sprite: 'mage', behavior: 'ranged', hp: 14, speed: 60, radius: 11, damage: 8, xp: 2, weight: 4, from: 50,
+      keepDist: 200, shootInterval: 2.2, shootRange: 340, bulletSpeed: 190, bulletDamage: 7,
     },
     // 돌진형: 접근 → 멈춤 + 예고선 → 직선 돌진 → 쉬는 시간
     charger: {
-      name: '지옥 사냥개', fx: '#9a4a2a', sprite: 'hound', behavior: 'charge', hp: 30, speed: 85, radius: 14, damage: 15, xp: 2, scale: 2, weight: 4, from: 80,
+      name: '지옥 사냥개', fx: '#9a4a2a', sprite: 'hound', behavior: 'charge', hp: 30, speed: 85, radius: 14, damage: 15, xp: 2, weight: 4, from: 80,
       chargeRange: 280, windup: 0.6, dashTime: 0.5, dashSpeed: 430, rest: 1.1,
     },
   },
@@ -109,7 +127,7 @@ const CONFIG = {
     sprite: 'boss', sprite2: 'boss2', behavior: 'boss',
     time: 200,           // 3분 20초에 등장
     warnTime: 30,        // 등장 이 시간(초) 전부터 경고 연출(붉은 화면, 사이렌, 카운트다운)
-    hp: 8800, speed: 55, radius: 68, damage: 25, xp: 25, scale: 7, // 크기: 스프라이트 7배(약 140x154px), 충돌 반지름 68
+    hp: 8800, speed: 55, radius: 60, damage: 25, xp: 25,
     sequence: ['chase', 'charge', 'barrage', 'chase', 'summon'],
     chaseTime: 3,
     charge: { windup: 1.0, dashTime: 0.8, dashSpeed: 560 },
@@ -215,19 +233,15 @@ const CONFIG = {
 
   // 던전 바닥 타일 (다크 판타지)
   floor: {
-    tileSize: 256,     // 반복되는 패턴 한 장의 크기(px)
-    slabSize: 64,      // 돌판 하나의 크기(px)
+    tileSize: 512,     // 반복되는 패턴 한 장의 크기
+    slabSize: 64,      // 돌판 하나의 크기
     mortar: '#0d0807', // 줄눈
     slabColors: ['#1c1411', '#201814', '#241a15', '#2a1d17'],
-    highlight: 'rgba(120, 85, 60, 0.22)', // 돌판 모서리 하이라이트
-    crack: 'rgba(5, 3, 2, 0.7)',
+    highlight: '#3a2a20', // 돌판 위·왼쪽 모서리
+    shade: '#140e0b',     // 돌판 아래·오른쪽 모서리, 어두운 얼룩
+    speck: '#30221a',     // 밝은 얼룩
+    crack: '#070403',
     seed: 20240601,    // 같은 값이면 항상 같은 무늬
   },
 
-  // 가장자리 비네팅
-  vignette: {
-    inner: 0.35,       // 이 비율(화면 대각선 기준)까지는 투명
-    color: '0, 0, 0',
-    alpha: 0.85,       // 가장자리 최대 어두움
-  },
 };

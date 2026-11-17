@@ -2,8 +2,8 @@
 // 일정 시간마다 플레이어 주변 무작위 위치에 생기고, 화면 밖이면 가장자리에 방향 화살표가 뜬다.
 
 const ITEM_LOOK = {
-  potion: { sprite: 'potion', scale: 3, glow: '255, 70, 50', icon: '✚' },
-  magnet: { sprite: 'magnet', scale: 3, glow: '120, 180, 255', icon: '◎' },
+  potion: { sprite: 'potion', glow: '#7a1c14', mark: '#ff5a44' },
+  magnet: { sprite: 'magnet', glow: '#24406a', mark: '#78b4ff' },
 };
 
 class Pickup {
@@ -20,30 +20,20 @@ class Pickup {
     return Math.hypot(player.x - this.x, player.y - this.y) < CONFIG.items.radius + player.radius;
   }
 
-  draw(ctx) {
-    const L = ITEM_LOOK[this.type];
-    const S = Sprites[L.sprite];
-    const w = S.w * L.scale;
-    const h = S.h * L.scale;
-    const bob = Math.sin(this.t) * 3;
+  // 빛무리 (가산 합성 상태에서 부른다)
+  drawGlow() {
+    Render.glow(Render.X(this.x), Render.Y(this.y), Math.sin(this.t * 1.5) > 0 ? 16 : 12, ITEM_LOOK[this.type].glow);
+  }
 
-    // 바닥 그림자
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.beginPath();
-    ctx.ellipse(this.x, this.y + h * 0.35, w * 0.4, w * 0.13, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 맥동하는 빛 (가산 합성)
-    const pulse = 0.75 + Math.sin(this.t * 1.5) * 0.25;
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = `rgba(${L.glow}, ${0.28 * pulse})`;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y + bob, w * 0.85, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
-
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(S.frames[0], this.x - w / 2, this.y - h / 2 + bob, w, h);
+  draw() {
+    const S = Sprites[ITEM_LOOK[this.type].sprite];
+    const bx = Render.X(this.x);
+    const by = Render.Y(this.y);
+    if (!Render.onScreen(bx, by, 16)) return;
+    Render.light(this.x, this.y, CONFIG.light.item);
+    const bob = Math.round(Math.sin(this.t) * 1.5); // 둥실거림
+    Render.spr(S.shadow, bx - (S.shadow.w >> 1), by + (S.h >> 1) + 1);
+    Render.spr(S.frames[0], bx - S.cx, by - (S.h >> 1) + bob);
   }
 }
 
@@ -82,54 +72,43 @@ const Items = {
     this.list.push(new Pickup(type, player.x + Math.cos(a) * d, player.y + Math.sin(a) * d));
   },
 
-  draw(ctx) {
-    for (const p of this.list) p.draw(ctx);
+  draw() {
+    for (const p of this.list) p.draw();
   },
 
-  // 화면 밖 아이템은 가장자리에 방향 화살표로 알려준다 (화면 좌표로 그린다)
-  drawIndicators(ctx, camera, w, h) {
-    const mx = 44; // 좌우 여백
-    const my = 130; // 위아래 여백: 상단 타이머와 하단 HUD를 피한다
+  drawGlow() {
+    for (const p of this.list) p.drawGlow();
+  },
+
+  // 화면 밖 아이템은 가장자리에 아이템 그림과 방향 표시로 알려준다 (그림판 좌표로 그린다)
+  drawIndicators(g) {
+    const mx = 16; // 좌우 여백
+    const my = 44; // 위아래 여백: 상단 타이머와 하단 HUD를 피한다
+    const w = Render.bw;
+    const h = Render.bh;
     for (const p of this.list) {
-      const sx = p.x - camera.x;
-      const sy = p.y - camera.y;
+      const sx = Render.X(p.x);
+      const sy = Render.Y(p.y);
       if (sx >= 0 && sx <= w && sy >= 0 && sy <= h) continue; // 화면 안이면 표시 안 함
 
       const dx = sx - w / 2;
       const dy = sy - h / 2;
       const t = Math.min((w / 2 - mx) / (Math.abs(dx) || 1e-6), (h / 2 - my) / (Math.abs(dy) || 1e-6));
-      const px = w / 2 + dx * t;
-      const py = h / 2 + dy * t;
+      const px = Math.round(w / 2 + dx * t);
+      const py = Math.round(h / 2 + dy * t);
       const L = ITEM_LOOK[p.type];
-      const angle = Math.atan2(dy, dx);
-      const pulse = 0.8 + Math.sin(p.t * 1.5) * 0.2;
+      const S = Sprites[L.sprite];
+      const d = Math.hypot(dx, dy) || 1;
+      const blink = Math.sin(p.t * 1.5) > 0;
 
-      ctx.save();
-      ctx.translate(px, py);
-      // 바깥쪽을 가리키는 삼각형
-      ctx.rotate(angle);
-      ctx.fillStyle = `rgba(${L.glow}, ${0.9 * pulse})`;
-      ctx.beginPath();
-      ctx.moveTo(26, 0);
-      ctx.lineTo(14, -8);
-      ctx.lineTo(14, 8);
-      ctx.closePath();
-      ctx.fill();
-      ctx.rotate(-angle);
-      // 아이콘 원
-      ctx.fillStyle = 'rgba(13, 8, 7, 0.85)';
-      ctx.strokeStyle = `rgba(${L.glow}, ${pulse})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(0, 0, 15, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = `rgb(${L.glow})`;
-      ctx.font = 'bold 16px "Segoe UI Symbol", "Segoe UI", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(L.icon, 0, 1);
-      ctx.restore();
+      // 어두운 원판 위에 아이템 그림, 바깥쪽으로 점 세 개가 방향을 가리킨다
+      Render.disc(px, py, 10, '#0d0807');
+      Render.ring(px, py, 10, blink ? L.mark : '#4a3f38', 1);
+      Render.spr(S.frames[0], px - S.cx, py - (S.h >> 1));
+      for (let i = 0; i < 3; i++) {
+        const k = 13 + i * 3;
+        Render.rect(Math.round(px + (dx / d) * k), Math.round(py + (dy / d) * k), 2 - (i >> 1), 2 - (i >> 1), L.mark);
+      }
     }
   },
 };

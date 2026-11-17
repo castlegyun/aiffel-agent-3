@@ -1,9 +1,11 @@
-// 타격감 이펙트: 데미지 숫자, 파티클, 화면 흔들림. 그리고 모든 공격이 지나가는 hitEnemy().
+// 타격감 이펙트: 데미지 숫자, 파티클, 고리, 섬광, 화면 흔들림. 그리고 모든 공격이 지나가는 hitEnemy().
+// 위치와 속도는 세계 좌표로 계산하고, 그릴 때만 그림판의 정수 픽셀로 옮긴다.
 
 const Effects = {
   numbers: [],
   particles: [],
   rings: [],
+  flashes: [],
   shakeAmp: 0,
   shakeTime: 0,
   shakeMax: 0.001,
@@ -12,6 +14,7 @@ const Effects = {
     this.numbers.length = 0;
     this.particles.length = 0;
     this.rings.length = 0;
+    this.flashes.length = 0;
     this.shakeTime = 0;
   },
 
@@ -37,7 +40,7 @@ const Effects = {
       y,
       text: String(Math.max(1, Math.round(value))),
       color: color || '#e8dca0',
-      size: big ? 20 : 14,
+      big: !!big,
       life: CONFIG.fx.numberLife,
       max: CONFIG.fx.numberLife,
     });
@@ -47,7 +50,13 @@ const Effects = {
   // color는 'r, g, b' 문자열
   ring(x, y, radius, color, life = 0.3) {
     if (this.rings.length >= 50) return;
-    this.rings.push({ x, y, r: radius, color, life, max: life });
+    this.rings.push({ x, y, r: radius, color: `rgb(${color})`, life, max: life });
+  },
+
+  // ---- 섬광: 폭발 한가운데에서 잠깐 번쩍이고 줄어드는 불덩이 ----
+  flash(x, y, radius, life = 0.16) {
+    if (this.flashes.length >= 40) return;
+    this.flashes.push({ x, y, r: radius, life, max: life });
   },
 
   // ---- 파티클 ----
@@ -63,7 +72,7 @@ const Effects = {
         vy: Math.sin(a) * s - speed * 0.2, // 살짝 위로 튄다
         life: life * (0.6 + Math.random() * 0.6),
         max: life,
-        size: 3 + Math.floor(Math.random() * 3),
+        size: Math.random() < 0.35 ? 2 : 1, // 도트 픽셀
         color: colors[Math.floor(Math.random() * colors.length)],
       });
     }
@@ -83,47 +92,51 @@ const Effects = {
       p.vx *= Math.max(0, 1 - 3 * dt); // 공기 저항
     }
     for (const g of this.rings) g.life -= dt;
+    for (const f of this.flashes) f.life -= dt;
     removeDead(this.rings, (g) => g.life <= 0);
+    removeDead(this.flashes, (f) => f.life <= 0);
     removeDead(this.numbers, (n) => n.life <= 0);
     removeDead(this.particles, (p) => p.life <= 0);
   },
 
-  draw(ctx) {
-    ctx.globalCompositeOperation = 'lighter';
-    for (const g of this.rings) {
-      const t = 1 - g.life / g.max; // 0 -> 1
-      const r = g.r * (0.35 + 0.65 * Math.sqrt(t));
-      ctx.strokeStyle = `rgba(${g.color}, ${(1 - t) * 0.9})`;
-      ctx.lineWidth = 1 + 4 * (1 - t);
-      ctx.beginPath();
-      ctx.arc(g.x, g.y, r, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = `rgba(${g.color}, ${(1 - t) * 0.12})`;
-      ctx.fill();
+  // 폭발이 주변 바닥을 잠깐 밝힌다 (어둠 레이어를 덮기 전에 부른다)
+  addLights() {
+    for (const f of this.flashes) Render.light(f.x, f.y, f.r * 2.4);
+  },
+
+  draw(g) {
+    g.globalCompositeOperation = 'lighter';
+    for (const f of this.flashes) {
+      const t = 1 - f.life / f.max; // 0 -> 1
+      const bx = Render.X(f.x);
+      const by = Render.Y(f.y);
+      const r = f.r * 0.5;
+      // 흰색 → 노랑 → 주황으로 식으면서 줄어든다
+      if (t < 0.35) Render.disc(bx, by, Math.round(r), '#fff4c8');
+      else if (t < 0.7) Render.disc(bx, by, Math.round(r * 0.8), '#ffb43a');
+      else Render.disc(bx, by, Math.round(r * 0.55), '#c4521a');
     }
-    ctx.globalCompositeOperation = 'source-over';
+    for (const q of this.rings) {
+      const t = 1 - q.life / q.max; // 0 -> 1
+      const r = Math.round(q.r * (0.35 + 0.65 * Math.sqrt(t)) * 0.5);
+      g.globalAlpha = Math.ceil((1 - t) * 4) / 4; // 네 단계로 끊어서 흐려진다
+      Render.ring(Render.X(q.x), Render.Y(q.y), r, q.color, t < 0.5 ? 2 : 1);
+    }
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'source-over';
 
     for (const p of this.particles) {
-      ctx.globalAlpha = Math.min(1, (p.life / p.max) * 1.6);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+      const s = p.life < p.max * 0.3 ? 1 : p.size; // 사라지기 직전에는 한 점으로 줄어든다
+      g.fillStyle = p.color;
+      g.fillRect(Render.X(p.x), Render.Y(p.y), s, s);
     }
-    ctx.globalAlpha = 1;
 
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round';
     for (const n of this.numbers) {
       const k = n.life / n.max;
-      ctx.globalAlpha = Math.min(1, k * 2);
-      ctx.font = `bold ${n.size}px "Segoe UI", "Malgun Gothic", sans-serif`;
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = '#000';
-      ctx.strokeText(n.text, n.x, n.y);
-      ctx.fillStyle = n.color;
-      ctx.fillText(n.text, n.x, n.y);
+      if (k < 0.25 && Math.floor(n.life * 30) % 2) continue; // 끝날 때 깜빡이며 사라진다
+      const pop = k > 0.85 ? -1 : 0; // 뜨는 순간 한 칸 튀어 오른다
+      PixelFont.draw(g, n.text, Render.X(n.x), Render.Y(n.y) + pop, n.color, n.big);
     }
-    ctx.globalAlpha = 1;
   },
 };
 
@@ -131,7 +144,7 @@ const Effects = {
 function hitEnemy(e, dmg) {
   e.hp -= dmg;
   e.flash = CONFIG.fx.flashTime;
-  Effects.number(e.x, e.y - e.radius - 6, dmg, e.isBoss ? '#ffb43a' : '#e8dca0', e.isBoss);
+  Effects.number(e.x, e.y - e.radius - 14, dmg, e.isBoss ? '#ffb43a' : '#e8dca0', e.isBoss);
   Effects.burst(e.x, e.y, 2, ['#ffe27a', '#ffffff'], 90, 0.25);
   Sfx.hit();
 }

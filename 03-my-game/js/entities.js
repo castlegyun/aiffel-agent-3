@@ -64,59 +64,43 @@ class Player {
     }
   }
 
-  draw(ctx) {
-    const P = CONFIG.player;
-    const frame = this.moving && Math.floor(this.walkTime / P.stepTime) % 2 === 1 ? 1 : 0;
-    const bob = this.moving && frame === 1 ? -1 : 0; // 걸을 때 살짝 들썩
-    const sprite = Sprites.wizard[frame];
-    const w = Sprites.wizardSize.w * P.scale;
-    const h = Sprites.wizardSize.h * P.scale;
+  draw(g) {
+    const S = Sprites.wizard;
+    const i = this.moving ? Math.floor(this.walkTime / CONFIG.player.stepTime) % S.frames.length : 0;
+    const bob = i & 1; // 발을 든 프레임에서는 한 칸 들썩인다
+    const bx = Render.X(this.x);
+    const foot = Render.Y(this.y) + Math.round(this.radius * 0.45);
 
-    ctx.save();
-    ctx.translate(this.x, this.y);
+    Render.spr(S.shadow, bx - (S.shadow.w >> 1), foot - (S.shadow.h >> 1));
     // 무적 중에는 깜빡여서 맞았음을 알려준다
-    if (this.invuln > 0 && Math.floor(this.invuln * 20) % 2 === 0) ctx.globalAlpha = 0.35;
-
-    // 바닥 그림자
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.beginPath();
-    ctx.ellipse(0, this.radius * 0.8, w * 0.38, w * 0.14, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 도트가 번지지 않게 확대하고, 이동 방향에 맞춰 좌우 반전
-    ctx.imageSmoothingEnabled = false;
-    ctx.scale(this.facing, 1);
-    ctx.drawImage(sprite, -w / 2, -h + this.radius * 0.9 + bob * P.scale, w, h);
-    ctx.restore();
+    if (this.invuln > 0 && Math.floor(this.invuln * 20) % 2 === 0) g.globalAlpha = 0.35;
+    // 이동 방향에 맞춰 미리 뒤집어 둔 그림을 고른다. 몸의 중심(cx)이 발 위치에 오게 놓는다.
+    if (this.facing > 0) Render.spr(S.frames[i], bx - S.cx, foot - S.h - bob);
+    else Render.spr(S.flip[i], bx - (S.w - S.cx), foot - S.h - bob);
+    g.globalAlpha = 1;
   }
 
   // 머리 위 칸 나누기 체력바. 적·탄에 가려지지 않게 main.js에서 맨 위에 따로 그린다.
-  drawHpBar(ctx) {
-    const P = CONFIG.player;
-    const B = P.hpBar;
+  drawHpBar(g) {
+    const B = CONFIG.player.hpBar;
     const cells = Math.ceil(this.maxHp / B.segmentHp);
-    const cellW = (B.width - (cells - 1) * B.gap) / cells;
-    const spriteTop = this.y + this.radius * 0.9 - Sprites.wizardSize.h * P.scale;
-    const x = Math.round(this.x - B.width / 2);
-    const y = Math.round(spriteTop - B.height - B.offset);
+    const cellW = Math.max(2, Math.floor((B.width - (cells - 1)) / cells)); // 칸 사이는 1픽셀
+    const width = cells * cellW + cells - 1;
+    const foot = Render.Y(this.y) + Math.round(this.radius * 0.45);
+    const x = Render.X(this.x) - (width >> 1);
+    const y = foot - Sprites.wizard.h - B.offset - B.height;
 
     // 테두리 + 바탕
-    ctx.fillStyle = '#4a3f38';
-    ctx.fillRect(x - 2, y - 2, B.width + 4, B.height + 4);
-    ctx.fillStyle = '#0d0807';
-    ctx.fillRect(x - 1, y - 1, B.width + 2, B.height + 2);
-
+    Render.rect(x - 1, y - 1, width + 2, B.height + 2, '#0d0807');
     for (let i = 0; i < cells; i++) {
-      const cx = x + i * (cellW + B.gap);
+      const cx = x + i * (cellW + 1);
       // 이 칸에 차 있는 비율(0~1): 마지막으로 깎이는 칸은 부분만 채운다
       const fill = Math.min(1, Math.max(0, (this.hp - i * B.segmentHp) / B.segmentHp));
-      ctx.fillStyle = '#2a1210';
-      ctx.fillRect(cx, y, cellW, B.height);
-      if (fill > 0) {
-        ctx.fillStyle = '#c42a1e';
-        ctx.fillRect(cx, y, cellW * fill, B.height);
-        ctx.fillStyle = '#ff6a50'; // 윗면 하이라이트
-        ctx.fillRect(cx, y, cellW * fill, 1);
+      const w = Math.ceil(cellW * fill);
+      Render.rect(cx, y, cellW, B.height, '#2a1210');
+      if (w > 0) {
+        Render.rect(cx, y, w, B.height, '#c42a1e');
+        Render.rect(cx, y, w, 1, '#ff6a50'); // 윗면 하이라이트
       }
     }
   }
@@ -138,7 +122,6 @@ class Enemy {
     this.damage = T.damage; // 닿았을 때 주는 피해
     this.xp = T.xp;
     this.sprite = Sprites[T.sprite];
-    this.scale = T.scale;
     this.facing = 1;
     this.anim = Math.random(); // 적마다 걷는 박자를 다르게
     this.sepScale = this.isBoss ? 0.15 : 1; // 군집 이동에 밀리는 정도
@@ -187,44 +170,33 @@ class Enemy {
     this.age += dt;
   }
 
-  // 바닥에 깔리는 돌진 예고선
-  drawGround(ctx) {
+  // 바닥에 깔리는 돌진 예고선: 달려갈 길을 붉은 띠로 보여 주고, 돌진이 가까울수록 진해진다
+  drawGround(g) {
     const t = this.telegraph;
     if (!t) return;
-    const w = this.radius * 1.6;
-    ctx.save();
-    ctx.translate(this.x, this.y + this.radius * 0.6);
-    ctx.rotate(Math.atan2(t.dy, t.dx));
-    ctx.fillStyle = `rgba(196, 34, 26, ${0.12 + 0.3 * t.progress})`;
-    ctx.fillRect(0, -w / 2, t.len, w);
-    ctx.strokeStyle = `rgba(255, 90, 60, ${0.4 + 0.5 * t.progress})`;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(0, -w / 2, t.len, w);
-    ctx.restore();
+    const x0 = Render.X(this.x);
+    const y0 = Render.Y(this.y + this.radius * 0.6);
+    const x1 = Render.X(this.x + t.dx * t.len);
+    const y1 = Render.Y(this.y + this.radius * 0.6 + t.dy * t.len);
+    const thick = Math.max(3, Math.round(this.radius * 0.8));
+    g.globalAlpha = 0.14 + 0.3 * t.progress;
+    Render.line(x0, y0, x1, y1, '#c4221a', thick);
+    g.globalAlpha = 0.45 + 0.5 * t.progress;
+    Render.line(x0, y0, x1, y1, '#ff5a3c', 1);
+    g.globalAlpha = 1;
   }
 
-  draw(ctx) {
+  draw(g) {
     const S = this.phase === 2 && this.cfg.sprite2 ? Sprites[this.cfg.sprite2] : this.sprite;
-    const frame = Math.floor(this.anim / CONFIG.player.stepTime) % 2;
-    const w = S.w * this.scale;
-    const h = S.h * this.scale;
-
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.beginPath();
-    ctx.ellipse(0, this.radius * 0.8, w * 0.4, w * 0.14, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.imageSmoothingEnabled = false;
-    ctx.scale(this.facing, 1);
-    ctx.drawImage(S.frames[frame], -w / 2, -h + this.radius * 0.9, w, h);
-    if (this.flash > 0) {
-      // 맞은 직후: 같은 모양의 하얀 실루엣을 덧그려 번쩍이게 한다
-      ctx.globalAlpha = Math.min(1, this.flash / CONFIG.fx.flashTime) * 0.9;
-      ctx.drawImage(whiteOf(S.frames[frame]), -w / 2, -h + this.radius * 0.9, w, h);
-    }
-    ctx.restore();
+    const i = Math.floor(this.anim / CONFIG.player.stepTime) % S.frames.length;
+    const bx = Render.X(this.x);
+    const foot = Render.Y(this.y) + Math.round(this.radius * 0.45);
+    Render.spr(S.shadow, bx - (S.shadow.w >> 1), foot - (S.shadow.h >> 1));
+    // 맞은 직후에는 같은 모양의 하얀 실루엣으로 바꿔 그려 번쩍이게 한다
+    const set = this.flash > 0
+      ? (this.facing > 0 ? S.white : S.whiteFlip)
+      : (this.facing > 0 ? S.frames : S.flip);
+    Render.spr(set[i], bx - (this.facing > 0 ? S.cx : S.w - S.cx), foot - S.h);
   }
 }
 
@@ -248,25 +220,17 @@ class EnemyProjectile {
     if (this.life <= 0) this.dead = true;
   }
 
-  draw(ctx) {
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = 'rgba(224, 42, 58, 0.3)';
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius * 2.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#2a0a10'; // 어두운 테두리: 플레이어의 주황 탄과 구분
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius + 1.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#e02a3a';
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ff9a8a';
-    ctx.beginPath();
-    ctx.arc(this.x - 1.5, this.y - 1.5, this.radius * 0.4, 0, Math.PI * 2);
-    ctx.fill();
+  // 붉은 빛무리 (가산 합성 상태에서 부른다)
+  drawGlow(g) {
+    Render.glow(Render.X(this.x), Render.Y(this.y), 8, '#7a1420');
+  }
+
+  draw() {
+    const bx = Render.X(this.x);
+    const by = Render.Y(this.y);
+    Render.disc(bx, by, 4, '#2a0a10'); // 어두운 테두리: 플레이어의 주황 탄과 구분
+    Render.disc(bx, by, 3, '#e02a3a');
+    Render.rect(bx - 1, by - 2, 2, 2, '#ff9a8a');
   }
 }
 
@@ -298,63 +262,45 @@ class Projectile {
     if (this.life <= 0) this.dead = true;
   }
 
-  draw(ctx) {
-    if (this.beam) return this.drawBeam(ctx);
-    // 가산 합성으로 겹치면 더 밝아지는 불덩이
-    ctx.globalCompositeOperation = 'lighter';
-    // 불꽃 꼬리: 뒤로 갈수록 작고 투명하다
-    for (let i = 0; i < this.trail.length; i++) {
+  // 불꽃 꼬리와 빛무리 (가산 합성 상태에서 부른다: 겹치면 더 밝아진다)
+  drawGlow(g) {
+    const bx = Render.X(this.x);
+    const by = Render.Y(this.y);
+    const r = Math.max(1, Math.round(this.radius * 0.5));
+    if (this.beam) {
+      // 진행 방향으로 길게 늘어난 빛줄기
+      const sp = Math.hypot(this.vx, this.vy) || 1;
+      const tx = Render.X(this.x - (this.vx / sp) * 52);
+      const ty = Render.Y(this.y - (this.vy / sp) * 52);
+      if (this.aw) Render.line(tx, ty, bx, by, '#5a4410', r * 2 + 3); // 공명: 금빛 후광
+      Render.line(tx, ty, bx, by, '#7a3408', r * 2 + 1);
+      Render.glow(bx, by, r * 4, '#7a3408');
+      return;
+    }
+    // 뒤로 갈수록 작고 어두워지는 불씨
+    for (let i = 0; i < this.trail.length; i += 2) {
       const k = (i + 1) / (this.trail.length + 1);
-      ctx.fillStyle = `rgba(255, ${Math.round(90 + 110 * k)}, 30, ${0.38 * k})`;
-      ctx.beginPath();
-      ctx.arc(this.trail[i].x, this.trail[i].y, this.radius * (0.5 + 1.1 * k), 0, Math.PI * 2);
-      ctx.fill();
+      Render.disc(Render.X(this.trail[i].x), Render.Y(this.trail[i].y), Math.round(r * k), k < 0.5 ? '#5a1c08' : '#8a3a0c');
     }
-    ctx.fillStyle = 'rgba(255, 122, 26, 0.28)';
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius * 2.6, 0, Math.PI * 2);
-    ctx.fill();
-    if (this.aw) {
-      // 공명: 금빛 후광
-      ctx.fillStyle = 'rgba(255, 220, 120, 0.22)';
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius * 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.fillStyle = '#ffb43a';
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffe27a';
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius * 0.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
+    Render.glow(bx, by, r * 4, this.aw ? '#8a6a20' : '#7a3408'); // 공명하면 금빛
   }
 
-  // 진행 방향으로 길게 늘어난 빛줄기
-  drawBeam(ctx) {
-    const sp = Math.hypot(this.vx, this.vy) || 1;
-    const len = 52;
-    const tx = this.x - (this.vx / sp) * len;
-    const ty = this.y - (this.vy / sp) * len;
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.lineCap = 'round';
-    const layers = [
-      ...(this.aw ? [[this.radius * 4.2, 'rgba(255, 214, 100, 0.2)']] : []), // 공명: 금빛 후광
-      [this.radius * 2.8, 'rgba(255, 122, 26, 0.25)'],
-      [this.radius * 1.5, '#ffb43a'],
-      [this.radius * 0.7, '#fff4c8'],
-    ];
-    for (const [w, color] of layers) {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = w;
-      ctx.beginPath();
-      ctx.moveTo(tx, ty);
-      ctx.lineTo(this.x, this.y);
-      ctx.stroke();
+  draw() {
+    const bx = Render.X(this.x);
+    const by = Render.Y(this.y);
+    const r = Math.max(1, Math.round(this.radius * 0.5));
+    if (this.beam) {
+      const sp = Math.hypot(this.vx, this.vy) || 1;
+      const tx = Render.X(this.x - (this.vx / sp) * 52);
+      const ty = Render.Y(this.y - (this.vy / sp) * 52);
+      Render.line(tx, ty, bx, by, '#ffb43a', Math.max(2, r));
+      Render.line(tx, ty, bx, by, '#fff4c8', 1);
+      Render.disc(bx, by, r, '#fff4c8');
+      return;
     }
-    ctx.globalCompositeOperation = 'source-over';
+    Render.disc(bx, by, r, '#ff7a1a');
+    Render.disc(bx, by, r - 1, '#ffb43a');
+    if (r > 2) Render.disc(bx, by, r - 2, '#fff4c8');
   }
 }
 
@@ -385,30 +331,14 @@ class Gem {
     return d < player.radius + this.radius;
   }
 
-  draw(ctx) {
-    const r = this.radius;
-    const y = this.y + Math.sin(this.t) * 1.5;
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = 'rgba(47, 208, 122, 0.22)';
-    ctx.beginPath();
-    ctx.arc(this.x, y, r * 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
-
-    ctx.fillStyle = '#2fd07a';
-    ctx.beginPath(); // 마름모
-    ctx.moveTo(this.x, y - r);
-    ctx.lineTo(this.x + r * 0.7, y);
-    ctx.lineTo(this.x, y + r);
-    ctx.lineTo(this.x - r * 0.7, y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#9affc4'; // 윗면 하이라이트
-    ctx.beginPath();
-    ctx.moveTo(this.x, y - r);
-    ctx.lineTo(this.x + r * 0.7, y);
-    ctx.lineTo(this.x, y - r * 0.1);
-    ctx.closePath();
-    ctx.fill();
+  draw() {
+    const S = Sprites.gem;
+    const bx = Render.X(this.x);
+    const by = Render.Y(this.y);
+    if (!Render.onScreen(bx, by, 8)) return;
+    Render.light(this.x, this.y, CONFIG.light.gem); // 어둠 속에서도 보석 주변은 은은하게 밝다
+    const bob = Math.sin(this.t) > 0.3 ? -1 : 0;    // 둥실거림
+    Render.spr(S.shadow, bx - (S.shadow.w >> 1), by + 3);
+    Render.spr(S.frames[0], bx - S.cx, by - (S.h >> 1) + bob);
   }
 }

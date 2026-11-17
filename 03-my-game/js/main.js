@@ -1,21 +1,18 @@
 const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+Render.init(canvas);
 
+// 화면에 보이는 세계의 크기(세계 좌표). 스폰 거리·카메라가 이 값을 쓴다.
 let width = 0;
 let height = 0;
 
 function resize() {
-  const dpr = window.devicePixelRatio || 1;
-  width = window.innerWidth;
-  height = window.innerHeight;
-  canvas.width = width * dpr;
-  canvas.height = height * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  Background.resize(width, height);
+  Render.resize();
+  width = Render.viewW;
+  height = Render.viewH;
 }
 window.addEventListener('resize', resize);
-Background.init(ctx);
 resize();
+Background.init();
 
 // ---- 입력 (WASD / 방향키) ----
 const keys = {};
@@ -87,7 +84,6 @@ function readInput() {
 
 // ---- 게임 상태 ----
 let player = new Player();
-const camera = { x: 0, y: 0 };
 const enemies = [];
 let gameTime = 0; // 시작 후 지난 시간(초)
 const sepVec = { x: 0, y: 0 };
@@ -360,6 +356,7 @@ function resumeGame() {
 function explode(p, hitTarget) {
   if (!p.splash) return;
   Effects.ring(p.x, p.y, p.splash * 1.2, '255, 150, 50', 0.32);
+  Effects.flash(p.x, p.y, p.splash * 0.7);
   Effects.burst(p.x, p.y, 9, ['#ff7a1a', '#ffb43a', '#fff4c8'], 150, 0.4);
   for (const o of enemies) {
     if (o === hitTarget || o.hp <= 0) continue;
@@ -470,74 +467,71 @@ function update(dt) {
   if (player.hp <= 0) endGame();
   else if (gameTime >= CONFIG.game.duration) winGame();
   else if (pendingLevelUps > 0 && !bossDefeated) openLevelUp();
-  // 카메라가 플레이어를 화면 중앙에 두고 따라간다
-  camera.x = player.x - width / 2;
-  camera.y = player.y - height / 2;
-}
-
-// 보스 머리 위의 빨간 이름표. 등장 직후 3초 동안은 크게 확대됐다가 줄어들며 깜빡인다.
-function drawBossName(ctx, b) {
-  const S = Sprites[b.cfg.sprite];
-  const top = b.y + b.radius * 0.9 - S.h * b.scale; // 스프라이트 머리 끝
-  const intro = Math.max(0, 1 - b.age / 3);          // 1 -> 0 (등장 연출 정도)
-  const size = 24 + 20 * intro * intro;              // 등장 때 크게
-  const pulse = intro > 0 ? 0.65 + 0.35 * Math.sin(b.age * 14) : 1; // 등장 때 깜빡임
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `bold ${size}px "Segoe UI", "Malgun Gothic", sans-serif`;
-  ctx.lineJoin = 'round';
-  ctx.globalAlpha = Math.min(1, b.age / 0.25) * pulse; // 처음 0.25초 동안 서서히 나타난다
-  ctx.lineWidth = 6;
-  ctx.strokeStyle = '#1a0000';
-  ctx.shadowColor = 'rgba(255, 30, 20, 0.95)';
-  ctx.shadowBlur = 16 + 18 * intro;
-  ctx.strokeText(b.cfg.name, b.x, top - 22);
-  ctx.fillStyle = b.phase === 2 ? '#ff4a2a' : '#ff1f1f'; // 분노하면 더 밝은 붉은색
-  ctx.fillText(b.cfg.name, b.x, top - 22);
-  ctx.restore();
 }
 
 const shakeVec = { x: 0, y: 0 };
+const drawList = []; // 이번 프레임에 화면에 보이는 적 (y 순서로 정렬해서 그린다)
 
 function draw() {
   // 화면 흔들림: 카메라를 매 프레임 조금씩 어긋나게 한다 (게임이 멈춰 있을 때는 흔들지 않는다)
   if (state === 'playing') Effects.shakeOffset(shakeVec);
   else { shakeVec.x = 0; shakeVec.y = 0; }
-  const view = { x: camera.x + shakeVec.x, y: camera.y + shakeVec.y };
+  const U = CONFIG.view.unit;
+  Render.begin(player.x, player.y, Math.round(shakeVec.x / U), Math.round(shakeVec.y / U));
+  const g = Render.g;
 
-  Background.drawFloor(ctx, view, width, height);
+  Background.drawFloor(g);
 
-  ctx.save();
-  ctx.translate(-view.x, -view.y);
+  // ---- 바닥에 깔리는 것 ----
+  Render.legacy(() => {
+    Awaken.drawAura(g, player); // 스킬 공명 오라
+    for (const w of weapons) w.drawUnder(g, player);
+  });
+  for (const e of enemies) e.drawGround(g); // 돌진 예고선
+  for (const gem of gems) gem.draw();
+  Items.draw();
 
-  Awaken.drawAura(ctx, player); // 스킬 공명 오라
-  for (const w of weapons) w.drawUnder(ctx, player); // 바닥에 깔리는 무기 이펙트
-  for (const e of enemies) e.drawGround(ctx); // 돌진 예고선
-  for (const g of gems) g.draw(ctx);
-  Items.draw(ctx);
-
-  // y가 작은(위쪽) 것부터 그려서 아래쪽 캐릭터가 앞에 보이게 한다
-  enemies.sort((a, b) => a.y - b.y);
-  let playerDrawn = false;
+  // ---- 캐릭터: 화면 안의 적만 골라, y가 작은(위쪽) 것부터 그려서 아래쪽 캐릭터가 앞에 보이게 한다 ----
+  drawList.length = 0;
   for (const e of enemies) {
+    if (Render.onScreen(Render.X(e.x), Render.Y(e.y), e.sprite.h)) drawList.push(e);
+  }
+  drawList.sort((a, b) => a.y - b.y);
+  let playerDrawn = false;
+  for (const e of drawList) {
     if (!playerDrawn && e.y > player.y) {
-      player.draw(ctx);
+      player.draw(g);
       playerDrawn = true;
     }
-    e.draw(ctx);
+    e.draw(g);
   }
-  if (!playerDrawn) player.draw(ctx);
-  for (const w of weapons) w.drawOver(ctx, player);   // 회전 구슬 등
-  for (const p of projectiles) p.draw(ctx);
-  for (const p of enemyProjectiles) p.draw(ctx);
-  if (boss && boss.hp > 0) drawBossName(ctx, boss);
-  Effects.draw(ctx); // 파티클과 데미지 숫자는 맨 위에
-  player.drawHpBar(ctx);
-  ctx.restore();
+  if (!playerDrawn) player.draw(g);
 
-  Background.drawVignette(ctx, width, height);
-  Items.drawIndicators(ctx, camera, width, height); // 화면 밖 아이템 방향 표시
+  // ---- 조명: 빛나는 것 주변만 밝고 나머지는 어둡다 ----
+  const L = CONFIG.light;
+  Render.light(player.x, player.y - 10, L.player);
+  for (const p of projectiles) Render.light(p.x, p.y, L.bolt);
+  for (const p of enemyProjectiles) Render.light(p.x, p.y, L.enemyShot);
+  Effects.addLights();
+  Render.drawDarkness();
+
+  // ---- 스스로 빛나는 것: 어둠 위에 그린다 ----
+  Render.legacy(() => {
+    for (const w of weapons) w.drawOver(g, player); // 회전 구슬 등
+  });
+  g.globalCompositeOperation = 'lighter';
+  Render.glow(Render.X(player.x), Render.Y(player.y - 10), L.player * 0.3, L.warm);
+  Items.drawGlow();
+  for (const p of projectiles) p.drawGlow(g);
+  for (const p of enemyProjectiles) p.drawGlow(g);
+  g.globalCompositeOperation = 'source-over';
+  for (const p of projectiles) p.draw();
+  for (const p of enemyProjectiles) p.draw();
+  Effects.draw(g); // 파티클과 데미지 숫자는 맨 위에
+  player.drawHpBar(g);
+  Items.drawIndicators(g); // 화면 밖 아이템 방향 표시
+
+  Render.present();
 }
 
 // ---- 게임 루프 ----

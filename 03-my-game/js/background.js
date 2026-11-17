@@ -1,4 +1,5 @@
-// 어두운 던전 바닥 타일과 가장자리 비네팅. 이미지 에셋 없이 canvas로 직접 만든다.
+// 어두운 던전 바닥. 이미지 에셋 없이 도트로 직접 찍어 만든다.
+// 타일 한 장을 그림판 해상도(세계 좌표의 절반)로 구워 두고 반복해서 깐다.
 
 // 시드 고정 난수: 새로고침해도 같은 바닥 무늬가 나오게 한다
 function makeRng(seed) {
@@ -12,65 +13,76 @@ function makeRng(seed) {
   };
 }
 
-// 돌판 한 장 (0,0)~(w,h)을 그린다. 모든 요소가 돌판 안에 머물러서 타일 경계가 이어진다.
+// 돌판 한 장을 (x, y)에 찍는다. 크기는 도트 픽셀. 모든 요소가 돌판 안에 머물러서 타일 경계가 이어진다.
 function drawSlab(c, x, y, w, h, rng) {
   const F = CONFIG.floor;
-  const gap = 2; // 줄눈 두께의 절반
+  const px = (color, ax, ay, aw, ah) => {
+    c.fillStyle = color;
+    c.fillRect(x + ax, y + ay, aw, ah);
+  };
 
-  c.fillStyle = F.slabColors[Math.floor(rng() * F.slabColors.length)];
-  c.fillRect(x + gap, y + gap, w - gap * 2, h - gap * 2);
+  // 줄눈 1픽셀을 남기고 돌판 바탕
+  px(F.slabColors[Math.floor(rng() * F.slabColors.length)], 1, 1, w - 2, h - 2);
 
-  // 얼룩/질감: 작은 점들을 어둡거나 밝게 흩뿌린다
-  const specks = Math.floor((w * h) / 28);
+  // 얼룩: 어둡거나 밝은 점을 흩뿌린다
+  const specks = Math.floor((w * h) / 26);
   for (let i = 0; i < specks; i++) {
-    const px = x + gap + rng() * (w - gap * 2);
-    const py = y + gap + rng() * (h - gap * 2);
-    c.fillStyle = rng() < 0.6 ? 'rgba(0,0,0,0.18)' : 'rgba(150,110,80,0.07)';
-    c.fillRect(px, py, 1 + rng() * 2, 1 + rng() * 2);
+    const sx = 2 + Math.floor(rng() * (w - 5));
+    const sy = 2 + Math.floor(rng() * (h - 5));
+    px(rng() < 0.62 ? F.shade : F.speck, sx, sy, rng() < 0.25 ? 2 : 1, 1);
   }
 
-  // 큰 얼룩 하나: 돌판마다 명암이 조금씩 다르게 보이게 한다
-  const g = c.createRadialGradient(
-    x + w * (0.3 + rng() * 0.4), y + h * (0.3 + rng() * 0.4), 2,
-    x + w / 2, y + h / 2, w * 0.7
-  );
-  g.addColorStop(0, rng() < 0.5 ? 'rgba(0,0,0,0.22)' : 'rgba(120,80,55,0.10)');
-  g.addColorStop(1, 'rgba(0,0,0,0)');
-  c.fillStyle = g;
-  c.fillRect(x + gap, y + gap, w - gap * 2, h - gap * 2);
-
-  // 위/왼쪽 모서리 하이라이트, 아래/오른쪽 그림자
-  c.fillStyle = F.highlight;
-  c.fillRect(x + gap, y + gap, w - gap * 2, 1);
-  c.fillRect(x + gap, y + gap, 1, h - gap * 2);
-  c.fillStyle = 'rgba(0,0,0,0.35)';
-  c.fillRect(x + gap, y + h - gap - 1, w - gap * 2, 1);
-  c.fillRect(x + w - gap - 1, y + gap, 1, h - gap * 2);
-
-  // 가끔 균열
-  if (rng() < 0.3) {
-    c.strokeStyle = F.crack;
-    c.lineWidth = 1;
-    c.beginPath();
-    let cx = x + gap + 4 + rng() * (w - 16);
-    let cy = y + gap + 4;
-    c.moveTo(cx, cy);
-    const steps = 3 + Math.floor(rng() * 3);
-    for (let i = 0; i < steps; i++) {
-      cx += (rng() - 0.5) * 12;
-      cy += (h - 12) / steps;
-      cx = Math.min(Math.max(cx, x + gap + 2), x + w - gap - 2);
-      c.lineTo(cx, cy);
+  // 큰 얼룩 하나: 점을 성기게 찍은 원. 돌판마다 명암이 조금씩 다르게 보이게 한다.
+  if (rng() < 0.55) {
+    const cx = 6 + Math.floor(rng() * (w - 12));
+    const cy = 6 + Math.floor(rng() * (h - 12));
+    const r = 3 + Math.floor(rng() * 4);
+    const color = rng() < 0.6 ? F.shade : F.speck;
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (dx * dx + dy * dy > r * r || (dx + dy) & 1) continue; // 한 칸 걸러 찍는다
+        const ax = cx + dx;
+        const ay = cy + dy;
+        if (ax > 1 && ax < w - 2 && ay > 1 && ay < h - 2) px(color, ax, ay, 1, 1);
+      }
     }
-    c.stroke();
+  }
+
+  // 위·왼쪽 모서리는 밝게, 아래·오른쪽은 어둡게: 돌판이 도톰해 보인다
+  px(F.highlight, 1, 1, w - 2, 1);
+  px(F.highlight, 1, 1, 1, h - 2);
+  px(F.shade, 1, h - 2, w - 2, 1);
+  px(F.shade, w - 2, 1, 1, h - 2);
+
+  // 가끔 균열: 위에서 아래로 한 칸씩 비틀거리며 내려간다
+  if (rng() < 0.32) {
+    let cx = 4 + Math.floor(rng() * (w - 8));
+    const from = 2 + Math.floor(rng() * 6);
+    const to = h - 3 - Math.floor(rng() * 8);
+    for (let cy = from; cy < to; cy++) {
+      px(F.crack, cx, cy, 1, 1);
+      const turn = rng();
+      if (turn < 0.3 && cx > 3) cx--;
+      else if (turn > 0.7 && cx < w - 4) cx++;
+    }
+  }
+
+  // 가끔 깨진 모서리: 줄눈 색으로 한 귀퉁이를 파낸다
+  if (rng() < 0.18) {
+    const right = rng() < 0.5;
+    const bottom = rng() < 0.5;
+    for (let i = 0; i < 3; i++) {
+      px(F.mortar, right ? w - 2 - (2 - i) : 1, bottom ? h - 2 - i : 1 + i, 3 - i, 1);
+    }
   }
 }
 
 // 반복해서 깔 수 있는 바닥 패턴 한 장을 만든다
 function createFloorTile() {
   const F = CONFIG.floor;
-  const T = F.tileSize;
-  const S = F.slabSize;
+  const U = CONFIG.view.unit;
+  const T = F.tileSize / U;
+  const S = F.slabSize / U;
   const rng = makeRng(F.seed);
 
   const tile = document.createElement('canvas');
@@ -96,48 +108,24 @@ function createFloorTile() {
   return tile;
 }
 
-// 가장자리를 어둡게 누르는 비네팅 (화면 크기가 바뀔 때만 다시 만든다)
-function createVignette(w, h) {
-  const V = CONFIG.vignette;
-  const v = document.createElement('canvas');
-  v.width = w;
-  v.height = h;
-  const c = v.getContext('2d');
-  const radius = Math.hypot(w, h) / 2;
-  const g = c.createRadialGradient(w / 2, h / 2, radius * V.inner, w / 2, h / 2, radius);
-  g.addColorStop(0, `rgba(${V.color}, 0)`);
-  g.addColorStop(0.6, `rgba(${V.color}, ${V.alpha * 0.45})`);
-  g.addColorStop(1, `rgba(${V.color}, ${V.alpha})`);
-  c.fillStyle = g;
-  c.fillRect(0, 0, w, h);
-  return v;
-}
-
 const Background = {
+  tile: null,
   pattern: null,
-  vignette: null,
 
-  init(ctx) {
-    this.pattern = ctx.createPattern(createFloorTile(), 'repeat');
-  },
-
-  resize(w, h) {
-    this.vignette = createVignette(Math.ceil(w), Math.ceil(h));
+  init() {
+    this.tile = createFloorTile();
+    this.pattern = Render.g.createPattern(this.tile, 'repeat');
   },
 
   // 카메라 위치만큼 어긋나게 패턴을 깔아 무한히 이어지는 바닥처럼 보이게 한다
-  drawFloor(ctx, camera, w, h) {
-    const T = CONFIG.floor.tileSize;
-    const ox = -(((camera.x % T) + T) % T);
-    const oy = -(((camera.y % T) + T) % T);
-    ctx.save();
-    ctx.translate(ox, oy);
-    ctx.fillStyle = this.pattern;
-    ctx.fillRect(0, 0, w + T, h + T);
-    ctx.restore();
-  },
-
-  drawVignette(ctx, w, h) {
-    ctx.drawImage(this.vignette, 0, 0, w, h);
+  drawFloor(g) {
+    const T = this.tile.width;
+    const ox = ((Render.ox % T) + T) % T;
+    const oy = ((Render.oy % T) + T) % T;
+    g.save();
+    g.translate(-ox, -oy);
+    g.fillStyle = this.pattern;
+    g.fillRect(0, 0, Render.bw + T, Render.bh + T);
+    g.restore();
   },
 };
