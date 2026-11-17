@@ -1,16 +1,20 @@
-// 바닥 아이템: 포션(체력 회복)과 자석(경험치 구슬 전부 흡수).
-// 일정 시간마다 플레이어 주변 무작위 위치에 생기고, 화면 밖이면 가장자리에 방향 화살표가 뜬다.
+// 바닥 아이템: 포션(체력 회복), 자석(경험치 구슬 전부 흡수), 폭탄(화면의 적에게 큰 피해), 상자(정예·보스가 떨어뜨림).
+// 포션·자석·폭탄은 일정 시간마다 플레이어 주변 무작위 위치에 생기고, 화면 밖이면 가장자리에 방향 표시가 뜬다.
 
 const ITEM_LOOK = {
   potion: { sprite: 'potion', glow: '#7a1c14', mark: '#ff5a44' },
   magnet: { sprite: 'magnet', glow: '#24406a', mark: '#78b4ff' },
+  bomb:   { sprite: 'bomb',   glow: '#6a3408', mark: '#ffb43a' },
+  chest:  { sprite: 'chest',  glow: '#6a5418', mark: '#ffd23a' },
 };
 
 class Pickup {
-  constructor(type, x, y) {
+  // count: 상자에 든 보상 수 (상자만 쓴다)
+  constructor(type, x, y, count) {
     this.type = type;
     this.x = x;
     this.y = y;
+    this.count = count || 0;
     this.t = Math.random() * Math.PI * 2; // 둥실거리는 박자
   }
 
@@ -31,7 +35,7 @@ class Pickup {
     const by = Render.Y(this.y);
     if (!Render.onScreen(bx, by, 16)) return;
     Render.light(this.x, this.y, CONFIG.light.item);
-    const bob = Math.round(Math.sin(this.t) * 1.5); // 둥실거림
+    const bob = this.type === 'chest' ? 0 : Math.round(Math.sin(this.t) * 1.5); // 둥실거림 (상자는 바닥에 놓여 있다)
     Render.spr(S.shadow, bx - (S.shadow.w >> 1), by + (S.h >> 1) + 1);
     Render.spr(S.frames[0], bx - S.cx, by - (S.h >> 1) + bob);
   }
@@ -39,14 +43,14 @@ class Pickup {
 
 const Items = {
   list: [],
-  timers: { potion: 0, magnet: 0 },
+  timers: { potion: 0, magnet: 0, bomb: 0 },
 
   reset() {
     this.list.length = 0;
     for (const type in this.timers) this.timers[type] = CONFIG.items[type].interval;
   },
 
-  // hooks: { potion(), magnet() } 줍는 순간 실행할 효과
+  // hooks: { potion(), magnet(), bomb(), chest(count) } 줍는 순간 실행할 효과
   update(dt, player, hooks) {
     for (const type in this.timers) {
       this.timers[type] -= dt;
@@ -56,9 +60,10 @@ const Items = {
       }
     }
     for (let i = this.list.length - 1; i >= 0; i--) {
-      if (this.list[i].update(dt, player)) {
-        hooks[this.list[i].type]();
+      const p = this.list[i];
+      if (p.update(dt, player)) {
         this.list.splice(i, 1);
+        hooks[p.type](p.count);
       }
     }
   },
@@ -72,6 +77,11 @@ const Items = {
     this.list.push(new Pickup(type, player.x + Math.cos(a) * d, player.y + Math.sin(a) * d));
   },
 
+  // 정예·보스가 쓰러진 자리에 상자를 놓는다
+  dropChest(x, y, count) {
+    this.list.push(new Pickup('chest', x, y, count));
+  },
+
   draw() {
     for (const p of this.list) p.draw();
   },
@@ -81,7 +91,7 @@ const Items = {
   },
 
   // 화면 밖 아이템은 가장자리에 아이템 그림과 방향 표시로 알려준다 (그림판 좌표로 그린다)
-  drawIndicators(g) {
+  drawIndicators() {
     const mx = 16; // 좌우 여백
     const my = 44; // 위아래 여백: 상단 타이머와 하단 HUD를 피한다
     const w = Render.bw;

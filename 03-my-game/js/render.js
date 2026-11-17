@@ -22,6 +22,7 @@ const Render = {
   rings: {},
   stamps: [],
   glows: {},
+  edges: {},
 
   init(canvas) {
     this.canvas = canvas;
@@ -53,6 +54,7 @@ const Render = {
     this.buf.height = this.dark.height = this.bh;
     this.viewW = this.bw * V.unit;
     this.viewH = this.bh * V.unit;
+    this.edges = {}; // 화면 크기에 맞춰 만든 가장자리 섬광은 다시 만든다
     // 캔버스 크기를 바꾸면 설정이 초기화되므로 다시 끈다 (확대할 때 도트가 번지지 않게)
     this.out.imageSmoothingEnabled = false;
     this.g.imageSmoothingEnabled = false;
@@ -234,13 +236,41 @@ const Render = {
     this.g.drawImage(c, bx - (c.width >> 1), by - (c.height >> 1));
   },
 
-  // 아직 도트로 바꾸지 않은 옛 그리기 코드(세계 좌표로 원·선을 그린다)를 그림판 크기에 맞춰 실행한다
-  legacy(fn) {
-    const g = this.g;
-    g.save();
-    g.setTransform(0.5, 0, 0, 0.5, -this.ox, -this.oy);
-    fn(g);
-    g.restore();
+  // 화면 가장자리를 점무늬로 물들인다 (피격·경고·각성 섬광). color = [r, g, b], alpha = 세기(0~1)
+  edge(color, alpha) {
+    if (alpha <= 0.01) return;
+    const key = color.join(',');
+    let c = this.edges[key];
+    if (!c) {
+      const w = this.bw;
+      const h = this.bh;
+      c = this.edges[key] = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      const k = c.getContext('2d');
+      const img = k.createImageData(w, h);
+      const bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+      const reach = Math.min(w, h) * 0.3; // 가장자리에서 이만큼 안쪽까지 물든다
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const d = Math.min(x, y, w - 1 - x, h - 1 - y) / reach;
+          if (d >= 1) continue;
+          const v = (1 - d) * (1 - d) * 4;
+          let level = Math.floor(v);
+          if (v - level > (bayer[(y & 3) * 4 + (x & 3)] + 0.5) / 16) level++;
+          if (!level) continue;
+          const i = (y * w + x) * 4;
+          img.data[i] = color[0];
+          img.data[i + 1] = color[1];
+          img.data[i + 2] = color[2];
+          img.data[i + 3] = Math.min(255, level * 64);
+        }
+      }
+      k.putImageData(img, 0, 0);
+    }
+    this.g.globalAlpha = Math.min(1, alpha);
+    this.g.drawImage(c, 0, 0);
+    this.g.globalAlpha = 1;
   },
 
   // 그림판을 정수 배로 확대해 화면에 붙인다

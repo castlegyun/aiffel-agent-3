@@ -2,11 +2,42 @@
 // (이름을 Audio로 하면 브라우저 내장 Audio와 겹치므로 Sfx)
 // 브라우저 정책상 소리는 사용자의 첫 입력(키/클릭) 뒤에야 켤 수 있어서 unlock()을 그때 부른다.
 
+// 사용자가 바꿀 수 있는 설정 (일시정지 화면). 브라우저에 저장해 두고 다음에도 쓴다.
+const Settings = {
+  KEY: 'abyss-survivor.settings',
+  sfx: 1,        // 효과음 음량 (0~1)
+  music: 1,      // 배경음악 음량 (0~1)
+  shake: true,   // 화면 흔들림
+  numbers: true, // 데미지 숫자
+
+  load() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(this.KEY) || '{}');
+      for (const k of ['sfx', 'music', 'shake', 'numbers']) if (typeof raw[k] === typeof this[k]) this[k] = raw[k];
+    } catch (e) {
+      // 저장소가 막혀 있으면 기본값으로 동작
+    }
+  },
+
+  save() {
+    try {
+      localStorage.setItem(this.KEY, JSON.stringify({ sfx: this.sfx, music: this.music, shake: this.shake, numbers: this.numbers }));
+    } catch (e) {
+      // 저장 실패는 무시
+    }
+    Sfx.applyVolume();
+    Music.applyBus();
+  },
+};
+Settings.load();
+
 const Sfx = {
   KEY: 'abyss-survivor.muted.v2', // 예전 키의 음소거 값은 무시한다 (표시 없이 저장돼 소리가 영영 꺼져 있던 문제)
   createdAt: 0,                  // 오디오 엔진을 만든 시각 (같은 클릭이 버튼 토글로 이어지는 걸 막는 데 쓴다)
   ctx: null,
   master: null,
+  bus: null,      // 효과음만 지나가는 통로 (효과음 음량 설정)
+  voices: 0,      // 지금 울리고 있는 소리 수 (너무 많으면 새 소리를 건너뛴다)
   noiseBuf: null,
   muted: false,
   last: {},       // 소리별 마지막 재생 시각 (너무 자주 울리지 않게)
@@ -34,10 +65,13 @@ const Sfx = {
       this.master.gain.value = this.muted ? 0 : CONFIG.sfx.volume;
       this.master.connect(comp);
       comp.connect(this.ctx.destination);
+      this.bus = this.ctx.createGain();
+      this.bus.gain.value = Settings.sfx;
+      this.bus.connect(this.master);
       Music.init(this.ctx, this.master); // 배경음악도 같은 마스터 음량(음소거)을 따른다
 
-      // 1초짜리 흰 소음: 타격·폭발·바람 소리의 재료
-      const len = this.ctx.sampleRate;
+      // 2초짜리 흰 소음: 타격·폭발·바람 소리의 재료 (이어 붙여 재생해서 긴 소리도 끊기지 않는다)
+      const len = this.ctx.sampleRate * 2;
       this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
       const data = this.noiseBuf.getChannelData(0);
       for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
@@ -56,8 +90,19 @@ const Sfx = {
     return this.muted;
   },
 
+  applyVolume() {
+    if (this.bus) this.bus.gain.value = Settings.sfx;
+  },
+
+  // 소리를 낼 수 있는 상태인가. 동시에 울리는 소리가 너무 많으면 새 소리는 건너뛴다.
   ready() {
-    return !!this.ctx && !this.muted;
+    return !!this.ctx && !this.muted && this.voices < 48;
+  },
+
+  // 소리 하나가 끝나면 세던 수를 줄인다
+  track(node) {
+    this.voices++;
+    node.onended = () => { this.voices--; };
   },
 
   // ms 안에 같은 소리가 또 요청되면 무시한다
@@ -81,7 +126,8 @@ const Sfx = {
     g.gain.exponentialRampToValueAtTime(o.vol || 0.1, t + (o.attack || 0.005));
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     osc.connect(g);
-    g.connect(this.master);
+    g.connect(this.bus);
+    this.track(osc);
     osc.start(t);
     osc.stop(t + dur + 0.02);
   },
@@ -101,10 +147,12 @@ const Sfx = {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(o.vol || 0.1, t + 0.004);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.loop = true;
     src.connect(filter);
     filter.connect(g);
-    g.connect(this.master);
-    src.start(t, Math.random() * 0.5);
+    g.connect(this.bus);
+    this.track(src);
+    src.start(t, Math.random());
     src.stop(t + dur + 0.02);
   },
 
@@ -166,8 +214,8 @@ const Sfx = {
     this.noise(0.3, { freq: 2500, to: 6000, q: 0.8, vol: 0.06 });
   },
 
-  // 1분이 지났다: 시계 초침 같은 두 번의 틱과, 박자를 재촉하는 상승음
-  minute() {
+  // 막이 바뀌었다: 시계 초침 같은 두 번의 틱과, 박자를 재촉하는 상승음
+  act() {
     this.tone(880, 0.05, { type: 'square', vol: 0.07 });
     this.tone(660, 0.05, { type: 'square', vol: 0.07, delay: 0.18 });
     this.tone(180, 0.45, { type: 'sawtooth', to: 360, vol: 0.09, delay: 0.3 });
@@ -185,7 +233,12 @@ const Sfx = {
     this.tone(520, 0.12, { type: 'sine', to: 300, vol: 0.04 });
   },
 
-  hit() {
+  // crit: 치명타는 높고 맑은 소리가 한 겹 더 울린다
+  hit(crit) {
+    if (crit && this.gap('crit', 60)) {
+      this.tone(1560, 0.09, { type: 'square', to: 2200, vol: 0.05 });
+      this.noise(0.07, { freq: 5200, q: 1.4, vol: 0.07 });
+    }
     if (!this.gap('hit', 35)) return;
     const j = 0.85 + Math.random() * 0.3; // 매번 조금씩 다른 음높이
     this.noise(0.05, { freq: 1500 * j, q: 1.2, vol: 0.07 });
@@ -245,7 +298,7 @@ const Sfx = {
     out.gain.exponentialRampToValueAtTime(vol, t + 0.14);
     out.gain.setValueAtTime(vol, t + len * 0.5);
     out.gain.exponentialRampToValueAtTime(0.0001, t + len);
-    out.connect(this.master);
+    out.connect(this.bus);
 
     // 입 모양(포먼트): 닫힌 소리 -> 크게 벌린 "아" -> 다시 낮게
     const mouth = c.createBiquadFilter();
@@ -310,6 +363,94 @@ const Sfx = {
 
   bossRage() {
     this.roar(1.5, 0.3, 1.25); // 분노: 더 높고 짧은 포효
+  },
+
+  // ---- 새 무기·적·아이템 소리 ----
+  // 점멸: 공기가 빨려 들어갔다 터지는 소리
+  blink() {
+    this.noise(0.16, { freq: 900, to: 5200, q: 0.9, vol: 0.12 });
+    this.tone(420, 0.14, { type: 'sine', to: 1400, vol: 0.09 });
+  },
+
+  // 서리 파동: 유리가 깨지는 듯한 높은 소리와 차가운 바람
+  frost() {
+    if (!this.gap('frost', 120)) return;
+    this.noise(0.4, { filter: 'highpass', freq: 3200, to: 900, q: 0.7, vol: 0.1 });
+    [1568, 2093, 2637].forEach((f, i) => this.tone(f, 0.22, { type: 'sine', to: f * 0.7, vol: 0.045, delay: i * 0.03 }));
+  },
+
+  // 유성이 떨어지는 휘파람 소리
+  meteorFall() {
+    if (!this.gap('mfall', 120)) return;
+    this.tone(1400, 0.35, { type: 'sine', to: 260, vol: 0.05 });
+  },
+
+  // 유성 충돌: 낮고 큰 폭발
+  meteor() {
+    if (!this.gap('meteor', 90)) return;
+    this.tone(110, 0.5, { type: 'sine', to: 34, vol: 0.24 });
+    this.noise(0.45, { filter: 'lowpass', freq: 1400, to: 120, vol: 0.2 });
+  },
+
+  // 낫: 바람을 가르는 소리
+  scythe() {
+    if (!this.gap('scythe', 100)) return;
+    this.noise(0.22, { freq: 1200, to: 4200, q: 1.6, vol: 0.09 });
+  },
+
+  // 영혼 불: 속삭이는 듯한 떨리는 소리
+  wisp() {
+    if (!this.gap('wisp', 110)) return;
+    this.tone(880, 0.2, { type: 'sine', to: 1320, vol: 0.04 });
+    this.tone(660, 0.24, { type: 'triangle', to: 990, vol: 0.03, delay: 0.03 });
+  },
+
+  // 자폭병·폭탄이 터진다
+  blast() {
+    if (!this.gap('blast', 70)) return;
+    this.tone(140, 0.32, { type: 'sawtooth', to: 40, vol: 0.16 });
+    this.noise(0.3, { filter: 'lowpass', freq: 2000, to: 150, vol: 0.18 });
+  },
+
+  // 보스가 땅을 내려찍는다
+  slam() {
+    this.tone(90, 0.6, { type: 'sine', to: 30, vol: 0.28 });
+    this.noise(0.5, { filter: 'lowpass', freq: 900, to: 90, vol: 0.2 });
+  },
+
+  // 리치의 순간이동
+  teleport() {
+    this.tone(1200, 0.25, { type: 'sine', to: 180, vol: 0.08 });
+    this.noise(0.25, { freq: 4000, to: 600, q: 0.8, vol: 0.07 });
+  },
+
+  // 보스의 광선
+  beam() {
+    this.tone(180, 1.2, { type: 'sawtooth', to: 90, vol: 0.14, attack: 0.1 });
+    this.noise(1.2, { freq: 1800, to: 500, q: 0.6, vol: 0.1 });
+  },
+
+  // 정예 등장: 낮은 뿔피리
+  elite() {
+    this.tone(196, 0.5, { type: 'sawtooth', to: 147, vol: 0.12, attack: 0.04 });
+    this.tone(294, 0.5, { type: 'triangle', to: 220, vol: 0.08, attack: 0.04, delay: 0.05 });
+  },
+
+  // 사건(포위·떼·벽) 알림
+  event() {
+    this.tone(440, 0.12, { type: 'square', vol: 0.06 });
+    this.tone(330, 0.2, { type: 'square', vol: 0.06, delay: 0.13 });
+  },
+
+  // 상자가 열린다: 반짝이며 올라가는 음
+  chest() {
+    [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => this.tone(f, 0.3, { type: 'triangle', vol: 0.09, delay: i * 0.06 }));
+    this.noise(0.5, { filter: 'highpass', freq: 5000, q: 0.7, vol: 0.05, delay: 0.2 });
+  },
+
+  // 상자 보상이 하나씩 드러난다
+  reward() {
+    this.tone(988, 0.12, { type: 'square', to: 1319, vol: 0.06 });
   },
 
   win() {

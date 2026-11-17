@@ -1,4 +1,4 @@
-// HTML/CSS로 만든 HUD와 화면들(시작 / 일시정지 / 레벨업 카드 / 결과) + 최고 기록 저장.
+// HTML/CSS로 만든 HUD와 화면들(시작 / 일시정지 / 레벨업 카드 / 상자 / 결과) + 최고 기록 저장.
 
 function formatTime(sec) {
   const s = Math.floor(sec);
@@ -8,7 +8,7 @@ function formatTime(sec) {
 
 // ---- 최고 기록: localStorage에 저장 (막혀 있어도 게임은 돌아가게 try/catch) ----
 const Records = {
-  KEY: 'abyss-survivor.best',
+  KEY: 'abyss-survivor.best.v2', // 10분 구성의 기록. 예전 4분 기록과는 따로 둔다.
 
   load() {
     try {
@@ -44,16 +44,22 @@ const Records = {
   },
 };
 
+// 요소를 만든다: el('div', 'class', '글자')
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
 const UI = {
   init(h) {
     const $ = (id) => document.getElementById(id);
+    this.$ = $;
     this.body = document.body;
     this.timer = $('timer');
     this.timerText = $('timer-text');
-    this.flash = $('flash');
-    this.hurt = $('hurt');
-    this.warn = $('warn');
-    this.awakenFlashEl = $('awaken-flash');
+    this.actLabel = $('act-label');
     this.awakenBadge = $('awaken-badge');
     this.warnLabel = $('warn-label');
     this.announceEl = $('announce');
@@ -64,6 +70,7 @@ const UI = {
     this.xpFill = $('xp-fill');
     this.killsText = $('kills-text');
     this.slots = $('slots');
+    this.passiveSlots = $('passive-slots');
     this.slotsKey = '';
     this.menu = $('menu');
     this.menuBest = $('menu-best');
@@ -73,8 +80,13 @@ const UI = {
     this.paused = $('paused');
     this.levelUp = $('levelup');
     this.cards = $('cards');
+    this.chest = $('chest');
     this.choices = []; // 지금 떠 있는 카드들의 선택 콜백
+    this.chestDone = null;
     this.result = $('result');
+    this.shown = {};   // 마지막으로 화면에 쓴 값 (값이 바뀔 때만 HTML을 고친다)
+    $('kills-icon').appendChild(Icons.img('skull'));
+    $('chest-icon').appendChild(Icons.img('chest', 'icon big'));
 
     // 버튼은 누른 뒤 포커스를 풀어서, 이후 Enter/Space가 버튼을 또 누르지 않게 한다
     const click = (id, fn) => $(id).addEventListener('click', (e) => { e.currentTarget.blur(); fn(); });
@@ -84,6 +96,22 @@ const UI = {
     click('btn-pause-menu', h.onMenu);
     click('btn-retry', h.onRestart);
     click('btn-result-menu', h.onMenu);
+    click('btn-chest', () => this.closeChest());
+
+    // 설정: 바꾸는 즉시 적용하고 저장한다
+    const bind = (id, key, isCheck) => {
+      const input = $(id);
+      if (isCheck) input.checked = Settings[key];
+      else input.value = Settings[key];
+      input.addEventListener('input', () => {
+        Settings[key] = isCheck ? input.checked : Number(input.value);
+        Settings.save();
+      });
+    };
+    bind('set-sfx', 'sfx');
+    bind('set-music', 'music');
+    bind('set-shake', 'shake', true);
+    bind('set-numbers', 'numbers', true);
 
     // 브라우저는 첫 입력 뒤에야 소리를 허용한다
     const unlock = () => Sfx.unlock();
@@ -101,6 +129,7 @@ const UI = {
     window.addEventListener('keydown', (e) => {
       const st = h.getState();
       const press = (fn) => { e.preventDefault(); fn(); };
+      if (e.target && e.target.tagName === 'INPUT') return; // 설정 슬라이더를 만지는 중
       if (e.code === 'KeyM') {
         this.announce(Sfx.toggleMute() ? '소리 꺼짐' : '소리 켜짐', 'good');
       } else if (e.code === 'Escape') {
@@ -114,6 +143,8 @@ const UI = {
         press(h.onRestart);
       } else if ((st === 'gameover' || st === 'victory') && e.code === 'Enter') {
         press(h.onRestart);
+      } else if (st === 'chest' && (e.code === 'Enter' || e.code === 'Space')) {
+        press(() => this.closeChest());
       } else if (st === 'levelup') {
         const i = { Digit1: 0, Digit2: 1, Digit3: 2, Numpad1: 0, Numpad2: 1, Numpad3: 2 }[e.code];
         if (i !== undefined && this.choices[i]) press(this.choices[i]);
@@ -127,6 +158,7 @@ const UI = {
     this.menu.classList.toggle('hidden', state !== 'menu');
     this.paused.classList.toggle('hidden', state !== 'paused');
     this.levelUp.classList.toggle('hidden', state !== 'levelup');
+    this.chest.classList.toggle('hidden', state !== 'chest');
     this.result.classList.toggle('hidden', state !== 'gameover' && state !== 'victory');
     if (state === 'menu') this.showMenuBest();
   },
@@ -136,57 +168,69 @@ const UI = {
     this.menuBest.textContent = best ? Records.text(best) : '아직 기록이 없습니다';
   },
 
+  // 값이 바뀌었을 때만 HTML을 고친다 (매 프레임 똑같은 값을 다시 쓰지 않는다)
+  put(key, value, apply) {
+    if (this.shown[key] === value) return;
+    this.shown[key] = value;
+    apply(value);
+  },
+
   // ---- HUD (매 프레임) ----
   updateHud(player, time, boss, kills, weapons) {
-    // 남은 시간: 4:00에서 0:00으로 줄어든다. 올림해서 시작할 때 04:00, 끝날 때 00:00이 된다.
+    // 남은 시간: 10:00에서 0:00으로 줄어든다. 올림해서 시작할 때 10:00, 끝날 때 00:00이 된다.
     const remaining = Math.max(0, CONFIG.game.duration - time);
-    this.timerText.textContent = formatTime(Math.ceil(remaining));
-    this.timerText.classList.toggle('urgent', remaining <= 30); // 마지막 30초는 붉게 깜빡임
-
-    this.levelLabel.textContent = 'Lv ' + player.level;
-    this.xpFill.style.width = Math.min(100, (player.xp / player.xpToNext) * 100) + '%';
-    this.killsText.textContent = kills;
+    this.put('time', formatTime(Math.ceil(remaining)), (v) => { this.timerText.textContent = v; });
+    this.put('urgent', remaining <= 30, (v) => this.timerText.classList.toggle('urgent', v)); // 마지막 30초는 붉게 깜빡임
+    this.put('level', player.level, (v) => { this.levelLabel.textContent = 'Lv ' + v; });
+    this.put('xp', Math.round(Math.min(100, (player.xp / player.xpToNext) * 100)), (v) => { this.xpFill.style.width = v + '%'; });
+    this.put('kills', kills, (v) => { this.killsText.textContent = v; });
+    this.put('dash', player.dashCd <= 0, (v) => this.$('btn-dash-touch').classList.toggle('ready', v));
     this.updateSlots(weapons);
 
+    this.put('boss', !!boss, (v) => this.bossHud.classList.toggle('hidden', !v));
     if (boss) {
-      this.bossHud.classList.remove('hidden');
-      this.bossName.textContent = boss.cfg.name;
-      this.bossFill.style.width = Math.max(0, (boss.hp / boss.maxHp) * 100) + '%';
-      this.bossFill.classList.toggle('rage', boss.phase === 2);
-    } else {
-      this.hideBoss();
+      this.put('bossName', boss.cfg.name, (v) => { this.bossName.textContent = v; });
+      this.put('bossHp', Math.max(0, Math.round((boss.hp / boss.maxHp) * 200) / 2), (v) => { this.bossFill.style.width = v + '%'; });
+      this.put('bossRage', boss.phase, (v) => { this.bossFill.dataset.phase = v; });
     }
   },
 
-  // 무기 슬롯 3칸. 무기 구성이 바뀔 때만 다시 만든다.
+  // 아이콘 + 레벨 숫자가 든 칸 하나
+  slot(icon, level, cls, title) {
+    const e = el('div', 'slot' + (cls ? ' ' + cls : ''));
+    if (icon) {
+      e.appendChild(Icons.img(icon));
+      e.title = title;
+      e.appendChild(el('span', 'slot-lv', level));
+    }
+    return e;
+  },
+
+  // 무기 칸과 패시브 칸. 구성이 바뀔 때만 다시 만든다.
   updateSlots(weapons) {
-    const key = weapons.map((w) => `${w.id}:${w.level}:${w.evolved}`).join('|');
+    const key = weapons.map((w) => `${w.id}:${w.level}:${w.evolved}`).join('|') + '#' + Object.entries(Build.levels).join('|');
     if (key === this.slotsKey) return;
     this.slotsKey = key;
     this.slots.textContent = '';
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < CONFIG.build.weaponSlots; i++) {
       const w = weapons[i];
-      const el = document.createElement('div');
-      el.className = 'slot' + (w ? (w.evolved ? ' evolved' : w.level >= 3 ? ' lv3' : '') : ' empty');
-      if (w) {
-        el.textContent = w.icon;
-        el.title = w.name;
-        const lv = document.createElement('span');
-        lv.className = 'slot-lv';
-        lv.textContent = w.evolved ? '★' : w.level;
-        el.appendChild(lv);
-      }
-      this.slots.appendChild(el);
+      this.slots.appendChild(w
+        ? this.slot(w.icon, w.evolved ? '★' : w.level, w.evolved ? 'evolved' : w.level >= CONFIG.awaken.minLevel ? 'lv3' : '', w.name)
+        : this.slot(null, '', 'empty'));
+    }
+    this.passiveSlots.textContent = '';
+    const owned = Object.keys(Build.levels);
+    for (let i = 0; i < CONFIG.build.passiveSlots; i++) {
+      const id = owned[i];
+      this.passiveSlots.appendChild(id
+        ? this.slot(CONFIG.passives[id].icon, Build.levels[id], 'passive', CONFIG.passives[id].name)
+        : this.slot(null, '', 'empty passive'));
     }
   },
 
-  // ---- 보스 / 안내 / 타이머 연출 ----
-  hideBoss() {
-    this.bossHud.classList.add('hidden');
-  },
-
+  // ---- 보스 / 안내 연출 ----
   // 화면 중앙 위쪽에 잠깐 떴다 사라지는 안내 문구
-  // kind: 'good'이면 초록색(아이템 획득 등), 없으면 붉은색(경고)
+  // kind: 'good' 초록(아이템 획득 등) / 'awaken'·'skill' 금빛 / 없으면 붉은색(경고)
   announce(text, kind) {
     this.announceEl.textContent = text;
     this.announceEl.classList.toggle('good', kind === 'good');
@@ -199,44 +243,35 @@ const UI = {
     this.announceEl.classList.remove('show');
   },
 
-  // 보스 등장 연출: 타이머가 붉게 물들며 커졌다가 자리 잡고, 화면 가장자리에 붉은 섬광이 지나간다
-  bossPop() {
-    this.restartAnim(this.timer, 'boss-pop');
-    this.restartAnim(this.flash, 'show');
-  },
-
-  // 보스 등장 경고: k(0~1)가 커질수록 붉은 테두리가 더 빠르고 진하게 맥동한다
-  setWarning(left, k) {
-    this.warn.classList.add('on');
-    this.warn.style.setProperty('--warn', k.toFixed(2));
-    this.warn.style.setProperty('--dur', (1.5 - 0.9 * k).toFixed(2) + 's');
-    this.warnLabel.classList.remove('hidden');
-    this.warnLabel.textContent = `⚠ ${CONFIG.boss.name} 출현까지 ${formatTime(Math.max(0, Math.ceil(left)))}`;
+  // 보스 등장 경고: 남은 시간을 카운트다운한다 (붉은 가장자리는 캔버스가 그린다)
+  setWarning(left, name) {
+    this.put('warn', Math.ceil(left), (v) => {
+      this.warnLabel.classList.remove('hidden');
+      this.warnLabel.textContent = `⚠ ${name} 출현까지 ${formatTime(Math.max(0, v))}`;
+    });
   },
 
   endWarning() {
-    this.warn.classList.remove('on');
+    this.shown.warn = null;
     this.warnLabel.classList.add('hidden');
+  },
+
+  setAct(name) {
+    this.actLabel.textContent = name;
   },
 
   // 소리 상태를 눈에 보이게: 꺼짐(빗금) / 아직 시작 전(깜빡임) / 정상
   updateSound() {
     const muted = Sfx.muted;
     const ready = !!Sfx.ctx && Sfx.ctx.state === 'running';
-    this.soundBtn.classList.toggle('off', muted);
-    this.soundBtn.classList.toggle('idle', !muted && !ready);
     const msg = muted
       ? '소리가 꺼져 있습니다 · M 키 또는 왼쪽 위 ♪ 버튼으로 켜세요'
       : !ready ? '소리를 켜려면 화면을 한 번 클릭하세요' : '';
-    if (msg !== this.soundMsg) {
-      this.soundMsg = msg;
-      this.menuSound.textContent = msg;
-    }
-  },
-
-  // 스킬 공명 발동: 금빛 섬광
-  awakenFlash() {
-    this.restartAnim(this.awakenFlashEl, 'show');
+    if (msg === this.soundMsg) return;
+    this.soundMsg = msg;
+    this.soundBtn.classList.toggle('off', muted);
+    this.soundBtn.classList.toggle('idle', !muted && !ready);
+    this.menuSound.textContent = msg;
   },
 
   // 공명 단계 표시 (0이면 숨김)
@@ -245,47 +280,32 @@ const UI = {
     this.awakenBadge.textContent = tier === 1 ? '✦ 공명' : '✦✦ 대공명';
   },
 
-  // 1분 경과: 화면 가장자리가 붉게 번쩍인다 (보스 등장 때와 같은 섬광)
-  minuteFlash() {
-    this.restartAnim(this.flash, 'show');
+  restartAnim(node, cls) {
+    node.classList.remove(cls);
+    void node.offsetWidth; // 애니메이션을 처음부터 다시 시작
+    node.classList.add(cls);
   },
 
-  // 피격 시 붉은 비네팅
-  hurtFlash() {
-    this.restartAnim(this.hurt, 'show');
-  },
-
-  restartAnim(el, cls) {
-    el.classList.remove(cls);
-    void el.offsetWidth; // 애니메이션을 처음부터 다시 시작
-    el.classList.add(cls);
-  },
-
-  resetTimer() {
-    this.timer.classList.remove('boss-pop');
-    this.timerText.classList.remove('urgent');
-    this.flash.classList.remove('show');
+  // ---- 카드 한 장 (레벨업·상자가 같이 쓴다) ----
+  card(info, key) {
+    const card = el('button', 'card' + (info.kind ? ' ' + info.kind : ''));
+    if (key) card.appendChild(el('div', 'card-key', key));
+    const icon = el('div', 'card-icon');
+    icon.appendChild(Icons.img(info.icon, 'icon big'));
+    card.appendChild(icon);
+    card.appendChild(el('div', 'card-name', info.name));
+    if (info.levelText) card.appendChild(el('div', 'card-level', info.levelText));
+    for (const line of info.lines) card.appendChild(el('div', 'card-line', line));
+    return card;
   },
 
   // ---- 레벨업 카드 ----
-  // infos: 카드 객체 배열({name, icon, kind, levelText, lines}), onPick(i): i번째 카드를 골랐을 때
+  // infos: 카드 객체 배열, onPick(i): i번째 카드를 골랐을 때
   showLevelUp(infos, onPick) {
     this.cards.textContent = '';
     this.choices = infos.map((info, i) => {
       const pick = () => onPick(i);
-      const card = document.createElement('button');
-      card.className = 'card' + (info.kind ? ' ' + info.kind : ''); // new / evolve
-      const add = (cls, text) => {
-        const el = document.createElement('div');
-        el.className = cls;
-        el.textContent = text;
-        card.appendChild(el);
-      };
-      add('card-key', String(i + 1));
-      add('card-icon', info.icon);
-      add('card-name', info.name);
-      if (info.levelText) add('card-level', info.levelText);
-      for (const line of info.lines) add('card-line', line);
+      const card = this.card(info, String(i + 1));
       card.addEventListener('click', (e) => { e.currentTarget.blur(); pick(); });
       this.cards.appendChild(card);
       return pick;
@@ -296,10 +316,90 @@ const UI = {
     this.choices = [];
   },
 
+  // ---- 상자: 받은 보상을 하나씩 드러낸다 ----
+  showChest(rewards, onDone) {
+    const box = this.$('chest-rewards');
+    box.textContent = '';
+    this.chestDone = onDone;
+    this.restartAnim(this.$('chest-icon'), 'open');
+    rewards.forEach((info, i) => {
+      const card = this.card(info);
+      card.disabled = true;
+      card.style.animationDelay = 0.35 + i * 0.3 + 's';
+      box.appendChild(card);
+      setTimeout(() => Sfx.reward(), 350 + i * 300);
+    });
+  },
+
+  closeChest() {
+    const done = this.chestDone;
+    this.chestDone = null;
+    if (done) done();
+  },
+
+  // ---- 무기 목록: 아이콘, 이름, 레벨, 준 피해(막대) ----
+  weaponRows(box, weapons) {
+    box.textContent = '';
+    const list = weapons.map((w) => ({ w, dmg: DamageLog.by[w.id] || 0 }));
+    const top = Math.max(1, ...list.map((x) => x.dmg));
+    for (const { w, dmg } of list) {
+      const row = el('div', 'wrow' + (w.evolved ? ' evolved' : ''));
+      row.appendChild(Icons.img(w.icon));
+      const body = el('div', 'wbody');
+      const head = el('div', 'whead');
+      head.appendChild(el('span', 'wname', w.name));
+      head.appendChild(el('span', 'wlv', w.evolved ? '★ 진화' : 'Lv ' + w.level));
+      head.appendChild(el('b', 'wdmg', Math.round(dmg).toLocaleString()));
+      body.appendChild(head);
+      const bar = el('div', 'wbar');
+      const fill = el('div', 'wfill');
+      fill.style.width = (dmg / top) * 100 + '%';
+      bar.appendChild(fill);
+      body.appendChild(bar);
+      row.appendChild(body);
+      box.appendChild(row);
+    }
+  },
+
+  passiveChips(box) {
+    box.textContent = '';
+    for (const id in Build.levels) {
+      const P = CONFIG.passives[id];
+      const chip = el('div', 'chip');
+      chip.appendChild(Icons.img(P.icon));
+      chip.appendChild(el('span', '', `${P.name} ${Build.levels[id]}`));
+      chip.title = P.text(P.per * Build.levels[id]);
+      box.appendChild(chip);
+    }
+  },
+
+  // ---- 일시정지 화면: 지금 빌드, 진화 조합표 ----
+  renderPause(player, weapons) {
+    this.weaponRows(this.$('pause-build'), weapons);
+    this.passiveChips(this.$('pause-passives'));
+
+    const box = this.$('pause-recipes');
+    box.textContent = '';
+    for (const id in CONFIG.weapons) {
+      const W = CONFIG.weapons[id];
+      const P = CONFIG.passives[W.evolve.needs];
+      const mine = weapons.find((w) => w.id === id);
+      // 상태: 이미 진화함 / 둘 다 가짐(최대 레벨이 되면 진화) / 아직
+      const state = mine && mine.evolved ? 'done' : mine && Build.has(W.evolve.needs) ? 'ready' : '';
+      const row = el('div', 'recipe ' + state);
+      row.appendChild(Icons.img(W.icon));
+      row.appendChild(el('span', 'plus', '+'));
+      row.appendChild(Icons.img(P.icon));
+      row.appendChild(el('span', 'arrow', '→'));
+      row.appendChild(el('span', 'rname', W.evolve.name));
+      row.title = `${W.name} Lv${W.maxLevel} + ${P.name}`;
+      box.appendChild(row);
+    }
+  },
+
   // ---- 결과 화면 (게임오버 / 승리) ----
-  // r: { won, time, kills, byType, level, weapons, record(이번 판), isNewRecord, best }
-  showResult(r) {
-    const $ = (id) => document.getElementById(id);
+  showResult(r, weapons) {
+    const $ = this.$;
     this.result.classList.toggle('win', r.won);
     $('result-title').textContent = r.won ? 'VICTORY' : 'GAME OVER';
 
@@ -308,36 +408,34 @@ const UI = {
     rec.textContent = r.isNewRecord ? '★ 새로운 최고 기록!' : Records.text(r.best);
 
     const row = (label, value, cls) => {
-      const el = document.createElement('div');
-      el.className = cls || 'result-row';
-      const l = document.createElement('span');
-      l.textContent = label;
-      const v = document.createElement('b');
-      v.textContent = value;
-      el.append(l, v);
-      return el;
+      const e = el('div', cls || 'result-row');
+      e.append(el('span', '', label), el('b', '', value));
+      return e;
     };
     const fill = (id, rows) => {
       const box = $(id);
       box.textContent = '';
-      for (const el of rows) box.appendChild(el);
+      for (const e of rows) box.appendChild(e);
     };
 
     fill('result-rows', [
       row('생존 시간', formatTime(r.time)),
-      row('처치 수', r.kills),
+      row('도달한 곳', `${r.act + 1}막`),
+      row('처치 수', r.kills.toLocaleString()),
       row('도달 레벨', 'Lv ' + r.level),
-      row('보스', r.byType.boss ? '처치함' : r.bossSeen ? '맞서 싸움' : '만나지 못함'),
-      ...(r.won ? [row('클리어', r.byBoss ? '보스 격파' : '4분 생존')] : []),
+      row('보스', `${r.bossesKilled} / ${Object.keys(CONFIG.bosses).length} 격파`),
+      ...(r.won ? [row('클리어', r.byBoss ? '최종 보스 격파' : '10분 생존')] : []),
     ]);
 
-    const names = Object.assign({}, ...Object.entries(CONFIG.enemies).map(([k, v]) => ({ [k]: v.name })), { boss: CONFIG.boss.name });
+    const names = {};
+    for (const k in CONFIG.enemies) names[k] = CONFIG.enemies[k].name;
+    for (const k in CONFIG.bosses) names[k] = CONFIG.bosses[k].name;
     const kills = Object.entries(r.byType).sort((a, b) => b[1] - a[1]);
     fill('result-kills', kills.length
       ? kills.map(([type, n]) => row(names[type] || type, '× ' + n, 'result-item'))
       : [row('—', '', 'result-item')]);
 
-    fill('result-weapons', r.weapons.map((w) =>
-      row(`${w.icon} ${w.name}`, w.evolved ? '★ 진화' : 'Lv ' + w.level, 'result-item' + (w.evolved ? ' evolved' : ''))));
+    this.weaponRows($('result-weapons'), weapons);
+    this.passiveChips($('result-passives'));
   },
 };

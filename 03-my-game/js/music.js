@@ -14,7 +14,8 @@ const Music = {
   duck: 1,          // 일시정지/카드 선택 중에는 음악을 낮춘다
   timer: null,
   nextTime: 0,      // 다음 음을 예약할 시각
-  tempo: 1,         // 박자 배율: 1분이 지날 때마다 조금씩 빨라진다
+  tempo: 1,         // 박자 배율: 막이 바뀔 때마다 조금씩 빨라진다
+  act: 0,           // 지금 몇 막인가 (0, 1, 2). 막이 오를수록 악기 층이 하나씩 더해진다
   step: 0,          // 한 마디(8분음표 8칸) 안의 위치
   bar: 0,
 
@@ -71,7 +72,7 @@ const Music = {
 
   applyBus() {
     if (!this.ctx) return;
-    const v = this.mood === 'off' ? 0 : CONFIG.music.volume * this.duck;
+    const v = this.mood === 'off' ? 0 : CONFIG.music.volume * Settings.music * this.duck;
     this.bus.gain.setTargetAtTime(v, this.ctx.currentTime, 0.25);
   },
 
@@ -86,9 +87,10 @@ const Music = {
     }
   },
 
-  // 박자 배율을 바꾼다 (다음 음부터 바로 반영)
-  setTempo(t) {
-    this.tempo = t;
+  // 막이 바뀌면 악기 층이 더해지고 박자도 조금 빨라진다
+  setAct(i) {
+    this.act = i;
+    this.tempo = 1 + i * CONFIG.music.tempoStep;
   },
 
   setDuck(v) {
@@ -101,7 +103,7 @@ const Music = {
     if (state === 'menu') { this.setMood('menu'); this.setDuck(1); }
     else if (state === 'playing') { this.setMood(bossAlive ? 'boss' : warning ? 'tense' : 'play'); this.setDuck(1); }
     else if (state === 'paused') this.setDuck(0.3);
-    else if (state === 'levelup') this.setDuck(0.55);
+    else if (state === 'levelup' || state === 'chest') this.setDuck(0.55);
     else this.setMood('off'); // 게임오버/승리: 음악을 끄고 효과음 팡파레만
   },
 
@@ -163,6 +165,17 @@ const Music = {
       if (s === 0 || s === 4 || (s === 6 && Math.random() < 0.5)) {
         this.bell(t, this.hz(chord.arp[Math.floor(Math.random() * chord.arp.length)] + 12), 0.045);
       }
+    }
+
+    // 2막부터: 한 옥타브 위에서 길게 우는 대선율이 더해진다
+    if (this.act >= 1 && M.drums >= 1 && (s === 0 || s === 5)) {
+      const lead = [4, 2, 5, 3][(this.bar + (s ? 1 : 0)) % 4];
+      this.lead(t, this.hz(chord.arp[lead] + 12), eighth * (s ? 3 : 5), 0.022);
+    }
+    // 3막: 낮게 깔리는 옥타브 베이스와 16분음표 하이햇이 몰아친다
+    if (this.act >= 2 && M.drums >= 1) {
+      if (s % 4 === 0) this.bass(t, this.hz(chord.root - 12), eighth * 3.5, 0.11);
+      this.hat(t + eighth / 2, 0.025);
     }
 
     // 북
@@ -271,6 +284,35 @@ const Music = {
     g.connect(this.send);
     osc.start(t);
     osc.stop(t + 0.32);
+  },
+
+  // 대선율: 살짝 떨리는 사각파가 천천히 차올랐다 사라진다
+  lead(t, freq, dur, vol) {
+    const osc = this.ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = freq;
+    const vib = this.ctx.createOscillator(); // 떨림
+    vib.frequency.value = 5.5;
+    const depth = this.ctx.createGain();
+    depth.gain.value = freq * 0.006;
+    vib.connect(depth);
+    depth.connect(osc.frequency);
+    const f = this.ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 1700;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.08);
+    g.gain.setValueAtTime(vol, t + dur * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(f);
+    f.connect(g);
+    g.connect(this.bus);
+    g.connect(this.send);
+    osc.start(t);
+    vib.start(t);
+    osc.stop(t + dur + 0.02);
+    vib.stop(t + dur + 0.02);
   },
 
   // 종소리: 정수배가 아닌 배음을 섞어 금속성 울림을 만든다

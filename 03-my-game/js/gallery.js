@@ -4,7 +4,7 @@
 (function gallery() {
   if (!location.search.includes('gallery')) return;
 
-  const Z = 5; // 확대 배율
+  const Z = 3; // 확대 배율
   const c = document.createElement('canvas');
   c.width = window.innerWidth;
   c.height = window.innerHeight;
@@ -52,7 +52,7 @@
   strip.width = 240;
   strip.height = 70;
   const s = strip.getContext('2d');
-  s.fillStyle = s.createPattern(Background.tile, 'repeat');
+  s.fillStyle = s.createPattern(Background.tiles[0], 'repeat');
   s.fillRect(0, 0, strip.width, strip.height);
   const keep = Render.g;
   Render.g = s; // 그리기 도우미가 이 캔버스에 찍도록 잠깐 바꿔 끼운다
@@ -68,4 +68,18 @@
   Render.line(80, 64, 140, 54, '#c4221a', 3);
   Render.g = keep;
   g.drawImage(strip, 12, y, strip.width * Z, strip.height * Z);
+
+  // 아이콘 (HTML의 HUD·카드에서 쓰는 그림)
+  let ix = strip.width * Z + 40;
+  let iy = y;
+  for (const name in ICON_ROWS) {
+    const img = new Image();
+    const px = ix;
+    const py = iy;
+    img.onload = () => g.drawImage(img, px, py, 48, 48);
+    img.src = Icons.url(name);
+    label(name, ix, iy + 60);
+    ix += 70;
+    if (ix + 70 > c.width) { ix = strip.width * Z + 40; iy += 80; }
+  }
 })();
