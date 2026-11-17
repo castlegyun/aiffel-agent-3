@@ -683,13 +683,14 @@ function draw() {
 // ---- 게임 루프 ----
 let last = performance.now();
 function loop(now) {
+  // 다음 프레임을 먼저 예약한다: 어느 한 곳에서 오류가 나도 게임 전체가 멈추지 않게
+  requestAnimationFrame(loop);
   const dt = Math.min((now - last) / 1000, CONFIG.maxDelta);
   last = now;
   update(dt);
   UI.updateHud(player, gameTime, boss, stats.kills, weapons);
   UI.updateSound();
   draw();
-  requestAnimationFrame(loop);
 }
 Sfx.init();
 UI.init({

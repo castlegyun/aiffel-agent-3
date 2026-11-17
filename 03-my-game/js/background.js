@@ -167,7 +167,9 @@ const Background = {
         const bx = Render.X(x);
         const by = Render.Y(y);
         if (!Render.onScreen(bx, by, 90)) continue;
-        const f = S.frames[S.frames.length > 1 ? Math.floor(Effects.clock * 7 + cx) % S.frames.length : 0];
+        // 칸 번호(cx)는 음수일 수 있으므로 나머지를 양수로 맞춘다 (음수 프레임 번호는 그림이 없다)
+        const n = S.frames.length;
+        const f = S.frames[((Math.floor(Effects.clock * 7 + cx) % n) + n) % n];
         Render.spr(f, bx - S.cx, by - (S.h >> 1));
         if (d.light) {
           Render.light(x, y - 6, d.light);
